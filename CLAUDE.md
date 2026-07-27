@@ -17,7 +17,11 @@ urban-edible plant field guide for Montréal. Live at **https://foraging.condrea
 - **Add a plant:** new `.md` in `src/content/plants/` (copy an existing one).
 - **Add a map spot:** edit `public/data/foraging-spots.geojson` (feature = Point `[lon,lat]`
   + properties `name, category, species, season, location, notes, photos[]`;
-  categories: `tree berries greens herbs nuts mushrooms other`).
+  categories: `tree berries greens herbs nuts mushrooms other`). Add optional `plant`
+  = a plant slug (filename in `src/content/plants/`) to interlink the pin with its
+  guide both ways; leave it out if no guide exists yet. Whether a plant shows as
+  "on map" is derived from these links at build time (`src/lib/spots.ts`) — no flag
+  to maintain on the plant.
 - **Better photos:** replace files in `public/images/plants/`.
 
 ## Deploy & backup (this VPS)
