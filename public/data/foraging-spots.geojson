@@ -68,6 +68,28 @@
           "crabapple-verdun-beatty-1.jpg"
         ]
       }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.564744,
+          45.453278
+        ]
+      },
+      "properties": {
+        "name": "Staghorn sumac",
+        "category": "tree",
+        "species": "staghorn sumac (Rhus typhina)",
+        "season": "drupes ripe Aug–Sept (usable into fall)",
+        "location": "Verdun (near riverfront)",
+        "notes": "Photographed Jul 27; upright dark-red fuzzy drupe clusters. Steep clusters in cold water for pink 'sumac-ade'; also ground as a tart spice. Don't confuse with poison sumac (white drooping berries, wet ground).",
+        "added": "2026-07-27",
+        "photos": [
+          "staghorn-sumac-1.jpg"
+        ]
+      }
     }
   ]
 }

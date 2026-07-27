@@ -52,7 +52,7 @@ const { fullscreen = false } = Astro.props;
 
   const usedCats = new Set<string>();
 
-  fetch('/data/foraging-spots.geojson')
+  fetch('/data/foraging-spots.geojson?t=' + Date.now(), { cache: 'no-store' })
     .then((r) => r.json())
     .then((geo) => {
       const layer = L.geoJSON(geo, {

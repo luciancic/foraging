@@ -26,6 +26,10 @@ if ! grep -q "foraging.condrea.dev" "$CADDYFILE" 2>/dev/null; then
 foraging.condrea.dev {
     root * /srv/foraging
     encode gzip
+    # GeoJSON is the source of truth and changes on each deploy — never cache it,
+    # or iOS Safari serves stale pins even after a redeploy.
+    @data path /data/*
+    header @data Cache-Control "no-cache"
     try_files {path} {path}/ =404
     file_server
 }
