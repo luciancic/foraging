@@ -5,6 +5,8 @@ commonNames: [wild spinach, fat hen, goosefoot, chénopode blanc]
 category: greens
 season: Spring through fall
 status: ripe-now
+ripeStart: "05-01"
+ripeEnd: "10-10"
 heroImage: /images/plants/lambs-quarters.jpg
 order: 20
 onMap: false
@@ -16,7 +18,7 @@ safety:
   - "One of the safest wild greens — a close relative of quinoa and spinach. Like spinach it contains oxalates, so cook it and don't eat huge amounts raw daily."
   - "No dangerous lookalike, but confirm the mealy coating; avoid plants from sprayed or roadside soil (it accumulates nitrates)."
 guides:
-  - { label: "iNaturalist — Chenopodium album", url: "https://www.inaturalist.org/taxa/55875-Chenopodium-album" }
+  - { label: "iNaturalist — Chenopodium album", url: "https://www.inaturalist.org/taxa/58127" }
 updated: "2026-07-27"
 ---
 

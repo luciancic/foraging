@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily rebuild of the foraging site so seasonal status stays current
+
+[Timer]
+# Every morning ~03:40 local; catch up if the box was off at the scheduled time.
+OnCalendar=*-*-* 03:40:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

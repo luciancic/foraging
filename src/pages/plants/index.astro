@@ -1,19 +1,15 @@
 ---
 import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
+import { effectiveStatus, STATUS_LABEL } from '../../lib/season';
 
-const plants = (await getCollection('plants')).sort(
-  (a, b) => a.data.order - b.data.order || a.data.title.localeCompare(b.data.title),
-);
-const statusLabel: Record<string, string> = {
-  'ripe-now': 'ripe now',
-  'coming-soon': 'coming soon',
-  'note-for-next-year': 'next year',
-  'year-round': 'year-round',
-};
+const order = { 'ripe-now': 0, 'coming-soon': 1, 'year-round': 2, 'note-for-next-year': 3 };
+const plants = (await getCollection('plants'))
+  .map((p) => ({ ...p, live: effectiveStatus(p.data) }))
+  .sort((a, b) => order[a.live] - order[b.live] || a.data.order - b.data.order || a.data.title.localeCompare(b.data.title));
 ---
 <Base title="Plants — Forage MTL" page="plants" description="Field guide to urban edible plants around Montréal.">
-  <section class="wrap" style="padding: 30px 0 12px;">
+  <section class="wrap section">
     <h1 style="margin:0 0 6px;">Plants to look for</h1>
     <p style="color:var(--ink-soft); margin:0 0 24px; max-width:62ch;">
       Urban foraging is mostly "weeds" and a few ornamental trees that happen to be edible — not orchards.
@@ -27,7 +23,7 @@ const statusLabel: Record<string, string> = {
             <span class="name">{p.data.title}</span>
             {p.data.scientificName && <span class="sci">{p.data.scientificName}</span>}
             <span class="meta">
-              <span class={`badge ${p.data.status}`}>{statusLabel[p.data.status]}</span>
+              <span class={`badge ${p.live}`}>{STATUS_LABEL[p.live]}</span>
               {p.data.onMap && <span style="margin-left:8px">📍 on map</span>}
             </span>
           </div>

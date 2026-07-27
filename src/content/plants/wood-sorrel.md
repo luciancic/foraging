@@ -5,6 +5,8 @@ commonNames: [oxalis, sourgrass, oxalide]
 category: herbs
 season: Spring through fall
 status: ripe-now
+ripeStart: "05-01"
+ripeEnd: "10-15"
 heroImage: /images/plants/wood-sorrel.jpg
 order: 50
 onMap: false
@@ -16,7 +18,7 @@ idCues:
 safety:
   - "Safe as a trailside nibble. Contains oxalic acid (the tang), so it's a garnish/snack, not a bulk green — don't eat bowlfuls."
 guides:
-  - { label: "iNaturalist — Oxalis stricta", url: "https://www.inaturalist.org/taxa/62870-Oxalis-stricta" }
+  - { label: "iNaturalist — Oxalis stricta", url: "https://www.inaturalist.org/taxa/53183" }
 updated: "2026-07-27"
 ---
 

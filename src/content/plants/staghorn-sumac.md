@@ -5,6 +5,8 @@ commonNames: [sumac vinaigrier, velvet sumac]
 category: herbs
 season: Red cones ripe August, hold into winter
 status: coming-soon
+ripeStart: "08-01"
+ripeEnd: "12-20"
 heroImage: /images/plants/staghorn-sumac.jpg
 order: 70
 onMap: false
@@ -16,7 +18,7 @@ safety:
   - "<strong>Critical:</strong> eat only <em>red, upright, fuzzy</em> cones. <strong>Poison sumac</strong> has <em>white/green, drooping</em> berries and grows in wet swampy ground — a completely different look and habitat. Red + upright + dry ground = safe."
   - "Despite the scary name, edible sumac is unrelated to poison ivy toxicity; it's the same genus as the culinary Middle-Eastern spice."
 guides:
-  - { label: "iNaturalist — Rhus typhina", url: "https://www.inaturalist.org/taxa/48478-Rhus-typhina" }
+  - { label: "iNaturalist — Rhus typhina", url: "https://www.inaturalist.org/taxa/167829" }
 updated: "2026-07-27"
 ---
 

@@ -5,6 +5,8 @@ commonNames: [white mulberry, red mulberry]
 category: tree
 season: Fruit ripe late June–July
 status: ripe-now
+ripeStart: "06-20"
+ripeEnd: "07-31"
 heroImage: /images/plants/mulberry.jpg
 order: 10
 onMap: false
@@ -16,7 +18,7 @@ idCues:
 safety:
   - "Very safe fruit. Unripe (white/green) berries and the milky sap can cause mild stomach upset — eat only fully soft, dark fruit."
 guides:
-  - { label: "iNaturalist — Morus", url: "https://www.inaturalist.org/taxa/54321-Morus" }
+  - { label: "iNaturalist — Morus", url: "https://www.inaturalist.org/taxa/56091" }
   - { label: "Wikipedia — Morus", url: "https://en.wikipedia.org/wiki/Morus_(plant)" }
 updated: "2026-07-27"
 ---

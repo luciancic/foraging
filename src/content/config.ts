@@ -13,8 +13,14 @@ const plants = defineCollection({
     category: z.enum(['tree', 'berries', 'greens', 'herbs', 'nuts', 'mushrooms', 'other']),
     // when it's usable
     season: z.string().optional(),
-    // drives the badge on cards: what to do about it right now
+    // Fallback badge when no ripening window is given (e.g. year-round plants).
+    // When ripeStart/ripeEnd ARE set, the badge is computed from today's date
+    // instead — see src/lib/season.ts.
     status: z.enum(['ripe-now', 'coming-soon', 'note-for-next-year', 'year-round']).default('year-round'),
+    // Ripening window as "MM-DD" (inclusive). If set, the live status is derived
+    // from the current date, so the site stays correct as the season turns.
+    ripeStart: z.string().regex(/^\d{2}-\d{2}$/).optional(),
+    ripeEnd: z.string().regex(/^\d{2}-\d{2}$/).optional(),
     // lead photo (path under /public) + optional gallery
     heroImage: z.string().optional(),
     gallery: z.array(z.object({ src: z.string(), credit: z.string().optional(), caption: z.string().optional() })).default([]),

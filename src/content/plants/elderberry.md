@@ -5,6 +5,8 @@ commonNames: [common elderberry, sureau]
 category: berries
 season: Flowers June; berries Aug–Sep
 status: coming-soon
+ripeStart: "08-15"
+ripeEnd: "09-30"
 order: 80
 onMap: false
 idCues:
@@ -17,7 +19,7 @@ safety:
   - "Avoid <strong>red elderberry</strong> (Sambucus racemosa — rounded, not flat, red berry clusters); treat its berries as not-for-eating."
   - "Flat-topped white flower clusters resemble toxic carrot-family plants at a glance — but elderberry is a woody shrub with compound leaves, not a soft herb. Confirm the shrub habit."
 guides:
-  - { label: "iNaturalist — Sambucus canadensis", url: "https://www.inaturalist.org/taxa/76115-Sambucus-canadensis" }
+  - { label: "iNaturalist — Sambucus canadensis", url: "https://www.inaturalist.org/taxa/84300" }
 updated: "2026-07-27"
 ---
 

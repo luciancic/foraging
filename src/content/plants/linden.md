@@ -15,7 +15,7 @@ idCues:
 safety:
   - "Flowers and young leaves are safe and mild. Old / heavily-scented flowers can taste bitter; harvest fresh, just-open blooms."
 guides:
-  - { label: "iNaturalist — Tilia", url: "https://www.inaturalist.org/taxa/54968-Tilia" }
+  - { label: "iNaturalist — Tilia", url: "https://www.inaturalist.org/taxa/54856" }
 updated: "2026-07-27"
 ---
 

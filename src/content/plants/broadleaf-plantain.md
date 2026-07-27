@@ -15,7 +15,7 @@ idCues:
 safety:
   - "Extremely safe — the classic beginner 'confidence plant', nearly impossible to confuse. (Not related to the banana-plantain.)"
 guides:
-  - { label: "iNaturalist — Plantago major", url: "https://www.inaturalist.org/taxa/57238-Plantago-major" }
+  - { label: "iNaturalist — Plantago major", url: "https://www.inaturalist.org/taxa/58961" }
 updated: "2026-07-27"
 ---
 

@@ -2,10 +2,13 @@
 import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import ForagingMap from '../components/ForagingMap.astro';
+import { effectiveStatus } from '../lib/season';
 
-const plants = (await getCollection('plants')).sort((a, b) => a.data.order - b.data.order);
-const ripeNow = plants.filter((p) => p.data.status === 'ripe-now');
-const soon = plants.filter((p) => p.data.status === 'coming-soon');
+const plants = (await getCollection('plants'))
+  .map((p) => ({ ...p, live: effectiveStatus(p.data) }))
+  .sort((a, b) => a.data.order - b.data.order);
+const ripeNow = plants.filter((p) => p.live === 'ripe-now');
+const soon = plants.filter((p) => p.live === 'coming-soon');
 
 function thumb(p: any) {
   return p.data.heroImage ? `--ph:url('${p.data.heroImage}')` : '';
@@ -17,13 +20,13 @@ function thumb(p: any) {
     <p>A personal, growing map of edible plants around Montréal — plus a field guide to what to look for, how to be sure it's safe, and how to harvest and prepare it.</p>
   </section>
 
-  <section class="wrap" style="margin: 8px 0 40px;">
+  <section class="wrap home-map">
     <ForagingMap />
     <p style="margin-top:12px"><a href="/map">Open the full map →</a></p>
   </section>
 
   {ripeNow.length > 0 && (
-    <section class="wrap" style="margin-bottom: 40px;">
+    <section class="wrap section">
       <h2>Ripe right now</h2>
       <div class="grid">
         {ripeNow.map((p) => (
@@ -32,7 +35,7 @@ function thumb(p: any) {
             <div class="body">
               <span class="name">{p.data.title}</span>
               {p.data.scientificName && <span class="sci">{p.data.scientificName}</span>}
-              <span class="meta"><span class={`badge ${p.data.status}`}>ripe now</span></span>
+              <span class="meta"><span class={`badge ${p.live}`}>ripe now</span></span>
             </div>
           </a>
         ))}
@@ -41,7 +44,7 @@ function thumb(p: any) {
   )}
 
   {soon.length > 0 && (
-    <section class="wrap" style="margin-bottom: 50px;">
+    <section class="wrap section">
       <h2>Coming in the next few weeks</h2>
       <div class="grid">
         {soon.map((p) => (
@@ -50,7 +53,7 @@ function thumb(p: any) {
             <div class="body">
               <span class="name">{p.data.title}</span>
               {p.data.scientificName && <span class="sci">{p.data.scientificName}</span>}
-              <span class="meta"><span class={`badge ${p.data.status}`}>coming soon</span></span>
+              <span class="meta"><span class={`badge ${p.live}`}>coming soon</span></span>
             </div>
           </a>
         ))}

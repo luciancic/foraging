@@ -1,0 +1,9 @@
+[Unit]
+Description=Rebuild + redeploy the foraging site (refreshes date-driven "ripe now" status)
+After=network-online.target
+
+[Service]
+Type=oneshot
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+WorkingDirectory=%h/foraging
+ExecStart=/bin/bash %h/foraging/scripts/deploy.sh

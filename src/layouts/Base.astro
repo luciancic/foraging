@@ -1,7 +1,7 @@
 ---
 import '../styles/global.css';
-interface Props { title: string; description?: string; page?: string; }
-const { title, description = 'A personal foraging map and plant field guide for Montréal.', page } = Astro.props;
+interface Props { title: string; description?: string; page?: string; fullBleed?: boolean; }
+const { title, description = 'A personal foraging map and plant field guide for Montréal.', page, fullBleed = false } = Astro.props;
 ---
 <!doctype html>
 <html lang="en">
@@ -13,7 +13,7 @@ const { title, description = 'A personal foraging map and plant field guide for 
     <meta name="theme-color" content="#2f5d3a" />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8D%83%3C/text%3E%3C/svg%3E" />
   </head>
-  <body>
+  <body class={fullBleed ? 'app fullbleed' : 'app'}>
     <header class="site-header">
       <div class="wrap">
         <a class="brand" href="/"><span class="leaf">🍃</span> Forage MTL</a>
@@ -27,11 +27,13 @@ const { title, description = 'A personal foraging map and plant field guide for 
     <main>
       <slot />
     </main>
+    {!fullBleed && (
     <footer class="site-footer">
       <div class="wrap">
         <p>A personal foraging notebook for the island of Montréal · <a href="/map">map</a> · <a href="/plants">plants</a></p>
         <p><strong>Forage responsibly:</strong> never eat anything you can't identify with certainty against a live plant and two independent sources. Learn the poisonous lookalike before the edible. When in doubt, throw it out.</p>
       </div>
     </footer>
+    )}
   </body>
 </html>

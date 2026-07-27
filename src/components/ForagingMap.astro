@@ -1,9 +1,15 @@
 ---
 // Renders public/data/foraging-spots.geojson with Leaflet, entirely client-side.
 // The GeoJSON is the source of truth for map pins (edit it in-repo).
+// `fullscreen` makes the map fill the viewport below the header (map page);
+// otherwise it's a boxed embed (home page).
+interface Props { fullscreen?: boolean; }
+const { fullscreen = false } = Astro.props;
 ---
-<div class="map-shell"><div id="map"></div></div>
-<div class="legend" id="legend"></div>
+<div class={`map-wrap${fullscreen ? ' full' : ''}`}>
+  <div class="map-shell"><div id="map"></div></div>
+  <div class="legend" id="legend"></div>
+</div>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
   integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
@@ -26,11 +32,18 @@
       html: svg,
       iconSize: [28, 40],
       iconAnchor: [14, 40],
-      popupAnchor: [0, -36],
+      popupAnchor: [0, -38],
     });
   }
 
-  const map = L.map('map', { scrollWheelZoom: false }).setView([45.462, -73.565], 13);
+  const mapEl = document.getElementById('map');
+  const isTouch = window.matchMedia('(pointer: coarse)').matches;
+
+  const map = L.map('map', {
+    scrollWheelZoom: false,   // desktop: unlock on click so page-scroll isn't hijacked
+    tap: true,
+  }).setView([45.462, -73.565], 13);
+
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '&copy; OpenStreetMap contributors',
@@ -52,7 +65,7 @@
           const p = feature.properties || {};
           const photos: string[] = Array.isArray(p.photos) ? p.photos : [];
           const imgs = photos
-            .map((f) => `<a href="/photos/spots/${f}" target="_blank" rel="noopener"><img src="/photos/spots/${f}" alt="${p.name || ''}" width="220" /></a>`)
+            .map((f) => `<a href="/photos/spots/${f}" target="_blank" rel="noopener"><img src="/photos/spots/${f}" alt="${p.name || ''}" loading="lazy" /></a>`)
             .join('');
           lyr.bindPopup(
             `<div class="p-pop">` +
@@ -63,7 +76,9 @@
               (p.notes ? `<div class="p-meta">${p.notes}</div>` : '') +
               imgs +
             `</div>`,
-            { maxWidth: 260 },
+            // Keep popups compact so they never overflow the viewport; the inner
+            // content scrolls if long, and Leaflet pans to keep it in view.
+            { maxWidth: 244, minWidth: 200, maxHeight: 300, autoPan: true, keepInView: true },
           );
         },
       }).addTo(map);
@@ -72,6 +87,9 @@
         const b = layer.getBounds();
         if (b.isValid()) map.fitBounds(b.pad(0.35));
       } catch {}
+
+      // Re-measure once the container has its final (flex/fullscreen) size.
+      setTimeout(() => map.invalidateSize(), 60);
 
       const legend = document.getElementById('legend');
       if (legend) {
@@ -82,8 +100,10 @@
       }
     })
     .catch((err) => {
-      const el = document.getElementById('map');
-      if (el) el.innerHTML = '<p style="padding:20px">Could not load map data.</p>';
+      if (mapEl) mapEl.innerHTML = '<p style="padding:20px">Could not load map data.</p>';
       console.error(err);
     });
+
+  window.addEventListener('resize', () => map.invalidateSize());
+  void isTouch;
 </script>

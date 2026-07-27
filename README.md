@@ -34,10 +34,18 @@ Served by Caddy from `/srv/foraging`.
 
 ```bash
 bash scripts/install.sh   # first time / after a VPS wipe: makes /srv/foraging, adds the
-                          # Caddy block, builds + deploys. Needs DNS A record
-                          # foraging.condrea.dev → 165.227.33.13 (already set).
+                          # Caddy block, installs the nightly rebuild timer, builds + deploys.
+                          # Needs DNS A record foraging.condrea.dev → 165.227.33.13 (already set).
 bash scripts/deploy.sh    # thereafter: rebuild + publish
 ```
+
+### Date-driven status
+
+Plant badges ("ripe now" / "coming soon" / "note for next year") are computed from
+each plant's ripening window (`ripeStart`/`ripeEnd` in the frontmatter) against the
+current date — see `src/lib/season.ts`. Since the site is static, a **systemd user
+timer** (`scripts/systemd/foraging-rebuild.timer`, installed by `install.sh`) rebuilds
+it nightly so the status stays current without any manual redeploy.
 
 ## Backups
 

@@ -1,6 +1,7 @@
 ---
 import { getCollection, type CollectionEntry } from 'astro:content';
 import Base from '../../layouts/Base.astro';
+import { effectiveStatus, STATUS_LABEL } from '../../lib/season';
 
 export async function getStaticPaths() {
   const plants = await getCollection('plants');
@@ -11,12 +12,8 @@ type Props = { plant: CollectionEntry<'plants'> };
 const { plant } = Astro.props;
 const { Content } = await plant.render();
 const d = plant.data;
-const statusLabel: Record<string, string> = {
-  'ripe-now': 'ripe now',
-  'coming-soon': 'coming soon',
-  'note-for-next-year': 'note for next year',
-  'year-round': 'year-round',
-};
+const live = effectiveStatus(d);
+const statusLabel = STATUS_LABEL;
 ---
 <Base title={`${d.title} — Forage MTL`} page="plants" description={d.scientificName ? `${d.title} (${d.scientificName}) — ID, safety, harvest & prep.` : d.title}>
   <article class="plant wrap">
@@ -24,7 +21,7 @@ const statusLabel: Record<string, string> = {
     <h1>{d.title}</h1>
     {d.scientificName && <p class="sci">{d.scientificName}{d.commonNames.length ? ` · also: ${d.commonNames.join(', ')}` : ''}</p>}
     <p style="margin:-6px 0 20px;">
-      <span class={`badge ${d.status}`}>{statusLabel[d.status]}</span>
+      <span class={`badge ${live}`}>{statusLabel[live]}</span>
       {d.season && <span style="color:var(--ink-soft); margin-left:10px;">🗓 {d.season}</span>}
       {d.onMap && <a href="/map" style="margin-left:10px;">📍 mapped nearby</a>}
     </p>

@@ -5,6 +5,8 @@ commonNames: [pourpier, little hogweed, verdolaga]
 category: greens
 season: Summer
 status: ripe-now
+ripeStart: "06-01"
+ripeEnd: "09-30"
 heroImage: /images/plants/purslane.jpg
 order: 25
 onMap: false
@@ -16,7 +18,7 @@ safety:
   - "<strong>Lookalike — spurge (Euphorbia):</strong> also mats in sidewalks but has thin, non-succulent leaves and <em>bleeds milky white sap</em> when broken, which purslane never does. If it oozes white, it's not purslane."
   - "Purslane is high in oxalates like spinach — fine in normal amounts, moderate if you're prone to kidney stones."
 guides:
-  - { label: "iNaturalist — Portulaca oleracea", url: "https://www.inaturalist.org/taxa/50907-Portulaca-oleracea" }
+  - { label: "iNaturalist — Portulaca oleracea", url: "https://www.inaturalist.org/taxa/1571188" }
 updated: "2026-07-27"
 ---
 

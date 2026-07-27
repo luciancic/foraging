@@ -5,6 +5,8 @@ commonNames: [crab apple, pommetier]
 category: tree
 season: Fruit ripe mid-July through fall
 status: ripe-now
+ripeStart: "07-15"
+ripeEnd: "11-10"
 heroImage: /photos/spots/crabapple-tree-1.jpg
 order: 30
 onMap: true
@@ -15,7 +17,7 @@ idCues:
 safety:
   - "Flesh is edible. Like all apples, the <em>seeds</em> contain trace cyanogenic compounds — don't eat handfuls of crushed seeds; the fruit itself is fine."
 guides:
-  - { label: "iNaturalist — Malus", url: "https://www.inaturalist.org/taxa/53602-Malus" }
+  - { label: "iNaturalist — Malus", url: "https://www.inaturalist.org/taxa/54500" }
 gallery:
   - { src: /photos/spots/crabapple-verdun-beatty-1.jpg, credit: "my photo", caption: "Loaded crabapple at rue de Verdun & Beatty." }
 updated: "2026-07-27"

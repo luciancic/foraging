@@ -36,6 +36,16 @@ else
   echo "   already present; skipping"
 fi
 
+echo "==> Installing nightly rebuild timer (keeps date-driven status fresh)"
+loginctl enable-linger "$USER" >/dev/null 2>&1 || true
+mkdir -p "$HOME/.config/systemd/user"
+cp "$REPO_DIR/scripts/systemd/foraging-rebuild.service" "$HOME/.config/systemd/user/"
+cp "$REPO_DIR/scripts/systemd/foraging-rebuild.timer" "$HOME/.config/systemd/user/"
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+systemctl --user daemon-reload
+systemctl --user enable --now foraging-rebuild.timer
+echo "   timer: $(systemctl --user is-enabled foraging-rebuild.timer 2>/dev/null)"
+
 echo "==> Building + deploying"
 bash "$REPO_DIR/scripts/deploy.sh"
 

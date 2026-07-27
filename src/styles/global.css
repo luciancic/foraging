@@ -11,6 +11,8 @@
   --radius: 14px;
   --shadow: 0 1px 2px rgba(30, 40, 25, 0.06), 0 6px 20px rgba(30, 40, 25, 0.07);
   --maxw: 1040px;
+  --header-h: 60px;
+  --pad: 20px;
 
   /* category colours — shared by map markers + plant badges */
   --cat-tree: #6b8e23;
@@ -36,7 +38,13 @@ a:hover { color: var(--forest-deep); }
 h1, h2, h3 { line-height: 1.2; letter-spacing: -0.01em; }
 img { max-width: 100%; height: auto; display: block; }
 
-.wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 20px; }
+.wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 var(--pad); width: 100%; }
+
+/* full-bleed pages (the map): header fixed, main fills the rest, no footer */
+body.fullbleed { height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+body.fullbleed .site-header { position: static; flex: 0 0 auto; }
+body.fullbleed main { flex: 1 1 auto; min-height: 0; display: flex; }
+.map-page { flex: 1 1 auto; min-height: 0; display: flex; }
 
 /* header */
 .site-header {
@@ -111,22 +119,60 @@ img { max-width: 100%; height: auto; display: block; }
 .guides { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 10px; }
 .guides a { display: inline-block; background: #eef2ec; border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; text-decoration: none; font-size: .9rem; }
 
-/* map */
+/* map — boxed (home) */
+.map-wrap { display: flex; flex-direction: column; width: 100%; }
 .map-shell { border-radius: var(--radius); overflow: hidden; border: 1px solid var(--line); box-shadow: var(--shadow); }
-#map { height: min(70vh, 620px); width: 100%; }
-.leaflet-popup-content { font: 14px/1.5 -apple-system, sans-serif; }
+#map { height: min(64vh, 560px); width: 100%; background: #e8eae4; }
+.home-map #map { height: min(56vh, 480px); }
+
+/* map — fullscreen (map page): fills main; legend floats over the map */
+.map-wrap.full { flex: 1 1 auto; min-height: 0; position: relative; }
+.map-wrap.full .map-shell { flex: 1 1 auto; min-height: 0; height: 100%; border-radius: 0; border: 0; box-shadow: none; }
+.map-wrap.full #map { height: 100%; }
+.map-wrap.full .legend {
+  position: absolute; z-index: 600; left: 12px; bottom: 22px; margin: 0;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px;
+  box-shadow: var(--shadow); backdrop-filter: blur(4px); max-width: calc(100% - 24px);
+}
+
+/* popups — kept compact so they never overflow the viewport */
+.leaflet-popup-content { font: 14px/1.5 -apple-system, sans-serif; margin: 12px 14px; max-height: 260px; overflow-y: auto; overscroll-behavior: contain; }
 .leaflet-popup-content h3 { margin: 0 0 4px; font-size: 1rem; }
 .leaflet-popup-content .p-sci { font-style: italic; color: #566152; }
 .leaflet-popup-content .p-meta { color: #566152; font-size: .85rem; margin: 4px 0; }
-.leaflet-popup-content img { border-radius: 8px; margin-top: 8px; cursor: zoom-in; }
+.leaflet-popup-content img { border-radius: 8px; margin-top: 8px; cursor: zoom-in; width: 100%; max-height: 150px; object-fit: cover; }
+
 .legend { display: flex; flex-wrap: wrap; gap: 14px; margin: 14px 0 0; font-size: .85rem; color: var(--ink-soft); }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
+
+/* section spacing helper */
+.section { margin: 8px 0 40px; }
+.home-map { margin: 8px 0 40px; }
 
 /* footer */
 .site-footer { border-top: 1px solid var(--line); margin-top: 40px; padding: 26px 0; color: var(--ink-soft); font-size: .88rem; }
 .callout { background: #fdf3f0; border: 1px solid #e8c9c1; color: #7a2c1a; border-radius: var(--radius); padding: 12px 16px; font-size: .9rem; margin: 20px 0; }
 
-@media (max-width: 560px) {
+@media (max-width: 640px) {
+  :root { --pad: 16px; --header-h: 56px; }
+  .site-header .wrap { height: 56px; gap: 12px; }
+  .brand { font-size: 1.02rem; }
   .nav { gap: 16px; }
-  .hero { padding: 34px 0 20px; }
+  .nav a { font-size: .95rem; }
+  .hero { padding: 28px 0 18px; }
+  .hero h1 { font-size: clamp(1.8rem, 8vw, 2.3rem); }
+  .hero p { font-size: 1.02rem; }
+  .section, .home-map { margin: 6px 0 30px; }
+  /* single-column, comfortably padded cards on phones */
+  .grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .card .body { padding: 11px 12px 13px; }
+  .plant { padding: 22px 0 44px; }
+  .panel { padding: 15px 16px; }
+  .plant .gallery { grid-template-columns: 1fr 1fr; gap: 10px; }
+  #map { height: 62vh; }
+}
+
+@media (max-width: 380px) {
+  .grid { grid-template-columns: 1fr; }
 }

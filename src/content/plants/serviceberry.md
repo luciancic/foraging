@@ -5,6 +5,8 @@ commonNames: [saskatoon, juneberry, serviceberry, amélanchier]
 category: berries
 season: Fruit ripe late June–early July
 status: note-for-next-year
+ripeStart: "06-15"
+ripeEnd: "07-08"
 heroImage: /images/plants/serviceberry.jpg
 order: 60
 onMap: true
@@ -16,7 +18,7 @@ idCues:
 safety:
   - "Edible and delicious. Seeds have a faint almond note (trace cyanogenic compounds) — normal to eat, just don't binge on crushed seeds."
 guides:
-  - { label: "iNaturalist — Amelanchier", url: "https://www.inaturalist.org/taxa/47094-Amelanchier" }
+  - { label: "iNaturalist — Amelanchier", url: "https://www.inaturalist.org/taxa/49230" }
   - { label: "Wikipedia — Amelanchier", url: "https://en.wikipedia.org/wiki/Amelanchier" }
 gallery:
   - { src: /photos/spots/saskatoon-berry-bush-1.jpg, credit: "my photo, Jul 4", caption: "Mapped bush near the Verdun riverfront — red pomes with the star-crown tip." }
