@@ -7,7 +7,6 @@ season: Flowers early summer; young leaves spring
 status: year-round
 heroImage: /images/plants/linden.jpg
 order: 40
-onMap: false
 idCues:
   - "Very common street tree with a distinctive <strong>asymmetric heart-shaped leaf</strong> (lopsided base)."
   - "Flowers hang from a papery, tongue-shaped bract (wing) — unmistakable once seen."

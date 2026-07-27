@@ -1,7 +1,7 @@
 {
   "type": "FeatureCollection",
   "name": "foraging-spots",
-  "note": "Lucian's foraging map — source of truth. Edit via scripts/gis/foraging-map.py (add/regen). Each feature: geometry Point [lon,lat]; properties: name, category, species, season, location, notes, added.",
+  "note": "Lucian's foraging map — source of truth. Each feature: geometry Point [lon,lat]; properties: name, category, species, season, location, notes, added, photos[]. Optional `plant` = a plant slug (filename in src/content/plants/) that links this pin to its field-guide entry both ways; leave it out if no guide exists yet.",
   "features": [
     {
       "type": "Feature",
@@ -16,6 +16,7 @@
         "name": "Crabapple tree",
         "category": "tree",
         "species": "crabapple (Malus sp.)",
+        "plant": "crabapple",
         "season": "ripe mid-July",
         "location": "Boulevard Gaétan-Laberge, Verdun",
         "notes": "Photographed Jul 10; small dark-red pomes.",
@@ -38,6 +39,7 @@
         "name": "Saskatoon berry bush",
         "category": "berries",
         "species": "saskatoon / serviceberry (Amelanchier)",
+        "plant": "serviceberry",
         "season": "ripe late June–early July",
         "location": "Verdun (near riverfront)",
         "notes": "Photographed Jul 4; red pomes with star-crown tip.",
@@ -60,6 +62,7 @@
         "name": "Crabapple (Verdun/Beatty)",
         "category": "tree",
         "species": "crabapple (Malus sp.)",
+        "plant": "crabapple",
         "season": "late summer/fall",
         "location": "Rue de Verdun & Beatty, Verdun",
         "notes": "Loaded crabapple at the street crossing, by the bike-path sign.",
@@ -82,6 +85,7 @@
         "name": "Staghorn sumac",
         "category": "tree",
         "species": "staghorn sumac (Rhus typhina)",
+        "plant": "staghorn-sumac",
         "season": "drupes ripe Aug–Sept (usable into fall)",
         "location": "Verdun (near riverfront)",
         "notes": "Photographed Jul 27; upright dark-red fuzzy drupe clusters. Steep clusters in cold water for pink 'sumac-ade'; also ground as a tart spice. Don't confuse with poison sumac (white drooping berries, wet ground).",
@@ -104,6 +108,7 @@
         "name": "Lamb's quarters",
         "category": "greens",
         "species": "lamb's quarters (Chenopodium album)",
+        "plant": "lambs-quarters",
         "season": "leaves best late spring–summer, before flowering",
         "location": "Verdun (near riverfront)",
         "notes": "Photographed Jul 27; mealy-white new growth, toothed diamond-shaped leaves. Cook like spinach (mild oxalates — eat cooked in quantity). Wild relative of quinoa.",

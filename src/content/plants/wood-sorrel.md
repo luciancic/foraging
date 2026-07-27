@@ -9,7 +9,6 @@ ripeStart: "05-01"
 ripeEnd: "10-15"
 heroImage: /images/plants/wood-sorrel.jpg
 order: 50
-onMap: false
 idCues:
   - "Looks like clover but leaflets are <strong>heart-shaped</strong> (clover's are oval/rounded with a pale crescent)."
   - "Three leaflets that fold down along their midrib in evening / bright sun."

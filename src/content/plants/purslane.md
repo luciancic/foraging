@@ -9,7 +9,6 @@ ripeStart: "06-01"
 ripeEnd: "09-30"
 heroImage: /images/plants/purslane.jpg
 order: 25
-onMap: false
 idCues:
   - "Low, spreading mat in sidewalk cracks, gravel, and garden beds."
   - "<strong>Smooth, fat, succulent paddle-shaped leaves</strong> and thick reddish stems — the whole plant is juicy."

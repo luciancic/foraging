@@ -8,6 +8,7 @@ const { fullscreen = false } = Astro.props;
 ---
 <div class={`map-wrap${fullscreen ? ' full' : ''}`}>
   <div class="map-shell"><div id="map"></div></div>
+  <div class="map-filter" id="map-filter" hidden></div>
   <div class="legend" id="legend"></div>
 </div>
 
@@ -52,10 +53,16 @@ const { fullscreen = false } = Astro.props;
 
   const usedCats = new Set<string>();
 
+  // Optional ?plant=<slug> filter: a plant page can deep-link here to show only
+  // the spots that link back to it (properties.plant === slug).
+  const plantFilter = new URLSearchParams(location.search).get('plant');
+
   fetch('/data/foraging-spots.geojson?t=' + Date.now(), { cache: 'no-store' })
     .then((r) => r.json())
     .then((geo) => {
       const layer = L.geoJSON(geo, {
+        filter: (feature) =>
+          !plantFilter || feature.properties?.plant === plantFilter,
         pointToLayer: (feature, latlng) => {
           const cat = feature.properties?.category || 'other';
           usedCats.add(cat);
@@ -75,6 +82,7 @@ const { fullscreen = false } = Astro.props;
               (p.location ? `<div class="p-meta">📍 ${p.location}</div>` : '') +
               (p.notes ? `<div class="p-meta">${p.notes}</div>` : '') +
               imgs +
+              (p.plant ? `<a class="p-guide" href="/plants/${p.plant}">View plant guide →</a>` : '') +
             `</div>`,
             // Keep popups compact so they never overflow the viewport; the inner
             // content scrolls if long, and Leaflet pans to keep it in view.
@@ -87,6 +95,21 @@ const { fullscreen = false } = Astro.props;
         const b = layer.getBounds();
         if (b.isValid()) map.fitBounds(b.pad(0.35));
       } catch {}
+
+      // When deep-linked to one plant, show a banner + "show all" reset. Label
+      // uses that plant's species text from the first matching feature.
+      const filterEl = document.getElementById('map-filter');
+      if (filterEl && plantFilter) {
+        const match = (geo.features || []).find(
+          (f: any) => f.properties?.plant === plantFilter,
+        );
+        const label = match?.properties?.species || match?.properties?.name || plantFilter;
+        const n = layer.getLayers().length;
+        filterEl.innerHTML =
+          `<span>Showing ${n} spot${n === 1 ? '' : 's'} for <strong>${label}</strong>.</span>` +
+          `<a href="/map">Show all spots →</a>`;
+        filterEl.hidden = false;
+      }
 
       // Re-measure once the container has its final (flex/fullscreen) size.
       setTimeout(() => map.invalidateSize(), 60);

@@ -7,7 +7,6 @@ season: Spring through fall
 status: year-round
 heroImage: /images/plants/broadleaf-plantain.jpg
 order: 55
-onMap: false
 idCues:
   - "Ground-hugging rosette of broad oval leaves with <strong>strong parallel veins</strong> that run leaf-tip to stem."
   - "Pull a leaf apart slowly — the veins stay as stringy threads."

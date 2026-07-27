@@ -9,7 +9,6 @@ ripeStart: "06-20"
 ripeEnd: "07-31"
 heroImage: /images/plants/mulberry.jpg
 order: 10
-onMap: false
 idCues:
   - "Fruit looks like a slim blackberry; ripens white → red → deep purple-black."
   - "<strong>Look down for purple stains</strong> on the sidewalk — they give the tree away before you spot the fruit."

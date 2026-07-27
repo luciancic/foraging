@@ -30,8 +30,8 @@ const plants = defineCollection({
     safety: z.array(z.string()).default([]),
     // external foraging guide links
     guides: z.array(z.object({ label: z.string(), url: z.string().url() })).default([]),
-    // does a pin on the map correspond to this plant? (matched by species text)
-    onMap: z.boolean().default(false),
+    // NOTE: whether this plant appears on the map is derived at build time from
+    // the GeoJSON (a spot with `plant: <slug>`), not stored here — see src/lib/spots.ts.
     order: z.number().default(100),
     updated: z.string().optional(),
   }),

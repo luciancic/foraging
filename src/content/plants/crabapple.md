@@ -9,7 +9,6 @@ ripeStart: "07-15"
 ripeEnd: "11-10"
 heroImage: /photos/spots/crabapple-tree-1.jpg
 order: 30
-onMap: true
 idCues:
   - "Small apples, from pea- to golf-ball size, red / yellow / green; hang in clusters."
   - "Classic apple-blossom in spring (white-pink, 5 petals); toothed oval leaves."

@@ -8,7 +8,6 @@ status: coming-soon
 ripeStart: "08-15"
 ripeEnd: "09-30"
 order: 80
-onMap: false
 idCues:
   - "Large multi-stem shrub; compound leaves with 5–7 (up to 11) toothed leaflets."
   - "Now: broad, flat-topped clusters of tiny creamy-white flowers (elderflower)."

@@ -9,7 +9,6 @@ ripeStart: "05-01"
 ripeEnd: "10-10"
 heroImage: /images/plants/lambs-quarters.jpg
 order: 20
-onMap: false
 idCues:
   - "Diamond / goosefoot-shaped leaves, often with a slightly toothed edge."
   - "<strong>The diagnostic:</strong> a white, powdery, water-repellent coating on the newest growth and leaf undersides — rub the growing tip and it feels mealy, and water beads on it."

@@ -9,7 +9,6 @@ ripeStart: "08-01"
 ripeEnd: "12-20"
 heroImage: /images/plants/staghorn-sumac.jpg
 order: 70
-onMap: false
 idCues:
   - "Big fuzzy <strong>upright cones of deep-red berries</strong> at branch tips."
   - "Compound leaves with many toothed leaflets in a row; young twigs velvety like antler 'velvet' (hence staghorn)."

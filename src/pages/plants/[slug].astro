@@ -2,6 +2,7 @@
 import { getCollection, type CollectionEntry } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import { effectiveStatus, STATUS_LABEL } from '../../lib/season';
+import { spotCount } from '../../lib/spots';
 
 export async function getStaticPaths() {
   const plants = await getCollection('plants');
@@ -14,6 +15,9 @@ const { Content } = await plant.render();
 const d = plant.data;
 const live = effectiveStatus(d);
 const statusLabel = STATUS_LABEL;
+// Derived from the map GeoJSON at build time — a spot with `plant: <slug>`
+// lights this up automatically, no manual `onMap` flag to keep in sync.
+const spots = spotCount(plant.slug);
 ---
 <Base title={`${d.title} — Forage MTL`} page="plants" description={d.scientificName ? `${d.title} (${d.scientificName}) — ID, safety, harvest & prep.` : d.title}>
   <article class="plant wrap">
@@ -23,7 +27,7 @@ const statusLabel = STATUS_LABEL;
     <p style="margin:-6px 0 20px;">
       <span class={`badge ${live}`}>{statusLabel[live]}</span>
       {d.season && <span style="color:var(--ink-soft); margin-left:10px;">🗓 {d.season}</span>}
-      {d.onMap && <a href="/map" style="margin-left:10px;">📍 mapped nearby</a>}
+      {spots > 0 && <a href={`/map?plant=${plant.slug}`} style="margin-left:10px;">📍 {spots} {spots === 1 ? 'spot' : 'spots'} on map</a>}
     </p>
 
     {d.heroImage && <img class="hero-img" src={d.heroImage} alt={d.title} loading="eager" />}

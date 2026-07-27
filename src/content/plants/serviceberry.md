@@ -9,7 +9,6 @@ ripeStart: "06-15"
 ripeEnd: "07-08"
 heroImage: /images/plants/serviceberry.jpg
 order: 60
-onMap: true
 idCues:
   - "Small tree / multi-stem shrub, hugely common as an ornamental planting."
   - "Berries look like blueberries but with a <em>5-pointed star crown</em> at the tip (like an apple's calyx); ripen red → purple."
