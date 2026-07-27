@@ -90,6 +90,28 @@
           "staghorn-sumac-1.jpg"
         ]
       }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.562222,
+          45.459147
+        ]
+      },
+      "properties": {
+        "name": "Lamb's quarters",
+        "category": "greens",
+        "species": "lamb's quarters (Chenopodium album)",
+        "season": "leaves best late spring–summer, before flowering",
+        "location": "Verdun (near riverfront)",
+        "notes": "Photographed Jul 27; mealy-white new growth, toothed diamond-shaped leaves. Cook like spinach (mild oxalates — eat cooked in quantity). Wild relative of quinoa.",
+        "added": "2026-07-27",
+        "photos": [
+          "lambs-quarters-1.jpg"
+        ]
+      }
     }
   ]
 }
