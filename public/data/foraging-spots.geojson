@@ -1,0 +1,73 @@
+{
+  "type": "FeatureCollection",
+  "name": "foraging-spots",
+  "note": "Lucian's foraging map — source of truth. Edit via scripts/gis/foraging-map.py (add/regen). Each feature: geometry Point [lon,lat]; properties: name, category, species, season, location, notes, added.",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.562631,
+          45.469108
+        ]
+      },
+      "properties": {
+        "name": "Crabapple tree",
+        "category": "tree",
+        "species": "crabapple (Malus sp.)",
+        "season": "ripe mid-July",
+        "location": "Boulevard Gaétan-Laberge, Verdun",
+        "notes": "Photographed Jul 10; small dark-red pomes.",
+        "added": "2026-07-24",
+        "photos": [
+          "crabapple-tree-1.jpg"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.560608,
+          45.462978
+        ]
+      },
+      "properties": {
+        "name": "Saskatoon berry bush",
+        "category": "berries",
+        "species": "saskatoon / serviceberry (Amelanchier)",
+        "season": "ripe late June–early July",
+        "location": "Verdun (near riverfront)",
+        "notes": "Photographed Jul 4; red pomes with star-crown tip.",
+        "added": "2026-07-24",
+        "photos": [
+          "saskatoon-berry-bush-1.jpg"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.572358,
+          45.450833
+        ]
+      },
+      "properties": {
+        "name": "Crabapple (Verdun/Beatty)",
+        "category": "tree",
+        "species": "crabapple (Malus sp.)",
+        "season": "late summer/fall",
+        "location": "Rue de Verdun & Beatty, Verdun",
+        "notes": "Loaded crabapple at the street crossing, by the bike-path sign.",
+        "added": "2026-07-24",
+        "photos": [
+          "crabapple-verdun-beatty-1.jpg"
+        ]
+      }
+    }
+  ]
+}

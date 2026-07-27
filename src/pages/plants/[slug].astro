@@ -1,0 +1,74 @@
+---
+import { getCollection, type CollectionEntry } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+
+export async function getStaticPaths() {
+  const plants = await getCollection('plants');
+  return plants.map((p) => ({ params: { slug: p.slug }, props: { plant: p } }));
+}
+
+type Props = { plant: CollectionEntry<'plants'> };
+const { plant } = Astro.props;
+const { Content } = await plant.render();
+const d = plant.data;
+const statusLabel: Record<string, string> = {
+  'ripe-now': 'ripe now',
+  'coming-soon': 'coming soon',
+  'note-for-next-year': 'note for next year',
+  'year-round': 'year-round',
+};
+---
+<Base title={`${d.title} — Forage MTL`} page="plants" description={d.scientificName ? `${d.title} (${d.scientificName}) — ID, safety, harvest & prep.` : d.title}>
+  <article class="plant wrap">
+    <a class="back" href="/plants">← All plants</a>
+    <h1>{d.title}</h1>
+    {d.scientificName && <p class="sci">{d.scientificName}{d.commonNames.length ? ` · also: ${d.commonNames.join(', ')}` : ''}</p>}
+    <p style="margin:-6px 0 20px;">
+      <span class={`badge ${d.status}`}>{statusLabel[d.status]}</span>
+      {d.season && <span style="color:var(--ink-soft); margin-left:10px;">🗓 {d.season}</span>}
+      {d.onMap && <a href="/map" style="margin-left:10px;">📍 mapped nearby</a>}
+    </p>
+
+    {d.heroImage && <img class="hero-img" src={d.heroImage} alt={d.title} loading="eager" />}
+
+    {d.idCues.length > 0 && (
+      <div class="panel">
+        <h2>How to ID it</h2>
+        <ul>{d.idCues.map((c) => <li set:html={c} />)}</ul>
+      </div>
+    )}
+
+    {d.safety.length > 0 && (
+      <div class="panel safety">
+        <h2>⚠ Safety &amp; lookalikes</h2>
+        <ul>{d.safety.map((s) => <li set:html={s} />)}</ul>
+      </div>
+    )}
+
+    <div class="prose">
+      <Content />
+    </div>
+
+    {d.gallery.length > 0 && (
+      <div class="gallery">
+        {d.gallery.map((g) => (
+          <figure>
+            <a href={g.src} target="_blank" rel="noopener"><img src={g.src} alt={g.caption || d.title} loading="lazy" /></a>
+            {(g.caption || g.credit) && <figcaption>{g.caption}{g.credit ? ` — ${g.credit}` : ''}</figcaption>}
+          </figure>
+        ))}
+      </div>
+    )}
+
+    {d.guides.length > 0 && (
+      <div class="panel">
+        <h2>Guides &amp; links</h2>
+        <ul class="guides">
+          {d.guides.map((g) => <li><a href={g.url} target="_blank" rel="noopener">{g.label} ↗</a></li>)}
+        </ul>
+      </div>
+    )}
+
+    {d.updated && <p style="color:var(--ink-soft); font-size:.82rem;">Updated {d.updated}</p>}
+  </article>
+</Base>

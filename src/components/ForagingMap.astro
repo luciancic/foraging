@@ -1,0 +1,89 @@
+---
+// Renders public/data/foraging-spots.geojson with Leaflet, entirely client-side.
+// The GeoJSON is the source of truth for map pins (edit it in-repo).
+---
+<div class="map-shell"><div id="map"></div></div>
+<div class="legend" id="legend"></div>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+<script>
+  import L from 'leaflet';
+
+  const CAT_COLORS: Record<string, string> = {
+    tree: '#6b8e23', berries: '#8a2f4a', greens: '#2f7d4f', herbs: '#4a8f7b',
+    nuts: '#8a6d3b', mushrooms: '#9c6b4a', other: '#7a7a7a',
+  };
+
+  function pinIcon(color: string) {
+    const svg =
+      `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="40" viewBox="0 0 28 40">` +
+      `<path d="M14 0C6.3 0 0 6.2 0 13.9 0 24 14 40 14 40s14-16 14-26.1C28 6.2 21.7 0 14 0z" fill="${color}"/>` +
+      `<circle cx="14" cy="14" r="5.4" fill="#fff"/></svg>`;
+    return L.divIcon({
+      className: 'forage-pin',
+      html: svg,
+      iconSize: [28, 40],
+      iconAnchor: [14, 40],
+      popupAnchor: [0, -36],
+    });
+  }
+
+  const map = L.map('map', { scrollWheelZoom: false }).setView([45.462, -73.565], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors',
+  }).addTo(map);
+  map.on('click', () => map.scrollWheelZoom.enable());
+
+  const usedCats = new Set<string>();
+
+  fetch('/data/foraging-spots.geojson')
+    .then((r) => r.json())
+    .then((geo) => {
+      const layer = L.geoJSON(geo, {
+        pointToLayer: (feature, latlng) => {
+          const cat = feature.properties?.category || 'other';
+          usedCats.add(cat);
+          return L.marker(latlng, { icon: pinIcon(CAT_COLORS[cat] || CAT_COLORS.other) });
+        },
+        onEachFeature: (feature, lyr) => {
+          const p = feature.properties || {};
+          const photos: string[] = Array.isArray(p.photos) ? p.photos : [];
+          const imgs = photos
+            .map((f) => `<a href="/photos/spots/${f}" target="_blank" rel="noopener"><img src="/photos/spots/${f}" alt="${p.name || ''}" width="220" /></a>`)
+            .join('');
+          lyr.bindPopup(
+            `<div class="p-pop">` +
+              `<h3>${p.name || 'Spot'}</h3>` +
+              (p.species ? `<div class="p-sci">${p.species}</div>` : '') +
+              (p.season ? `<div class="p-meta">🗓 ${p.season}</div>` : '') +
+              (p.location ? `<div class="p-meta">📍 ${p.location}</div>` : '') +
+              (p.notes ? `<div class="p-meta">${p.notes}</div>` : '') +
+              imgs +
+            `</div>`,
+            { maxWidth: 260 },
+          );
+        },
+      }).addTo(map);
+
+      try {
+        const b = layer.getBounds();
+        if (b.isValid()) map.fitBounds(b.pad(0.35));
+      } catch {}
+
+      const legend = document.getElementById('legend');
+      if (legend) {
+        legend.innerHTML = [...usedCats]
+          .sort()
+          .map((c) => `<span><i class="dot" style="background:${CAT_COLORS[c] || CAT_COLORS.other}"></i>${c}</span>`)
+          .join('');
+      }
+    })
+    .catch((err) => {
+      const el = document.getElementById('map');
+      if (el) el.innerHTML = '<p style="padding:20px">Could not load map data.</p>';
+      console.error(err);
+    });
+</script>

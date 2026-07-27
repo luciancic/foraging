@@ -1,0 +1,21 @@
+{
+  "name": "foraging",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Lucian's Montréal foraging map + plant field guide — foraging.condrea.dev",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "deploy": "bash scripts/deploy.sh",
+    "backup": "bash scripts/backup-storj.sh"
+  },
+  "dependencies": {
+    "astro": "^4.16.18",
+    "leaflet": "^1.9.4"
+  },
+  "devDependencies": {
+    "@types/leaflet": "^1.9.12"
+  }
+}

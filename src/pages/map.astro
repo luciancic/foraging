@@ -1,0 +1,18 @@
+---
+import Base from '../layouts/Base.astro';
+import ForagingMap from '../components/ForagingMap.astro';
+---
+<Base title="Map — Forage MTL" page="map" description="Personal foraging spots mapped across Montréal.">
+  <section class="wrap" style="padding: 30px 0 12px;">
+    <h1 style="margin:0 0 6px;">The map</h1>
+    <p style="color:var(--ink-soft); margin:0 0 18px; max-width:60ch;">
+      My own logged spots. Tap a pin for species, season, location notes, and photos.
+      Scroll-zoom unlocks after you click the map.
+    </p>
+    <ForagingMap />
+    <p class="callout">
+      Spots are personal notes, not an invitation to strip a tree — take less than a third of any stand,
+      never the first or last plant, and confirm every ID against a live plant before eating.
+    </p>
+  </section>
+</Base>
