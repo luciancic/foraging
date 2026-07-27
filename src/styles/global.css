@@ -38,7 +38,12 @@ a:hover { color: var(--forest-deep); }
 h1, h2, h3 { line-height: 1.2; letter-spacing: -0.01em; }
 img { max-width: 100%; height: auto; display: block; }
 
-.wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 var(--pad); width: 100%; }
+.wrap {
+  max-width: var(--maxw); margin: 0 auto; width: 100%;
+  /* never let the gutter fall inside the notch (landscape) */
+  padding-left: max(var(--pad), env(safe-area-inset-left));
+  padding-right: max(var(--pad), env(safe-area-inset-right));
+}
 
 /* full-bleed pages (the map): header fixed, main fills the rest, no footer */
 body.fullbleed { height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
@@ -83,7 +88,8 @@ body.fullbleed main { flex: 1 1 auto; min-height: 0; display: flex; }
 .card .body { padding: 13px 15px 16px; display: flex; flex-direction: column; gap: 6px; }
 .card .name { font-weight: 700; font-size: 1.05rem; }
 .card .sci { font-style: italic; color: var(--ink-soft); font-size: .85rem; }
-.card .meta { margin-top: auto; color: var(--ink-soft); font-size: .82rem; }
+.card .meta { margin-top: auto; color: var(--ink-soft); font-size: .82rem; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.card .meta .on-map { white-space: nowrap; }
 
 /* badges */
 .badge { display: inline-flex; align-items: center; gap: 5px; font-size: .72rem; font-weight: 700; letter-spacing: .02em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; }
@@ -130,11 +136,19 @@ body.fullbleed main { flex: 1 1 auto; min-height: 0; display: flex; }
 .map-wrap.full .map-shell { flex: 1 1 auto; min-height: 0; height: 100%; border-radius: 0; border: 0; box-shadow: none; }
 .map-wrap.full #map { height: 100%; }
 .map-wrap.full .legend {
-  position: absolute; z-index: 600; left: 12px; bottom: 22px; margin: 0;
+  position: absolute; z-index: 600; margin: 0;
+  left: max(12px, env(safe-area-inset-left));
+  bottom: max(22px, calc(env(safe-area-inset-bottom) + 12px));
   background: color-mix(in srgb, var(--surface) 92%, transparent);
   border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px;
   box-shadow: var(--shadow); backdrop-filter: blur(4px); max-width: calc(100% - 24px);
 }
+
+/* keep Leaflet's own controls (zoom, attribution) out of the notch / home indicator */
+.leaflet-top .leaflet-control { margin-top: max(10px, env(safe-area-inset-top)); }
+.leaflet-left .leaflet-control { margin-left: max(10px, env(safe-area-inset-left)); }
+.leaflet-right .leaflet-control { margin-right: max(10px, env(safe-area-inset-right)); }
+.leaflet-bottom .leaflet-control { margin-bottom: max(0px, env(safe-area-inset-bottom)); }
 
 /* popups — kept compact so they never overflow the viewport */
 .leaflet-popup-content { font: 14px/1.5 -apple-system, sans-serif; margin: 12px 14px; max-height: 260px; overflow-y: auto; overscroll-behavior: contain; }
@@ -151,7 +165,7 @@ body.fullbleed main { flex: 1 1 auto; min-height: 0; display: flex; }
 .home-map { margin: 8px 0 40px; }
 
 /* footer */
-.site-footer { border-top: 1px solid var(--line); margin-top: 40px; padding: 26px 0; color: var(--ink-soft); font-size: .88rem; }
+.site-footer { border-top: 1px solid var(--line); margin-top: 40px; padding: 26px 0; padding-bottom: max(26px, env(safe-area-inset-bottom)); color: var(--ink-soft); font-size: .88rem; }
 .callout { background: #fdf3f0; border: 1px solid #e8c9c1; color: #7a2c1a; border-radius: var(--radius); padding: 12px 16px; font-size: .9rem; margin: 20px 0; }
 
 @media (max-width: 640px) {

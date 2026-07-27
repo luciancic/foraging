@@ -24,7 +24,7 @@ const plants = (await getCollection('plants'))
             {p.data.scientificName && <span class="sci">{p.data.scientificName}</span>}
             <span class="meta">
               <span class={`badge ${p.live}`}>{STATUS_LABEL[p.live]}</span>
-              {p.data.onMap && <span style="margin-left:8px">📍 on map</span>}
+              {p.data.onMap && <span class="on-map">📍 on map</span>}
             </span>
           </div>
         </a>
