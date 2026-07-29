@@ -117,6 +117,29 @@
           "lambs-quarters-1.jpg"
         ]
       }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.565147,
+          45.454369
+        ]
+      },
+      "properties": {
+        "name": "Crabapple (Verdun park)",
+        "category": "tree",
+        "species": "crabapple (Malus sp.)",
+        "plant": "crabapple",
+        "season": "late summer/fall",
+        "location": "Verdun (park bench near footpath)",
+        "notes": "Photographed Jul 29; mature tree loaded with small red pomes, ~2 cm. Tart raw — best cooked into jelly (high pectin), sauce, or fruit leather.",
+        "added": "2026-07-29",
+        "photos": [
+          "crabapple-verdun-park-1.jpg"
+        ]
+      }
     }
   ]
 }
