@@ -140,6 +140,29 @@
           "crabapple-verdun-park-1.jpg"
         ]
       }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.544075,
+          45.531549
+        ]
+      },
+      "properties": {
+        "name": "Apple trees (bike path)",
+        "category": "tree",
+        "species": "apple (Malus domestica)",
+        "season": "apples ripen late summer–fall (Sept–Oct)",
+        "location": "By the bike path (a few young trees lined up)",
+        "notes": "Photographed Jul 30; a row of young apple trees right beside the bike path, loaded with green unripe fruit. Domestic apple — let them ripen into fall before picking; windfalls on the grass below.",
+        "added": "2026-07-30",
+        "photos": [
+          "apple-bike-path-1.jpg",
+          "apple-bike-path-2.jpg"
+        ]
+      }
     }
   ]
 }
