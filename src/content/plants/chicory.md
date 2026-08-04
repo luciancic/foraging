@@ -18,7 +18,7 @@ safety:
   - "No dangerous lookalikes — the blue flowers plus milky latex are unmistakable. It's the same species as cultivated Belgian endive / radicchio."
   - "Every part is bitter; older leaves are intensely so. Skip plants growing in sprayed verges or exhaust-heavy roadsides."
 guides:
-  - { label: "iNaturalist — Cichorium intybus", url: "https://www.inaturalist.org/taxa/50907" }
+  - { label: "iNaturalist — Cichorium intybus", url: "https://www.inaturalist.org/taxa/52913" }
 updated: "2026-07-28"
 ---
 

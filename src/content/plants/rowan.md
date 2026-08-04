@@ -19,7 +19,7 @@ safety:
   - "<strong>Cooking neutralises the parasorbic acid</strong> into harmless sorbic acid; a frost (or a stint in the freezer) also mellows the bitterness. Cooked = safe and traditional."
   - "ID together: pinnate leaves + flat orange pome clusters. Don't confuse with unrelated ornamentals you can't vouch for."
 guides:
-  - { label: "iNaturalist — Sorbus aucuparia", url: "https://www.inaturalist.org/taxa/82746" }
+  - { label: "iNaturalist — Sorbus aucuparia", url: "https://www.inaturalist.org/taxa/56063" }
   - { label: "Wikipedia — Sorbus aucuparia", url: "https://en.wikipedia.org/wiki/Sorbus_aucuparia" }
 gallery:
   - { src: /photos/spots/rowan-1.jpg, credit: "my photo, Aug 4", caption: "Flat-topped clusters of orange pomes with the star-crown tip; finely toothed pinnate leaflets." }

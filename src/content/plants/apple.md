@@ -17,7 +17,7 @@ safety:
   - "Flesh is edible. Like all apples, the <em>seeds</em> contain trace cyanogenic compounds — don't eat handfuls of crushed seeds; the fruit itself is fine."
   - "Check windfalls for bruising and worm holes before eating raw — bruised drops are best cooked."
 guides:
-  - { label: "iNaturalist — Malus domestica", url: "https://www.inaturalist.org/taxa/57250" }
+  - { label: "iNaturalist — Malus domestica", url: "https://www.inaturalist.org/taxa/469472" }
 gallery:
   - { src: /photos/spots/apple-bike-path-2.jpg, credit: "my photo", caption: "Young apple tree in the row along the bike path." }
 updated: "2026-07-31"
