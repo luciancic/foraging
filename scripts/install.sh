@@ -26,10 +26,15 @@ if ! grep -q "foraging.condrea.dev" "$CADDYFILE" 2>/dev/null; then
 foraging.condrea.dev {
     root * /srv/foraging
     encode gzip
-    # GeoJSON is the source of truth and changes on each deploy — never cache it,
-    # or iOS Safari serves stale pins even after a redeploy.
-    @data path /data/*
-    header @data Cache-Control "no-cache"
+    # Hashed build assets (/_astro/*.[hash].js|css) are content-addressed — a new
+    # build gets a new filename, so cache them hard.
+    @assets path /_astro/*
+    header @assets Cache-Control "public, max-age=31536000, immutable"
+    # Everything else — HTML pages and the GeoJSON — changes each deploy. Force a
+    # revalidation (etag makes it a cheap 304) so phones never serve a stale page
+    # or stale pins after a redeploy. iOS Safari is the aggressive offender.
+    @revalidate not path /_astro/*
+    header @revalidate Cache-Control "no-cache"
     try_files {path} {path}/ =404
     file_server
 }
