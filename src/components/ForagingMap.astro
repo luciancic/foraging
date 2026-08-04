@@ -23,6 +23,17 @@ const { fullscreen = false } = Astro.props;
     nuts: '#8a6d3b', mushrooms: '#9c6b4a', other: '#7a7a7a',
   };
 
+  // Scouting layer (unverified iNaturalist leads) — a separate class from the
+  // verified teardrop pins. Rendered as tier-coloured circles so the two never
+  // read as the same thing. Tier = how to approach a find.
+  const TIER_COLORS: Record<string, string> = {
+    snack: '#2f7d4f', prep: '#b8791f', caution: '#c2571f', avoid: '#9a2b1e',
+  };
+  const TIER_LABEL: Record<string, string> = {
+    snack: 'Snackable', prep: 'Needs prep', caution: 'Caution — lookalike', avoid: 'Toxic — avoid',
+  };
+  const TIER_ORDER = ['snack', 'prep', 'caution', 'avoid'];
+
   function pinIcon(color: string) {
     const svg =
       `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="40" viewBox="0 0 28 40">` +
@@ -34,6 +45,19 @@ const { fullscreen = false } = Astro.props;
       iconSize: [28, 40],
       iconAnchor: [14, 40],
       popupAnchor: [0, -38],
+    });
+  }
+
+  function scoutIcon(color: string) {
+    const svg =
+      `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">` +
+      `<circle cx="10" cy="10" r="7" fill="${color}" fill-opacity="0.85" stroke="#fff" stroke-width="2.5"/></svg>`;
+    return L.divIcon({
+      className: 'scout-pin',
+      html: svg,
+      iconSize: [20, 20],
+      iconAnchor: [10, 10],
+      popupAnchor: [0, -10],
     });
   }
 
@@ -126,6 +150,108 @@ const { fullscreen = false } = Astro.props;
       if (mapEl) mapEl.innerHTML = '<p style="padding:20px">Could not load map data.</p>';
       console.error(err);
     });
+
+  // ── Scouting layer ──────────────────────────────────────────────────────
+  // Only on the fullscreen map page, never the home embed. Unverified iNat
+  // leads, off by default; visibility + per-tier filter persist in localStorage.
+  const isMapPage = document.querySelector('.map-wrap')?.classList.contains('full');
+  if (isMapPage && !plantFilter) initScouting();
+
+  function loadPref(key: string, fallback: boolean) {
+    try { const v = localStorage.getItem(key); return v === null ? fallback : v === '1'; }
+    catch { return fallback; }
+  }
+  function savePref(key: string, on: boolean) {
+    try { localStorage.setItem(key, on ? '1' : '0'); } catch {}
+  }
+
+  function scoutPopup(p: any) {
+    const tier = p.tier || 'snack';
+    return (
+      `<div class="p-pop">` +
+        `<h3>${p.name || 'Observation'}</h3>` +
+        (p.species ? `<div class="p-sci">${p.species}</div>` : '') +
+        `<div class="p-tier tier-${tier}">${TIER_LABEL[tier] || tier}</div>` +
+        (p.notes ? `<div class="p-meta">${p.notes}</div>` : '') +
+        (p.observed ? `<div class="p-meta p-obs">🔍 iNat obs ${p.observed}${p.observer ? ' · @' + p.observer : ''}${p.obscured ? ' · ⚠ location obscured' : ''}</div>` : '') +
+        `<a class="p-guide" href="${p.inat}" target="_blank" rel="noopener">View on iNaturalist →</a>` +
+        (p.plant ? `<a class="p-guide" href="/plants/${p.plant}">View plant guide →</a>` : '') +
+      `</div>`
+    );
+  }
+
+  function initScouting() {
+    fetch('/data/scouting-spots.geojson?t=' + Date.now(), { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : Promise.reject('no scouting data')))
+      .then((geo) => {
+        const groups: Record<string, any> = {};
+        for (const t of TIER_ORDER) groups[t] = L.layerGroup();
+        const tiersPresent = new Set<string>();
+
+        for (const f of geo.features || []) {
+          const p = f.properties || {};
+          const tier = p.tier || 'snack';
+          if (!groups[tier]) continue;
+          tiersPresent.add(tier);
+          const [lon, lat] = f.geometry.coordinates;
+          L.marker([lat, lon], { icon: scoutIcon(TIER_COLORS[tier] || '#7a7a7a') })
+            .bindPopup(scoutPopup(p), { maxWidth: 244, minWidth: 200, maxHeight: 300, autoPan: true, keepInView: true })
+            .addTo(groups[tier]);
+        }
+        if (!tiersPresent.size) return;
+
+        // Live, mutable UI state — read by apply() on every change; persisted.
+        const state = { master: loadPref('scout.on', false), tier: {} as Record<string, boolean> };
+        for (const t of TIER_ORDER) state.tier[t] = loadPref('scout.tier.' + t, true);
+
+        const apply = () => {
+          for (const t of TIER_ORDER) {
+            if (!tiersPresent.has(t)) continue;
+            const show = state.master && state.tier[t];
+            if (show && !map.hasLayer(groups[t])) groups[t].addTo(map);
+            else if (!show && map.hasLayer(groups[t])) map.removeLayer(groups[t]);
+          }
+        };
+        apply();
+
+        const Ctl = L.Control.extend({
+          onAdd: function () {
+            const div = L.DomUtil.create('div', 'scout-ctl');
+            L.DomEvent.disableClickPropagation(div);
+            L.DomEvent.disableScrollPropagation(div);
+            const tiers = TIER_ORDER.filter((t) => tiersPresent.has(t));
+            div.innerHTML =
+              `<label class="scout-master"><input type="checkbox" id="scout-master"${state.master ? ' checked' : ''}>` +
+              `<span>Scouting leads <em>iNat · unverified</em></span></label>` +
+              `<div class="scout-tiers"${state.master ? '' : ' hidden'} id="scout-tiers">` +
+              tiers.map((t) =>
+                `<label class="scout-tier"><input type="checkbox" data-tier="${t}"${state.tier[t] ? ' checked' : ''}>` +
+                `<i class="dot" style="background:${TIER_COLORS[t]}"></i>${TIER_LABEL[t]} <b>${groups[t].getLayers().length}</b></label>`,
+              ).join('') +
+              `</div>`;
+            const masterEl = div.querySelector('#scout-master') as HTMLInputElement;
+            const tiersEl = div.querySelector('#scout-tiers') as HTMLElement;
+            masterEl.addEventListener('change', () => {
+              state.master = masterEl.checked;
+              savePref('scout.on', state.master);
+              tiersEl.hidden = !state.master;
+              apply();
+            });
+            div.querySelectorAll('input[data-tier]').forEach((el) => {
+              el.addEventListener('change', () => {
+                const t = (el as HTMLInputElement).dataset.tier as string;
+                state.tier[t] = (el as HTMLInputElement).checked;
+                savePref('scout.tier.' + t, state.tier[t]);
+                apply();
+              });
+            });
+            return div;
+          },
+        });
+        new Ctl({ position: 'topright' }).addTo(map);
+      })
+      .catch(() => { /* no scouting layer for this deploy */ });
+  }
 
   window.addEventListener('resize', () => map.invalidateSize());
   void isTouch;
