@@ -165,7 +165,19 @@ const { fullscreen = false } = Astro.props;
     try { localStorage.setItem(key, on ? '1' : '0'); } catch {}
   }
 
-  function scoutPopup(p: any) {
+  // Locally-hidden scouting pins (e.g. one that turned out to sit in someone's
+  // private garden). Stored as a set of iNat observation ids in localStorage, so
+  // a hide is stable across reloads AND across data regenerations (the id keys
+  // the observation, not an array index). Per-device by nature.
+  function loadHidden(): Set<number> {
+    try { return new Set(JSON.parse(localStorage.getItem('scout.hidden') || '[]')); }
+    catch { return new Set(); }
+  }
+  function saveHidden(s: Set<number>) {
+    try { localStorage.setItem('scout.hidden', JSON.stringify([...s])); } catch {}
+  }
+
+  function scoutPopup(p: any, id: number) {
     const tier = p.tier || 'snack';
     return (
       `<div class="p-pop">` +
@@ -176,6 +188,7 @@ const { fullscreen = false } = Astro.props;
         (p.observed ? `<div class="p-meta p-obs">🔍 iNat obs ${p.observed}${p.observer ? ' · @' + p.observer : ''}${p.obscured ? ' · ⚠ location obscured' : ''}</div>` : '') +
         `<a class="p-guide" href="${p.inat}" target="_blank" rel="noopener">View on iNaturalist →</a>` +
         (p.plant ? `<a class="p-guide" href="/plants/${p.plant}">View plant guide →</a>` : '') +
+        `<button type="button" class="scout-hide" data-hide="${id}">✕ Hide this pin</button>` +
       `</div>`
     );
   }
@@ -187,17 +200,22 @@ const { fullscreen = false } = Astro.props;
         const groups: Record<string, any> = {};
         for (const t of TIER_ORDER) groups[t] = L.layerGroup();
         const tiersPresent = new Set<string>();
+        const hidden = loadHidden();
+        // Every marker kept by id+tier so we can hide/unhide without a reload.
+        const records: Array<{ id: number; tier: string; marker: any }> = [];
 
-        for (const f of geo.features || []) {
+        (geo.features || []).forEach((f: any, i: number) => {
           const p = f.properties || {};
           const tier = p.tier || 'snack';
-          if (!groups[tier]) continue;
+          if (!groups[tier]) return;
           tiersPresent.add(tier);
+          const id = typeof f.id === 'number' ? f.id : i;
           const [lon, lat] = f.geometry.coordinates;
-          L.marker([lat, lon], { icon: scoutIcon(TIER_COLORS[tier] || '#7a7a7a') })
-            .bindPopup(scoutPopup(p), { maxWidth: 244, minWidth: 200, maxHeight: 300, autoPan: true, keepInView: true })
-            .addTo(groups[tier]);
-        }
+          const marker = L.marker([lat, lon], { icon: scoutIcon(TIER_COLORS[tier] || '#7a7a7a') })
+            .bindPopup(scoutPopup(p, id), { maxWidth: 244, minWidth: 200, maxHeight: 300, autoPan: true, keepInView: true });
+          records.push({ id, tier, marker });
+          if (!hidden.has(id)) groups[tier].addLayer(marker);
+        });
         if (!tiersPresent.size) return;
 
         // Live, mutable UI state — read by apply() on every change; persisted.
@@ -214,37 +232,66 @@ const { fullscreen = false } = Astro.props;
         };
         apply();
 
+        let renderCtl = () => {};
+        const hidePin = (id: number) => {
+          const rec = records.find((r) => r.id === id);
+          if (!rec) return;
+          hidden.add(id);
+          saveHidden(hidden);
+          groups[rec.tier].removeLayer(rec.marker);
+          map.closePopup();
+          renderCtl();
+        };
+        const unhideAll = () => {
+          for (const rec of records) if (hidden.has(rec.id)) groups[rec.tier].addLayer(rec.marker);
+          hidden.clear();
+          saveHidden(hidden);
+          apply();
+          renderCtl();
+        };
+        // Popups are HTML strings — wire their Hide button when the popup opens.
+        map.on('popupopen', (e: any) => {
+          const btn = e.popup.getElement()?.querySelector('.scout-hide');
+          if (btn) btn.addEventListener('click', () => hidePin(Number(btn.dataset.hide)), { once: true });
+        });
+
         const Ctl = L.Control.extend({
           onAdd: function () {
             const div = L.DomUtil.create('div', 'scout-ctl');
             L.DomEvent.disableClickPropagation(div);
             L.DomEvent.disableScrollPropagation(div);
             const tiers = TIER_ORDER.filter((t) => tiersPresent.has(t));
-            div.innerHTML =
-              `<label class="scout-master"><input type="checkbox" id="scout-master"${state.master ? ' checked' : ''}>` +
-              `<span>Scouting leads <em>iNat · unverified</em></span></label>` +
-              `<div class="scout-tiers"${state.master ? '' : ' hidden'} id="scout-tiers">` +
-              tiers.map((t) =>
-                `<label class="scout-tier"><input type="checkbox" data-tier="${t}"${state.tier[t] ? ' checked' : ''}>` +
-                `<i class="dot" style="background:${TIER_COLORS[t]}"></i>${TIER_LABEL[t]} <b>${groups[t].getLayers().length}</b></label>`,
-              ).join('') +
-              `</div>`;
-            const masterEl = div.querySelector('#scout-master') as HTMLInputElement;
-            const tiersEl = div.querySelector('#scout-tiers') as HTMLElement;
-            masterEl.addEventListener('change', () => {
-              state.master = masterEl.checked;
-              savePref('scout.on', state.master);
-              tiersEl.hidden = !state.master;
-              apply();
-            });
-            div.querySelectorAll('input[data-tier]').forEach((el) => {
-              el.addEventListener('change', () => {
-                const t = (el as HTMLInputElement).dataset.tier as string;
-                state.tier[t] = (el as HTMLInputElement).checked;
-                savePref('scout.tier.' + t, state.tier[t]);
+            renderCtl = () => {
+              div.innerHTML =
+                `<label class="scout-master"><input type="checkbox" id="scout-master"${state.master ? ' checked' : ''}>` +
+                `<span>Scouting leads <em>iNat · unverified</em></span></label>` +
+                `<div class="scout-tiers"${state.master ? '' : ' hidden'} id="scout-tiers">` +
+                tiers.map((t) =>
+                  `<label class="scout-tier"><input type="checkbox" data-tier="${t}"${state.tier[t] ? ' checked' : ''}>` +
+                  `<i class="dot" style="background:${TIER_COLORS[t]}"></i>${TIER_LABEL[t]} <b>${groups[t].getLayers().length}</b></label>`,
+                ).join('') +
+                (hidden.size ? `<button type="button" class="scout-unhide">↺ Restore ${hidden.size} hidden pin${hidden.size === 1 ? '' : 's'}</button>` : '') +
+                `</div>`;
+              const masterEl = div.querySelector('#scout-master') as HTMLInputElement;
+              const tiersEl = div.querySelector('#scout-tiers') as HTMLElement;
+              masterEl.addEventListener('change', () => {
+                state.master = masterEl.checked;
+                savePref('scout.on', state.master);
+                tiersEl.hidden = !state.master;
                 apply();
               });
-            });
+              div.querySelectorAll('input[data-tier]').forEach((el) => {
+                el.addEventListener('change', () => {
+                  const t = (el as HTMLInputElement).dataset.tier as string;
+                  state.tier[t] = (el as HTMLInputElement).checked;
+                  savePref('scout.tier.' + t, state.tier[t]);
+                  apply();
+                });
+              });
+              const unhideEl = div.querySelector('.scout-unhide');
+              if (unhideEl) unhideEl.addEventListener('click', unhideAll);
+            };
+            renderCtl();
             return div;
           },
         });

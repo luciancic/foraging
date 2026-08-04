@@ -73,6 +73,10 @@ def fetch(bbox, per_species_cap):
     q = urllib.parse.urlencode({
         "taxon_id": taxa, "swlat": swlat, "swlng": swlng, "nelat": nelat, "nelng": nelng,
         "quality_grade": "research", "geo": "true", "per_page": 200, "order_by": "observed_on",
+        # Exclude cultivated/planted observations — these are overwhelmingly the
+        # "growing in someone's private garden / yard" pins we don't want to point
+        # foragers at. Wild specimens only.
+        "captive": "false",
     })
     req = urllib.request.Request(f"{API}?{q}", headers={"User-Agent": "foraging-scout/1.0"})
     data = json.load(urllib.request.urlopen(req, timeout=30))
@@ -99,7 +103,7 @@ def fetch(bbox, per_species_cap):
         }
         if slug:
             props["plant"] = slug
-        feats.append({"type": "Feature",
+        feats.append({"type": "Feature", "id": o["id"],
                       "geometry": {"type": "Point", "coordinates": [round(lon, 6), round(lat, 6)]},
                       "properties": props})
     return feats, counts

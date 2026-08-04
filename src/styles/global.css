@@ -190,6 +190,12 @@ body.fullbleed main { flex: 1 1 auto; min-height: 0; display: flex; }
 .leaflet-popup-content .p-tier.tier-caution { background: #fbe6d8; color: #b0501c; }
 .leaflet-popup-content .p-tier.tier-avoid { background: #fbe0dc; color: #9a2b1e; }
 .leaflet-popup-content .p-obs { font-size: .78rem; opacity: .85; }
+/* per-pin hide button in a scouting popup */
+.leaflet-popup-content .scout-hide { display: block; width: 100%; margin-top: 10px; padding: 7px 10px; font: inherit; font-size: .82rem; color: #9a2b1e; background: #fbe0dc; border: 1px solid #eec4bd; border-radius: 8px; cursor: pointer; }
+.leaflet-popup-content .scout-hide:hover { background: #f7d2cb; }
+/* restore-hidden action inside the scouting control */
+.scout-unhide { margin-top: 8px; padding: 5px 8px; width: 100%; font: inherit; font-size: .78rem; color: var(--ink-soft); background: transparent; border: 1px dashed var(--line); border-radius: 8px; cursor: pointer; }
+.scout-unhide:hover { color: var(--ink); border-color: var(--ink-soft); }
 
 /* section spacing helper */
 /* top margin gives the lead heading room under the sticky header; it collapses
