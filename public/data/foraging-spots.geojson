@@ -188,6 +188,149 @@
           "rowan-2.jpg"
         ]
       }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.571553,
+          45.453447
+        ]
+      },
+      "properties": {
+        "name": "Black chokeberry (aronia) — west",
+        "category": "berries",
+        "species": "black chokeberry (Aronia melanocarpa)",
+        "plant": "aronia",
+        "season": "ripe Aug–Sep",
+        "location": "Verdun",
+        "notes": "Photographed Aug 4; glossy toothed leaves, purple-black star-tipped pomes. Astringent raw — cook/juice. Ripe now.",
+        "added": "2026-08-04",
+        "photos": [
+          "aronia-chokeberry-1.jpg",
+          "aronia-chokeberry-2.jpg"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.568925,
+          45.454147
+        ]
+      },
+      "properties": {
+        "name": "Black chokeberry (aronia) — east",
+        "category": "berries",
+        "species": "black chokeberry (Aronia melanocarpa)",
+        "plant": "aronia",
+        "season": "ripe Aug–Sep",
+        "location": "Verdun",
+        "notes": "Photographed Aug 4; second patch ~200 m east of the first. Same shrub, loaded.",
+        "added": "2026-08-04",
+        "photos": [
+          "aronia-chokeberry-east-1.jpg",
+          "aronia-chokeberry-east-2.jpg"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.569467,
+          45.454144
+        ]
+      },
+      "properties": {
+        "name": "Elderberry (Verdun)",
+        "category": "berries",
+        "species": "common elderberry (Sambucus canadensis)",
+        "plant": "elderberry",
+        "season": "berries Aug–Sep (cook)",
+        "location": "Verdun",
+        "notes": "Photographed Aug 4; green unripe berry umbels. Come back when clusters are deep purple-black and drooping — then cook. Never eat raw.",
+        "added": "2026-08-04",
+        "photos": [
+          "elderberry-verdun-1.jpg"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.568314,
+          45.454411
+        ]
+      },
+      "properties": {
+        "name": "Red raspberry brambles (Verdun)",
+        "category": "berries",
+        "species": "red raspberry (Rubus idaeus)",
+        "plant": "raspberry",
+        "season": "ripe now (Jul–Aug)",
+        "location": "Verdun",
+        "notes": "Photographed Aug 4; ripe red berries. Brambles run along the path — a second stretch ~75 m south too. Eat on the spot.",
+        "added": "2026-08-04",
+        "photos": [
+          "raspberry-verdun-1.jpg",
+          "raspberry-verdun-2.jpg"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.568344,
+          45.45435
+        ]
+      },
+      "properties": {
+        "name": "Black currant (Verdun)",
+        "category": "berries",
+        "species": "black currant (Ribes nigrum, likely garden escape)",
+        "plant": "black-currant",
+        "season": "ripe now (Jul–Aug)",
+        "location": "Verdun",
+        "notes": "Photographed Aug 4; glossy black berries in short strings on aromatic maple-lobed leaves, thornless. Right beside the raspberries. Tart — great cooked.",
+        "added": "2026-08-04",
+        "photos": [
+          "black-currant-1.jpg",
+          "black-currant-2.jpg"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.568428,
+          45.453244
+        ]
+      },
+      "properties": {
+        "name": "Wild rose / rose hips (Verdun)",
+        "category": "berries",
+        "species": "wild rose (Rosa sp.)",
+        "plant": "rose-hips",
+        "season": "hips ripen Sep, best after frost",
+        "location": "Verdun",
+        "notes": "Photographed Aug 4; green immature hips. Return in fall once they turn red-orange and soften — cook & strain for syrup (remove the irritant seed hairs).",
+        "added": "2026-08-04",
+        "photos": [
+          "rose-hips-1.jpg",
+          "rose-hips-2.jpg"
+        ]
+      }
     }
   ]
 }
