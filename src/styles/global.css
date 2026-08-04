@@ -167,6 +167,31 @@ body.fullbleed main { flex: 1 1 auto; min-height: 0; display: flex; }
 .legend { display: flex; flex-wrap: wrap; gap: 14px; margin: 14px 0 0; font-size: .85rem; color: var(--ink-soft); }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
 
+/* "you are here" marker: pulsing blue dot + heading cone (shown when we have
+   a device-compass / GPS course reading) */
+.user-loc { position: relative; }
+.user-dot {
+  position: absolute; left: 50%; top: 50%; width: 15px; height: 15px;
+  transform: translate(-50%, -50%); border-radius: 50%;
+  background: #1a73e8; border: 3px solid #fff;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.18), 0 1px 5px rgba(0,0,0,.45);
+}
+.user-cone {
+  position: absolute; left: 50%; bottom: 50%; width: 0; height: 0;
+  transform-origin: 50% 100%; transform: translateX(-50%) rotate(0deg);
+  border-left: 10px solid transparent; border-right: 10px solid transparent;
+  border-bottom: 22px solid rgba(26,115,232,.6);
+  opacity: 0; transition: opacity .25s;
+}
+.user-loc.has-heading .user-cone { opacity: 1; }
+
+/* locate / compass button (reuses Leaflet's control-bar chrome) */
+.locate-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; color: #4a5a48; background: #fff;
+}
+.locate-btn:hover { color: #1a73e8; background: #f4f4f4; }
+
 /* scouting control (fullscreen map): master toggle + per-tier filter */
 .scout-ctl {
   background: color-mix(in srgb, var(--surface) 94%, transparent);
