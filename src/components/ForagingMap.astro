@@ -75,32 +75,42 @@ const { fullscreen = false } = Astro.props;
   }).addTo(map);
   map.on('click', () => map.scrollWheelZoom.enable());
 
-  // ── User location & heading ───────────────────────────────────────────────
-  // A "you are here" dot + accuracy halo + a heading cone. On the first GPS fix
-  // we recenter the map on the user (so they land in their area instead of the
-  // Montréal overview) — but only if they're reasonably near the logged spots;
-  // a far-away visitor keeps the overview. The compass cone needs device
-  // orientation, which iOS only grants on a user gesture, so it lights up after
-  // the locate button is tapped there; Android streams it automatically.
+  // ── User location ─────────────────────────────────────────────────────────
+  // A "you are here" dot + accuracy halo. On the first fix we recenter the map
+  // on the user (so they land in their area instead of the Montréal overview) —
+  // unless they're far (>150 km) from the logged spots, where we keep the
+  // overview. The locate button forces a fresh fix and surfaces a message when
+  // the browser blocks/‌can't provide location (so it's never a silent no-op).
   let userMarker: any = null, accCircle: any = null;
-  let headingDeg: number | null = null, sensorActive = false;
   let didLocate = false, spotsBounds: any = null;
   const isFullMap = document.querySelector('.map-wrap')?.classList.contains('full');
 
   const userIcon = L.divIcon({
     className: 'user-loc',
-    html: `<div class="user-cone"></div><div class="user-dot"></div>`,
-    iconSize: [26, 26],
-    iconAnchor: [13, 13],
+    html: `<div class="user-dot"></div>`,
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
   });
 
-  function applyHeading() {
-    const el = userMarker?.getElement();
-    if (!el) return;
-    if (headingDeg == null || isNaN(headingDeg)) { el.classList.remove('has-heading'); return; }
-    el.classList.add('has-heading');
-    const cone = el.querySelector('.user-cone') as HTMLElement | null;
-    if (cone) cone.style.transform = `translateX(-50%) rotate(${headingDeg}deg)`;
+  // A transient status line over the map (denied / unavailable / locating…).
+  let msgTimer: any = null;
+  function flash(text: string, sticky = false) {
+    let el = document.getElementById('map-msg');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'map-msg';
+      el.className = 'map-msg';
+      (mapEl?.parentElement || mapEl)?.appendChild(el);
+    }
+    el.textContent = text;
+    el.hidden = false;
+    clearTimeout(msgTimer);
+    if (!sticky) msgTimer = setTimeout(() => { if (el) el.hidden = true; }, 4000);
+  }
+  function clearFlash() {
+    const el = document.getElementById('map-msg');
+    if (el) el.hidden = true;
+    clearTimeout(msgTimer);
   }
 
   function updatePosition(lat: number, lon: number, acc: number) {
@@ -111,7 +121,6 @@ const { fullscreen = false } = Astro.props;
         radius: acc || 0, interactive: false,
         color: '#1a73e8', weight: 1, opacity: 0.25, fillColor: '#1a73e8', fillOpacity: 0.12,
       }).addTo(map);
-      applyHeading();
     } else {
       userMarker.setLatLng(ll);
       accCircle.setLatLng(ll).setRadius(acc || 0);
@@ -126,66 +135,40 @@ const { fullscreen = false } = Astro.props;
     if (near) map.setView(ll, Math.max(map.getZoom(), 15), { animate: true });
   }
 
-  function onOrient(e: any) {
-    let h: number | null = null;
-    if (typeof e.webkitCompassHeading === 'number') h = e.webkitCompassHeading;   // iOS: already 0=N, CW
-    else if (e.absolute && typeof e.alpha === 'number') h = 360 - e.alpha;          // absolute: alpha CCW from N
-    if (h == null || isNaN(h)) return;
-    sensorActive = true;
-    headingDeg = h;
-    applyHeading();
-  }
-
-  let orientAttached = false;
-  // Non-iOS (Android/desktop) expose orientation without a permission prompt —
-  // wire it up as soon as we start locating.
-  function attachOrientationAuto() {
-    const DOE: any = (window as any).DeviceOrientationEvent;
-    if (DOE && typeof DOE.requestPermission === 'function') return; // iOS: needs a gesture
-    if (orientAttached) return; orientAttached = true;
-    window.addEventListener('deviceorientationabsolute', onOrient, true);
-    window.addEventListener('deviceorientation', onOrient, true);
-  }
-  // iOS 13+ only grants the compass from inside a user gesture (the locate tap).
-  function attachOrientationGesture() {
-    const DOE: any = (window as any).DeviceOrientationEvent;
-    if (!(DOE && typeof DOE.requestPermission === 'function')) { attachOrientationAuto(); return; }
-    if (orientAttached) return; orientAttached = true;
-    DOE.requestPermission().then((res: string) => {
-      if (res === 'granted') window.addEventListener('deviceorientation', onOrient, true);
-    }).catch(() => {});
-  }
-
   function onFix(pos: any, recenter: boolean) {
-    const { latitude, longitude, accuracy, heading } = pos.coords;
+    clearFlash();
+    const { latitude, longitude, accuracy } = pos.coords;
     updatePosition(latitude, longitude, accuracy);
-    // GPS course-over-ground is a fallback heading when there's no compass.
-    if (!sensorActive && heading != null && !isNaN(heading)) { headingDeg = heading; applyHeading(); }
     if (recenter) map.setView([latitude, longitude], Math.max(map.getZoom(), 16), { animate: true });
     else firstFix(L.latLng(latitude, longitude));
+  }
+
+  function onError(err: any, loud: boolean) {
+    if (!loud) return; // the silent passive watch shouldn't nag on load
+    if (err && err.code === 1) flash('Location is blocked. Enable it for this site in your browser settings.', true);
+    else flash('Couldn’t get your location — try again outdoors with a clear sky.');
   }
 
   let locating = false;
   function startLocating() {
     if (locating || !('geolocation' in navigator)) return;
     locating = true;
-    attachOrientationAuto();
     navigator.geolocation.watchPosition(
       (pos) => onFix(pos, false),
-      () => { /* denied / unavailable — keep the overview, no dot */ },
+      (err) => onError(err, false),
       { enableHighAccuracy: true, maximumAge: 10000, timeout: 20000 },
     );
   }
 
   // Button-driven locate: a one-shot fix that always recenters. Unlike the
-  // passive watch, this fires geolocation fresh on every tap — so it triggers
-  // the permission prompt (and recenters) even when the on-load watch was
-  // denied, timed out, or hasn't returned a fix yet.
+  // passive watch it fires fresh on every tap and reports failures, so tapping
+  // does something visible even when the on-load watch was denied or pending.
   function locateNow() {
-    if (!('geolocation' in navigator)) return;
+    if (!('geolocation' in navigator)) { flash('This browser can’t share location.'); return; }
+    flash('Locating…', true);
     navigator.geolocation.getCurrentPosition(
       (pos) => onFix(pos, true),
-      () => { /* denied / unavailable */ },
+      (err) => onError(err, true),
       { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 },
     );
     startLocating(); // keep the live watch going for continued tracking
@@ -199,12 +182,11 @@ const { fullscreen = false } = Astro.props;
       a.innerHTML =
         `<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">` +
         `<path fill="none" stroke="currentColor" stroke-width="2" d="M12 8a4 4 0 100 8 4 4 0 000-8zM12 2v3M12 19v3M2 12h3M19 12h3"/></svg>`;
+      L.DomEvent.disableClickPropagation(a);
       L.DomEvent.on(a, 'click', L.DomEvent.stop);
       L.DomEvent.on(a, 'click', () => {
-        // Location first (the primary ask), then the compass unlock.
         if (userMarker) map.setView(userMarker.getLatLng(), Math.max(map.getZoom(), 16), { animate: true });
         else locateNow();
-        attachOrientationGesture();                // the tap iOS needs to unlock the compass
       });
       return a;
     },
