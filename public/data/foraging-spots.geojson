@@ -164,6 +164,30 @@
           "apple-bike-path-2.jpg"
         ]
       }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.577094,
+          45.409358
+        ]
+      },
+      "properties": {
+        "name": "Rowan / Mountain-ash (LaSalle)",
+        "category": "tree",
+        "species": "rowan / European mountain-ash (Sorbus aucuparia)",
+        "plant": "rowan",
+        "season": "berries Aug–fall; best after first frost, hold on the tree into winter",
+        "location": "LaSalle (beside a paved path)",
+        "notes": "Photographed Aug 4; small tree loaded with flat-topped clusters of orange-red pomes, pinnate serrated leaflets. Cook-don't-graze: raw is bitter/irritating, but cooked (ideally after a frost) makes a classic tart rowan jelly. High pectin.",
+        "added": "2026-08-04",
+        "photos": [
+          "rowan-1.jpg",
+          "rowan-2.jpg"
+        ]
+      }
     }
   ]
 }
