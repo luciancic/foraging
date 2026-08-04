@@ -156,22 +156,39 @@ const { fullscreen = false } = Astro.props;
     }).catch(() => {});
   }
 
+  function onFix(pos: any, recenter: boolean) {
+    const { latitude, longitude, accuracy, heading } = pos.coords;
+    updatePosition(latitude, longitude, accuracy);
+    // GPS course-over-ground is a fallback heading when there's no compass.
+    if (!sensorActive && heading != null && !isNaN(heading)) { headingDeg = heading; applyHeading(); }
+    if (recenter) map.setView([latitude, longitude], Math.max(map.getZoom(), 16), { animate: true });
+    else firstFix(L.latLng(latitude, longitude));
+  }
+
   let locating = false;
   function startLocating() {
     if (locating || !('geolocation' in navigator)) return;
     locating = true;
     attachOrientationAuto();
     navigator.geolocation.watchPosition(
-      (pos) => {
-        const { latitude, longitude, accuracy, heading } = pos.coords;
-        updatePosition(latitude, longitude, accuracy);
-        // GPS course-over-ground is a fallback heading when there's no compass.
-        if (!sensorActive && heading != null && !isNaN(heading)) { headingDeg = heading; applyHeading(); }
-        firstFix(L.latLng(latitude, longitude));
-      },
+      (pos) => onFix(pos, false),
       () => { /* denied / unavailable — keep the overview, no dot */ },
       { enableHighAccuracy: true, maximumAge: 10000, timeout: 20000 },
     );
+  }
+
+  // Button-driven locate: a one-shot fix that always recenters. Unlike the
+  // passive watch, this fires geolocation fresh on every tap — so it triggers
+  // the permission prompt (and recenters) even when the on-load watch was
+  // denied, timed out, or hasn't returned a fix yet.
+  function locateNow() {
+    if (!('geolocation' in navigator)) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => onFix(pos, true),
+      () => { /* denied / unavailable */ },
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 },
+    );
+    startLocating(); // keep the live watch going for continued tracking
   }
 
   const LocateCtl = L.Control.extend({
@@ -184,9 +201,10 @@ const { fullscreen = false } = Astro.props;
         `<path fill="none" stroke="currentColor" stroke-width="2" d="M12 8a4 4 0 100 8 4 4 0 000-8zM12 2v3M12 19v3M2 12h3M19 12h3"/></svg>`;
       L.DomEvent.on(a, 'click', L.DomEvent.stop);
       L.DomEvent.on(a, 'click', () => {
-        attachOrientationGesture();                // the tap iOS needs to unlock the compass
+        // Location first (the primary ask), then the compass unlock.
         if (userMarker) map.setView(userMarker.getLatLng(), Math.max(map.getZoom(), 16), { animate: true });
-        else { didLocate = false; startLocating(); }
+        else locateNow();
+        attachOrientationGesture();                // the tap iOS needs to unlock the compass
       });
       return a;
     },
