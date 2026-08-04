@@ -23,6 +23,16 @@ urban-edible plant field guide for Montréal. Live at **https://foraging.condrea
   "on map" is derived from these links at build time (`src/lib/spots.ts`) — no flag
   to maintain on the plant.
 - **Better photos:** replace files in `public/images/plants/`.
+- **Scout a mission area (iNaturalist leads):** `public/data/scouting-spots.geojson`
+  is a *separate, unverified* pin class (distinct tier-coloured circles vs. the
+  verified teardrop pins) — regenerate it with `scripts/inat-scout.py --bbox
+  SWLAT SWLNG NELAT NELNG --name "..." --out public/data/scouting-spots.geojson`.
+  It pulls iNat research-grade observations in the box and keeps only species in
+  the script's curated `FORAGE` table (tier = snack/prep/caution/avoid + a how-to
+  note + optional guide slug). The map shows it under a filter toggle (off by
+  default, fullscreen map page only). Confirming a lead in person = promote it
+  into `foraging-spots.geojson` as a real pin. Extend `FORAGE` when ranging into
+  new species; iNat gives *where*, the table gives *edible/how*.
 
 ## Deploy & backup (this VPS)
 - Served by Caddy from `/srv/foraging`. `scripts/deploy.sh` = rebuild + publish;
