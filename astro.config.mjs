@@ -30,7 +30,8 @@ export default defineConfig({
     ssr: { external: ['better-sqlite3'] },
     optimizeDeps: { exclude: ['better-sqlite3'] },
     // Dev: proxy /api → the local API service so the map calls it same-origin,
-    // exactly as it does in prod behind Caddy. Prod Caddy does the same proxy.
-    server: { proxy: { '/api': 'http://localhost:8787' } },
+    // exactly as it does in prod behind Caddy. Override the target (e.g. to a
+    // throwaway test API on another port) with FORAGING_API_PROXY.
+    server: { proxy: { '/api': process.env.FORAGING_API_PROXY || 'http://localhost:8787' } },
   },
 });

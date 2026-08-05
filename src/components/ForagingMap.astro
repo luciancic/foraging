@@ -242,6 +242,74 @@ const { fullscreen = false } = Astro.props;
     }
   }
 
+  // Long-press to move (mobile-safe). Pins are inert to touch by default so you
+  // can pan the map freely; press-and-hold ~0.45s on a pin to "lift" it, then drag
+  // and release to drop. Moving the finger before the hold completes is treated as
+  // a pan and never grabs the pin — which was the old draggable-marker footgun.
+  function enableLongPressMove(marker: any, id: number) {
+    const ARM_MS = 450, SLOP = 10;
+    let timer: any = null, armed = false, start: any = null, originLL: any = null;
+
+    const arm = () => {
+      armed = true;
+      originLL = marker.getLatLng();
+      map.dragging.disable();               // don't pan while a pin is lifted
+      marker.getElement()?.classList.add('pin-armed');
+      try { (navigator as any).vibrate?.(30); } catch {}
+      flash('Pin lifted — drag to move, release to drop.', true);
+    };
+    const disarm = () => {
+      map.dragging.enable();
+      marker.getElement()?.classList.remove('pin-armed');
+    };
+    const onMove = (e: any) => {
+      if (!armed) {
+        // A move before the hold completes = a pan/tap; abandon arming.
+        if (start && Math.hypot(e.clientX - start.x, e.clientY - start.y) > SLOP) { clearTimeout(timer); cleanup(); }
+        return;
+      }
+      e.preventDefault();
+      marker.setLatLng(map.mouseEventToLatLng(e));
+    };
+    const onUp = (e: any) => {
+      clearTimeout(timer);
+      if (armed) {
+        e.preventDefault?.();
+        disarm();
+        suppressNextClick(marker.getElement()); // don't pop the popup right after a move
+        saveMove(id, marker, originLL);
+      }
+      cleanup();
+    };
+    const onCancel = () => {
+      clearTimeout(timer);
+      if (armed) { marker.setLatLng(originLL); disarm(); }
+      cleanup();
+    };
+    const cleanup = () => {
+      armed = false; start = null;
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onCancel);
+    };
+    const onDown = (e: any) => {
+      if (e.button != null && e.button > 0) return; // primary button / touch only
+      start = { x: e.clientX, y: e.clientY };
+      timer = setTimeout(arm, ARM_MS);
+      window.addEventListener('pointermove', onMove, { passive: false });
+      window.addEventListener('pointerup', onUp);
+      window.addEventListener('pointercancel', onCancel);
+    };
+    marker.on('add', () => marker.getElement()?.addEventListener('pointerdown', onDown));
+  }
+
+  function suppressNextClick(el: any) {
+    if (!el) return;
+    const h = (ev: any) => { ev.stopPropagation(); ev.preventDefault(); el.removeEventListener('click', h, true); };
+    el.addEventListener('click', h, true);
+    setTimeout(() => el.removeEventListener('click', h, true), 500);
+  }
+
   // Pins load live from the API; fall back to the build-time static export if the
   // API is unreachable, so the map still renders when the service is down.
   async function loadSpots() {
@@ -255,21 +323,19 @@ const { fullscreen = false } = Astro.props;
 
   loadSpots()
     .then((geo) => {
-      if (editMode) flash('✎ Edit mode — drag any pin to its real spot; it saves automatically.', true);
+      if (editMode) flash('✎ Edit mode — press & hold a pin to lift it, then drag to its real spot.', true);
       const layer = L.geoJSON(geo, {
         filter: (feature) =>
           !plantFilter || feature.properties?.plant === plantFilter,
         pointToLayer: (feature, latlng) => {
           const cat = feature.properties?.category || 'other';
           usedCats.add(cat);
-          return L.marker(latlng, { icon: pinIcon(CAT_COLORS[cat] || CAT_COLORS.other), draggable: editMode });
+          return L.marker(latlng, { icon: pinIcon(CAT_COLORS[cat] || CAT_COLORS.other) });
         },
         onEachFeature: (feature, lyr) => {
           const p = feature.properties || {};
           if (editMode && typeof feature.id === 'number') {
-            let origin: any = null;
-            lyr.on('dragstart', () => { origin = lyr.getLatLng(); });
-            lyr.on('dragend', () => saveMove(feature.id as number, lyr, origin));
+            enableLongPressMove(lyr, feature.id as number);
           }
           const photos: string[] = Array.isArray(p.photos) ? p.photos : [];
           const imgs = photos
