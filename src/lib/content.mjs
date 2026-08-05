@@ -12,7 +12,9 @@ const md = new MarkdownIt({ html: true, linkify: true, typographer: true });
 
 function shape(row) {
   const { body, ...data } = row;
-  return { slug: row.slug, data, bodyHtml: md.render(body || '') };
+  // `id` == the slug string, matching Astro's glob-collection convention the
+  // rest of the codebase uses (p.id / params.slug).
+  return { id: row.slug, data, bodyHtml: md.render(body || '') };
 }
 
 /** All plants, ordered by `order` then title — for the index + home lists. */

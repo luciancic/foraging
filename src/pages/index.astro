@@ -30,7 +30,7 @@ function thumb(p: any) {
       <h2>Ripe right now</h2>
       <div class="grid">
         {ripeNow.map((p) => (
-          <a class="card" href={`/plants/${p.slug}`}>
+          <a class="card" href={`/plants/${p.id}`}>
             <div class="thumb" style={thumb(p)}></div>
             <div class="body">
               <span class="name">{p.data.title}</span>
@@ -48,7 +48,7 @@ function thumb(p: any) {
       <h2>Coming in the next few weeks</h2>
       <div class="grid">
         {soon.map((p) => (
-          <a class="card" href={`/plants/${p.slug}`}>
+          <a class="card" href={`/plants/${p.id}`}>
             <div class="thumb" style={thumb(p)}></div>
             <div class="body">
               <span class="name">{p.data.title}</span>

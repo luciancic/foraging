@@ -8,12 +8,15 @@
 // Written as .mjs so both the Astro build (plant pages, spot counts) and the
 // plain-Node scripts/API can import the exact same accessors.
 import Database from 'better-sqlite3';
-import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { mkdirSync } from 'node:fs';
 
-const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
-export const DB_PATH = process.env.FORAGING_DB || join(repoRoot, 'data', 'foraging.db');
+// Anchor on the working directory, NOT import.meta.url — Astro's bundler relocates
+// this module into dist/ at build time, so a URL-relative path would resolve to the
+// wrong place and silently open an empty DB. Every entry point (astro build, the
+// npm scripts, the foraging-api systemd service) runs with CWD = repo root; the
+// FORAGING_DB env var overrides for anything that doesn't.
+export const DB_PATH = process.env.FORAGING_DB || join(process.cwd(), 'data', 'foraging.db');
 
 // Columns whose stored value is a JSON string; parsed on read, stringified on write.
 const PLANT_JSON = ['commonNames', 'gallery', 'idCues', 'safety', 'guides'];

@@ -16,7 +16,7 @@
     "api": "node server/api.mjs"
   },
   "dependencies": {
-    "astro": "^4.16.18",
+    "astro": "^7.1.6",
     "better-sqlite3": "^13.0.3",
     "leaflet": "^1.9.4",
     "markdown-it": "^15.0.0"
