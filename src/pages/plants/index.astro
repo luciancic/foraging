@@ -6,7 +6,7 @@ import { spotCount } from '../../lib/spots';
 
 const order = { 'ripe-now': 0, 'coming-soon': 1, 'year-round': 2, 'note-for-next-year': 3 };
 const plants = (await getCollection('plants'))
-  .map((p) => ({ ...p, live: effectiveStatus(p.data), spots: spotCount(p.slug) }))
+  .map((p) => ({ ...p, live: effectiveStatus(p.data), spots: spotCount(p.id) }))
   .sort((a, b) => order[a.live] - order[b.live] || a.data.order - b.data.order || a.data.title.localeCompare(b.data.title));
 ---
 <Base title="Plants — Forage MTL" page="plants" description="Field guide to urban edible plants around Montréal.">
@@ -18,7 +18,7 @@ const plants = (await getCollection('plants'))
     </p>
     <div class="grid">
       {plants.map((p) => (
-        <a class="card" href={`/plants/${p.slug}`}>
+        <a class="card" href={`/plants/${p.id}`}>
           <div class="thumb" style={p.data.heroImage ? `--ph:url('${p.data.heroImage}')` : ''}></div>
           <div class="body">
             <span class="name">{p.data.title}</span>

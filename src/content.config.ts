@@ -1,10 +1,11 @@
 import { defineCollection, z } from 'astro:content';
+import { glob } from 'astro/loaders';
 
 // One markdown file per plant in src/content/plants/.
 // The body (markdown under the frontmatter) is free-form field notes:
 // harvest, prep, recipes, links — write whatever you like there.
 const plants = defineCollection({
-  type: 'content',
+  loader: glob({ pattern: '**/*.md', base: './src/content/plants' }),
   schema: z.object({
     title: z.string(),
     scientificName: z.string().optional(),
