@@ -25,8 +25,9 @@ if ! grep -q "foraging.condrea.dev" "$CADDYFILE" 2>/dev/null; then
 # record foraging.condrea.dev → 165.227.33.13
 foraging.condrea.dev {
     encode gzip
-    # Live pin reads/writes go to the Node data API (systemd: foraging-api).
-    handle /api/* {
+    # Live data API + photos (served from Storj) go to the Node service on :8787.
+    @dynamic path /api/* /photos/* /images/*
+    handle @dynamic {
         reverse_proxy localhost:8787
     }
     # Everything else is the static site.

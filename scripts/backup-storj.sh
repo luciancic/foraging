@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
-# Back up the foraging data (SQLite DB + its committed seed snapshot + photos) to
-# the personal Storj "foraging" bucket. The live DB (data/foraging.db) is now the
+# Back up the foraging data (SQLite DB + its committed seed snapshot) to the
+# personal Storj "foraging" bucket. The live DB (data/foraging.db) is now the
 # runtime source of truth and is NOT in git, so this offsite copy — plus db/seed.json,
 # refreshed by `npm run db:export` — is the recovery path for field edits.
+# Photos are NOT handled here: they already live in the bucket under media/ and are
+# served from there by the API.
 #
 # Credentials: reuses the Storj S3 keys already in ~/myclaw/.env (STORJ_ACCESS_KEY_ID /
 # STORJ_SECRET_ACCESS_KEY). Override via a local .env or environment if you prefer.
@@ -38,9 +40,11 @@ if [ -f "$REPO_DIR/data/foraging.db" ]; then
 fi
 
 echo "==> Snapshotting data → $TARBALL"
-# Only tar paths that exist (data/ is absent on a fresh checkout before db:init).
+# Photos are NOT backed up here — they already live in Storj (bucket prefix
+# media/, served by the API). Only tar paths that exist (data/ is absent on a
+# fresh checkout before db:init).
 PATHS=()
-for p in db/seed.json data/foraging.db public/photos public/images; do
+for p in db/seed.json data/foraging.db; do
   [ -e "$REPO_DIR/$p" ] && PATHS+=("$p")
 done
 tar -czf "$TARBALL" -C "$REPO_DIR" "${PATHS[@]}"
@@ -67,17 +71,12 @@ key = f"backups/{os.path.basename(tarball)}"
 s3.upload_file(tarball, bucket, key)
 print("  uploaded", key)
 
-# 2) plain mirror of the current data + photos (easy to browse/restore individually)
+# 2) plain mirror of the DB + seed (easy to browse/restore individually). Photos
+# aren't mirrored — they're already first-class objects under the bucket's media/.
 mirror = [
     ("db/seed.json", "assets/db/seed.json"),
     ("data/foraging.db", "assets/data/foraging.db"),
 ]
-for d in ("public/photos/spots", "public/images/plants"):
-    ad = os.path.join(repo, d)
-    if os.path.isdir(ad):
-        for f in os.listdir(ad):
-            mirror.append((f"{d}/{f}", f"assets/{d.split('public/')[1]}/{f}"))
-
 for rel, key in mirror:
     p = os.path.join(repo, rel)
     if not os.path.isfile(p):

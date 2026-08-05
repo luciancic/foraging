@@ -9,6 +9,9 @@ Environment=FORAGING_API_PORT=8787
 # Holds FORAGING_EDIT_TOKEN. Optional (leading '-'): if absent the API still runs
 # but refuses writes (read-only) rather than crash-looping. install.sh creates it.
 EnvironmentFile=-%h/.config/foraging/foraging.env
+# Storj S3 creds for serving photos from the `media/` prefix (reuses the same keys
+# as the backup). Optional: if absent, image routes return 503 but pins still work.
+EnvironmentFile=-%h/myclaw/.env
 WorkingDirectory=%h/foraging
 ExecStart=/usr/bin/node %h/foraging/server/api.mjs
 Restart=always

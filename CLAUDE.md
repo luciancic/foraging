@@ -17,7 +17,13 @@ urban-edible plant field guide for Montréal. Live at **https://foraging.condrea
   `POST`/`PATCH` to add/move) so field edits show without a rebuild. `ForagingMap.astro`
   fetches `/api/pins`, falling back to a build-time `dist/data/foraging-spots.geojson`
   export if the API is down. In prod Caddy reverse-proxies `/api/*` → `localhost:8787`.
-- Photos: `public/images/plants/` (ID shots), `public/photos/spots/` (map-pin shots).
+- **Photos live in Storj** (bucket `foraging`, prefix `media/`), NOT in git. The API
+  serves them at `/images/plants/*` (ID shots) and `/photos/spots/*` (map-pin shots) —
+  a read-through cache (`media-cache/`) fetches each from Storj on first hit. Caddy
+  reverse-proxies those paths to the API. To add a photo: upload it to
+  `media/images/plants/<file>` or `media/photos/spots/<file>` in the bucket (reuse the
+  Storj creds in `~/myclaw/.env`); reference it by the same `/images/...` or `/photos/...`
+  URL. Image URLs are unchanged from before — only where they're served from changed.
 - Status badges ("ripe now" etc.) are **date-driven** from each plant's `ripeStart`/
   `ripeEnd` window — `src/lib/season.ts`. A nightly systemd timer rebuilds so they stay current.
 
@@ -41,7 +47,9 @@ urban-edible plant field guide for Montréal. Live at **https://foraging.condrea
   then commit. This is a deliberate step — the nightly Storj backup captures the
   live `data/foraging.db` directly (so field edits are safe) but does NOT touch the
   git-tracked seed, to avoid a perpetually-dirty prod working tree.
-- **Better photos:** replace files in `public/images/plants/`.
+- **Better photos:** replace the object in Storj under `media/images/plants/<file>`
+  (or `media/photos/spots/<file>`); clear the API's `media-cache/<path>` so the new
+  one is re-fetched.
 - **Scout a mission area (iNaturalist leads):** `public/data/scouting-spots.geojson`
   is a *separate, unverified* pin class (distinct tier-coloured circles vs. the
   verified teardrop pins) — regenerate it with `scripts/inat-scout.py --bbox
@@ -54,15 +62,18 @@ urban-edible plant field guide for Montréal. Live at **https://foraging.condrea
   new species; iNat gives *where*, the table gives *edible/how*.
 
 ## Deploy & backup (this VPS)
-- Served by Caddy from `/srv/foraging` (static) + a reverse-proxy `/api/*` →
-  `localhost:8787` (the `foraging-api` systemd user service running `server/api.mjs`).
+- Served by Caddy from `/srv/foraging` (static) + a reverse-proxy for `/api/*`,
+  `/photos/*`, `/images/*` → `localhost:8787` (the `foraging-api` systemd user service
+  running `server/api.mjs`, which needs the Storj creds from `~/myclaw/.env` to serve
+  photos).
 - `scripts/deploy.sh` = `db:init` (sync plants; keep live spots) + build + publish +
   restart the API. `scripts/install.sh` = first-time / post-wipe: Caddy block, edit
   token (`~/.config/foraging/foraging.env`, generated + printed once), nightly rebuild
   timer, the API service, DB seed, then deploy.
 - `scripts/backup-storj.sh` → personal Storj `foraging` bucket (reuses the Storj creds
-  in `~/myclaw/.env`); backs up `data/foraging.db` + `db/seed.json` + photos. Git holds
-  the code + `db/seed.json` snapshot; the **live DB is only in the backup**, not git.
+  in `~/myclaw/.env`); backs up `data/foraging.db` + `db/seed.json` (NOT photos — those
+  already live in the bucket under `media/`). Git holds the code + `db/seed.json`
+  snapshot; the **live DB is only in the backup**, not git.
 - VPS is wipeable: `install.sh` rebuilds the DB from the committed `db/seed.json` (or
   restore `data/foraging.db` from the Storj backup to recover field edits since the
   last `db:export`).

@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "astro": "^7.1.6",
+    "aws4fetch": "^1.0.20",
     "better-sqlite3": "^13.0.3",
     "leaflet": "^1.9.4",
     "markdown-it": "^15.0.0"

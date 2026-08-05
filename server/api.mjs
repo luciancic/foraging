@@ -2,20 +2,73 @@
 // otherwise static site. Reads pins from the SQLite data layer, and (behind a
 // bearer token) lets pins be moved or added from the field without a rebuild.
 //
-// In prod, Caddy reverse-proxies /api/* here on the same origin. Run under the
-// systemd user service (scripts/systemd/foraging-api.service).
+// In prod, Caddy reverse-proxies /api/* here on the same origin (and /photos/* +
+// /images/*, which this also serves from Storj). Run under the systemd user
+// service (scripts/systemd/foraging-api.service).
 //
 //   Env:
-//     FORAGING_EDIT_TOKEN  required for writes; if unset, writes are refused (read-only).
-//     FORAGING_API_PORT    default 8787
-//     FORAGING_DB          optional DB path override (see src/lib/db.mjs)
+//     FORAGING_EDIT_TOKEN     required for writes; if unset, writes are refused (read-only).
+//     FORAGING_API_PORT       default 8787
+//     FORAGING_DB             optional DB path override (see src/lib/db.mjs)
+//     STORJ_ACCESS_KEY_ID / STORJ_SECRET_ACCESS_KEY / STORJ_ENDPOINT / STORJ_BACKUP_BUCKET
+//                             Storj S3 creds for serving photos (media/*). If unset,
+//                             image routes return 503 (pins still work).
 import { createServer } from 'node:http';
 import { timingSafeEqual } from 'node:crypto';
+import { createReadStream, existsSync, mkdirSync } from 'node:fs';
+import { writeFile, rename } from 'node:fs/promises';
+import { join, dirname } from 'node:path';
+import { AwsClient } from 'aws4fetch';
 import { allSpots, spotsGeoJSON, moveSpot, addSpot } from '../src/lib/db.mjs';
 
 const PORT = Number(process.env.FORAGING_API_PORT || 8787);
 const TOKEN = process.env.FORAGING_EDIT_TOKEN || '';
 const CATEGORIES = new Set(['tree', 'berries', 'greens', 'herbs', 'nuts', 'mushrooms', 'other']);
+
+// ── Media (photos) served from Storj with an on-disk cache ──────────────────
+// Photos live only in Storj (bucket prefix `media/`), not in git. This streams
+// them at /photos/spots/* and /images/plants/*, caching each to media-cache/ on
+// first hit so repeat views don't re-fetch. URL path maps 1:1 to media/<path>.
+const STORJ_ENDPOINT = process.env.STORJ_ENDPOINT || 'https://gateway.storjshare.io';
+const STORJ_BUCKET = process.env.STORJ_BACKUP_BUCKET || 'foraging';
+const MEDIA_CACHE = join(process.cwd(), 'media-cache');
+const MEDIA_PATH = /^\/(photos\/spots|images\/plants)\/[\w.-]+\.(jpe?g|png|webp)$/i;
+const CT = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' };
+const storj = process.env.STORJ_ACCESS_KEY_ID && process.env.STORJ_SECRET_ACCESS_KEY
+  ? new AwsClient({
+      accessKeyId: process.env.STORJ_ACCESS_KEY_ID,
+      secretAccessKey: process.env.STORJ_SECRET_ACCESS_KEY,
+      region: 'us-east-1', service: 's3',
+    })
+  : null;
+mkdirSync(MEDIA_CACHE, { recursive: true });
+
+const contentType = (p) => CT[p.split('.').pop().toLowerCase()] || 'application/octet-stream';
+
+async function serveMedia(res, pathname) {
+  if (!storj) { res.writeHead(503); res.end('media not configured'); return; }
+  const rel = pathname.slice(1);               // e.g. photos/spots/x.jpg
+  const cacheFile = join(MEDIA_CACHE, rel);
+  const cacheHeaders = { 'Content-Type': contentType(rel), 'Cache-Control': 'public, max-age=604800' };
+  if (existsSync(cacheFile)) {
+    res.writeHead(200, cacheHeaders);
+    createReadStream(cacheFile).pipe(res);
+    return;
+  }
+  let r;
+  try { r = await storj.fetch(`${STORJ_ENDPOINT}/${STORJ_BUCKET}/media/${rel}`); }
+  catch (e) { console.error('media upstream error:', e); res.writeHead(502); res.end('upstream error'); return; }
+  if (!r.ok) { res.writeHead(r.status === 404 ? 404 : 502); res.end(r.status === 404 ? 'not found' : 'upstream error'); return; }
+  const buf = Buffer.from(await r.arrayBuffer());
+  try {                                          // cache atomically (temp + rename)
+    mkdirSync(dirname(cacheFile), { recursive: true });
+    const tmp = `${cacheFile}.tmp`;
+    await writeFile(tmp, buf);
+    await rename(tmp, cacheFile);
+  } catch (e) { console.error('media cache write failed:', e); }
+  res.writeHead(200, { ...cacheHeaders, 'Content-Type': r.headers.get('content-type') || cacheHeaders['Content-Type'] });
+  res.end(buf);
+}
 // Only these origins may make cross-origin (esp. write) calls. Same-origin prod
 // requests through Caddy need no CORS at all; the dev server is the one exception.
 const ALLOWED_ORIGINS = new Set(['https://foraging.condrea.dev', 'http://localhost:4321']);
@@ -75,6 +128,9 @@ const server = createServer(async (req, res) => {
     const path = url.pathname.replace(/\/$/, '') || '/';
 
     if (req.method === 'OPTIONS') return send(res, 204, {});
+
+    // ── Photos (served from Storj) ───────────────────────────────────────────
+    if (req.method === 'GET' && MEDIA_PATH.test(path)) return serveMedia(res, path);
 
     // ── Public read ─────────────────────────────────────────────────────────
     if (req.method === 'GET' && (path === '/api/pins' || path === '/api/pins.geojson')) {
