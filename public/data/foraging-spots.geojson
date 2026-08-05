@@ -331,6 +331,50 @@
           "rose-hips-2.jpg"
         ]
       }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.568236,
+          45.450358
+        ]
+      },
+      "properties": {
+        "name": "Rowan / Mountain-ash (Verdun)",
+        "category": "tree",
+        "species": "rowan / European mountain-ash (Sorbus aucuparia)",
+        "plant": "rowan",
+        "season": "berries Aug–fall; best after first frost, hold on the tree into winter",
+        "location": "Verdun",
+        "notes": "Photographed Aug 4; second rowan (separate from the LaSalle tree), loaded with flat-topped clusters of orange pomes, pinnate serrated leaflets. Cook-don't-graze: raw is bitter/irritating, cooked (ideally after a frost) makes a tart rowan jelly. High pectin.",
+        "added": "2026-08-04",
+        "photos": [
+          "rowan-verdun-1.jpg",
+          "rowan-verdun-2.jpg"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.565274,
+          45.452609
+        ]
+      },
+      "properties": {
+        "name": "Red currant (community-garden fence)",
+        "category": "berries",
+        "species": "red currant (Ribes rubrum)",
+        "season": "ripe now (Jul–Aug)",
+        "location": "Verdun — outside the community garden, on the outer edge of the fence",
+        "notes": "Confirmed in person Aug 4 (iNat lead promoted). Translucent red berries in hanging clusters on lobed maple-like leaves, thornless — growing on the public/outside edge of the community-garden fence, not inside the plot. Eat raw or cook into jelly. Tart.",
+        "added": "2026-08-04",
+        "photos": []
+      }
     }
   ]
 }

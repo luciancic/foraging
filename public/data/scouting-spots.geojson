@@ -1293,28 +1293,6 @@
     },
     {
       "type": "Feature",
-      "id": 215326707,
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -73.565274,
-          45.452609
-        ]
-      },
-      "properties": {
-        "name": "Red currant",
-        "species": "Ribes rubrum",
-        "tier": "snack",
-        "notes": "Translucent red berries in hanging clusters, eat raw or jelly.",
-        "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/215326707",
-        "observed": "2024-05-12",
-        "observer": "viandemoisie",
-        "obscured": false
-      }
-    },
-    {
-      "type": "Feature",
       "id": 215381481,
       "geometry": {
         "type": "Point",
