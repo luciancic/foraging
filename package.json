@@ -10,7 +10,6 @@
     "preview": "astro preview",
     "deploy": "bash scripts/deploy.sh",
     "backup": "bash scripts/backup-storj.sh",
-    "db:migrate": "node scripts/db-migrate.mjs",
     "db:init": "node scripts/db-init.mjs",
     "db:export": "node scripts/db-export.mjs",
     "api": "node server/api.mjs"

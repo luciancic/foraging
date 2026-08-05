@@ -10,30 +10,41 @@
 //     FORAGING_API_PORT    default 8787
 //     FORAGING_DB          optional DB path override (see src/lib/db.mjs)
 import { createServer } from 'node:http';
+import { timingSafeEqual } from 'node:crypto';
 import { allSpots, spotsGeoJSON, moveSpot, addSpot } from '../src/lib/db.mjs';
 
 const PORT = Number(process.env.FORAGING_API_PORT || 8787);
 const TOKEN = process.env.FORAGING_EDIT_TOKEN || '';
 const CATEGORIES = new Set(['tree', 'berries', 'greens', 'herbs', 'nuts', 'mushrooms', 'other']);
+// Only these origins may make cross-origin (esp. write) calls. Same-origin prod
+// requests through Caddy need no CORS at all; the dev server is the one exception.
+const ALLOWED_ORIGINS = new Set(['https://foraging.condrea.dev', 'http://localhost:4321']);
+const SAFE_FILE = /^[\w.-]+\.(jpe?g|png|webp)$/i;
+
+// Reflect an allowlisted Origin rather than a wildcard; unknown origins get no
+// ACAO header (same-origin still works, cross-origin JS is blocked).
+function setCors(req, res) {
+  const o = req.headers.origin;
+  if (o && ALLOWED_ORIGINS.has(o)) {
+    res.setHeader('Access-Control-Allow-Origin', o);
+    res.setHeader('Vary', 'Origin');
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+}
 
 function send(res, status, body) {
-  const json = JSON.stringify(body);
-  res.writeHead(status, {
-    'Content-Type': 'application/json',
-    'Cache-Control': 'no-store',
-    // Same-origin in prod; permissive so the dev server (:4321) can call the API (:8787).
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, PATCH, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  });
-  res.end(json);
+  res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+  res.end(JSON.stringify(body));
 }
 
 function authed(req) {
   if (!TOKEN) return false;
-  const h = req.headers['authorization'] || '';
-  const m = h.match(/^Bearer\s+(.+)$/i);
-  return !!m && m[1] === TOKEN;
+  const m = (req.headers['authorization'] || '').match(/^Bearer\s+(.+)$/i);
+  if (!m) return false;
+  // Constant-time compare (avoids a token-length/timing side-channel).
+  const a = Buffer.from(m[1]), b = Buffer.from(TOKEN);
+  return a.length === b.length && timingSafeEqual(a, b);
 }
 
 function readBody(req) {
@@ -41,7 +52,7 @@ function readBody(req) {
     let data = '';
     req.on('data', (c) => {
       data += c;
-      if (data.length > 1e6) reject(new Error('body too large')); // hard cap
+      if (data.length > 1e6) { req.destroy(); reject(new Error('body too large')); } // hard cap — stop buffering
     });
     req.on('end', () => {
       if (!data) return resolve({});
@@ -54,9 +65,12 @@ function readBody(req) {
 const isFiniteNum = (v) => typeof v === 'number' && Number.isFinite(v);
 const inLat = (v) => isFiniteNum(v) && v >= -90 && v <= 90;
 const inLon = (v) => isFiniteNum(v) && v >= -180 && v <= 180;
+// Keep only safe image basenames — these get interpolated into the map popups.
+const cleanPhotos = (arr) => (Array.isArray(arr) ? arr.filter((f) => typeof f === 'string' && SAFE_FILE.test(f)) : []);
 
 const server = createServer(async (req, res) => {
   try {
+    setCors(req, res);
     const url = new URL(req.url, 'http://localhost');
     const path = url.pathname.replace(/\/$/, '') || '/';
 
@@ -94,7 +108,7 @@ const server = createServer(async (req, res) => {
         location: body.location ?? null, notes: body.notes ?? null,
         added: new Date().toISOString().slice(0, 10),
         plant: body.plant ?? null, lon: body.lon, lat: body.lat,
-        photos: Array.isArray(body.photos) ? body.photos : [],
+        photos: cleanPhotos(body.photos),
         updated: new Date().toISOString().slice(0, 10),
       });
       return send(res, 201, { ok: true, spot });
@@ -102,7 +116,9 @@ const server = createServer(async (req, res) => {
 
     return send(res, 404, { error: 'not found' });
   } catch (err) {
-    return send(res, 400, { error: String(err.message || err) });
+    // Log details server-side; return a generic message so we don't leak internals.
+    console.error('api error:', err);
+    return send(res, 400, { error: 'bad request' });
   }
 });
 

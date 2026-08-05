@@ -69,6 +69,9 @@ export function getDb() {
   _db = new Database(DB_PATH);
   _db.pragma('journal_mode = WAL');
   _db.pragma('foreign_keys = ON');
+  // Wait (don't immediately throw SQLITE_BUSY) if another process holds the write
+  // lock — e.g. a field save landing during the nightly rebuild or the backup.
+  _db.pragma('busy_timeout = 5000');
   _db.exec(SCHEMA);
   return _db;
 }

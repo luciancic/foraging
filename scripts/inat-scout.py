@@ -3,8 +3,8 @@
 bounding box, keep only species in the curated forage table below, and emit a
 GeoJSON of "scouting" pins (unverified leads to go check in person).
 
-This is NOT the source of truth for the map — public/data/foraging-spots.geojson
-is. This produces a *separate*, deliberately-distinct layer.
+This is NOT the source of truth for the map — the SQLite data layer (served via
+/api/pins) is. This produces a *separate*, deliberately-distinct layer.
 
 Usage:
   scripts/inat-scout.py --bbox SWLAT SWLNG NELAT NELNG \
@@ -120,8 +120,8 @@ def main():
     fc = {"type": "FeatureCollection", "name": "scouting-spots",
           "note": (f"UNVERIFIED scouting leads for '{a.name}', generated from iNaturalist "
                    "research-grade observations by scripts/inat-scout.py. NOT the source of "
-                   "truth — that is foraging-spots.geojson. Each pin is a lead to go confirm "
-                   "in person; once confirmed, promote it into foraging-spots.geojson."),
+                   "truth — that is the SQLite DB. Each pin is a lead to go confirm in "
+                   "person; once confirmed, promote it into a real pin via POST /api/pins."),
           "features": feats}
     with open(a.out, "w") as f:
         json.dump(fc, f, indent=2, ensure_ascii=False)

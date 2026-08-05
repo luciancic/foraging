@@ -1,6 +1,7 @@
 ---
-// Renders public/data/foraging-spots.geojson with Leaflet, entirely client-side.
-// The GeoJSON is the source of truth for map pins (edit it in-repo).
+// Client-side Leaflet map. Pins load live from the /api/pins data API (the SQLite
+// DB is the source of truth), falling back to the build-time static export at
+// /data/foraging-spots.geojson if the API is unreachable.
 // `fullscreen` makes the map fill the viewport below the header (map page);
 // otherwise it's a boxed embed (home page).
 interface Props { fullscreen?: boolean; }
@@ -33,6 +34,13 @@ const { fullscreen = false } = Astro.props;
     snack: 'Snackable', prep: 'Needs prep', caution: 'Caution — lookalike', avoid: 'Toxic — avoid',
   };
   const TIER_ORDER = ['snack', 'prep', 'caution', 'avoid'];
+
+  // Popups are built as HTML strings, so any text that originates from the DB
+  // (pin fields) or third parties (iNaturalist usernames on scouting pins) must be
+  // escaped before interpolation. `seg` makes a value safe inside an href/src path.
+  const esc = (s: any) => String(s ?? '').replace(/[&<>"']/g, (c) =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } as Record<string, string>)[c]);
+  const seg = (s: any) => encodeURIComponent(String(s ?? ''));
 
   function pinIcon(color: string) {
     const svg =
@@ -339,17 +347,17 @@ const { fullscreen = false } = Astro.props;
           }
           const photos: string[] = Array.isArray(p.photos) ? p.photos : [];
           const imgs = photos
-            .map((f) => `<a href="/photos/spots/${f}" target="_blank" rel="noopener"><img src="/photos/spots/${f}" alt="${p.name || ''}" loading="lazy" /></a>`)
+            .map((f) => `<a href="/photos/spots/${seg(f)}" target="_blank" rel="noopener"><img src="/photos/spots/${seg(f)}" alt="${esc(p.name)}" loading="lazy" /></a>`)
             .join('');
           lyr.bindPopup(
             `<div class="p-pop">` +
-              `<h3>${p.name || 'Spot'}</h3>` +
-              (p.species ? `<div class="p-sci">${p.species}</div>` : '') +
-              (p.season ? `<div class="p-meta">🗓 ${p.season}</div>` : '') +
-              (p.location ? `<div class="p-meta">📍 ${p.location}</div>` : '') +
-              (p.notes ? `<div class="p-meta">${p.notes}</div>` : '') +
+              `<h3>${esc(p.name) || 'Spot'}</h3>` +
+              (p.species ? `<div class="p-sci">${esc(p.species)}</div>` : '') +
+              (p.season ? `<div class="p-meta">🗓 ${esc(p.season)}</div>` : '') +
+              (p.location ? `<div class="p-meta">📍 ${esc(p.location)}</div>` : '') +
+              (p.notes ? `<div class="p-meta">${esc(p.notes)}</div>` : '') +
               imgs +
-              (p.plant ? `<a class="p-guide" href="/plants/${p.plant}">View plant guide →</a>` : '') +
+              (p.plant ? `<a class="p-guide" href="/plants/${seg(p.plant)}">View plant guide →</a>` : '') +
             `</div>`,
             // Keep popups compact so they never overflow the viewport; the inner
             // content scrolls if long, and Leaflet pans to keep it in view.
@@ -375,7 +383,7 @@ const { fullscreen = false } = Astro.props;
         const label = match?.properties?.species || match?.properties?.name || plantFilter;
         const n = layer.getLayers().length;
         filterEl.innerHTML =
-          `<span>Showing ${n} spot${n === 1 ? '' : 's'} for <strong>${label}</strong>.</span>` +
+          `<span>Showing ${n} spot${n === 1 ? '' : 's'} for <strong>${esc(label)}</strong>.</span>` +
           `<a href="/map">Show all spots →</a>`;
         filterEl.hidden = false;
       }
@@ -387,7 +395,7 @@ const { fullscreen = false } = Astro.props;
       if (legend) {
         legend.innerHTML = [...usedCats]
           .sort()
-          .map((c) => `<span><i class="dot" style="background:${CAT_COLORS[c] || CAT_COLORS.other}"></i>${c}</span>`)
+          .map((c) => `<span><i class="dot" style="background:${CAT_COLORS[c] || CAT_COLORS.other}"></i>${esc(c)}</span>`)
           .join('');
       }
     })
@@ -426,13 +434,13 @@ const { fullscreen = false } = Astro.props;
     const tier = p.tier || 'snack';
     return (
       `<div class="p-pop">` +
-        `<h3>${p.name || 'Observation'}</h3>` +
-        (p.species ? `<div class="p-sci">${p.species}</div>` : '') +
-        `<div class="p-tier tier-${tier}">${TIER_LABEL[tier] || tier}</div>` +
-        (p.notes ? `<div class="p-meta">${p.notes}</div>` : '') +
-        (p.observed ? `<div class="p-meta p-obs">🔍 iNat obs ${p.observed}${p.observer ? ' · @' + p.observer : ''}${p.obscured ? ' · ⚠ location obscured' : ''}</div>` : '') +
-        `<a class="p-guide" href="${p.inat}" target="_blank" rel="noopener">View on iNaturalist →</a>` +
-        (p.plant ? `<a class="p-guide" href="/plants/${p.plant}">View plant guide →</a>` : '') +
+        `<h3>${esc(p.name) || 'Observation'}</h3>` +
+        (p.species ? `<div class="p-sci">${esc(p.species)}</div>` : '') +
+        `<div class="p-tier tier-${esc(tier)}">${TIER_LABEL[tier] || esc(tier)}</div>` +
+        (p.notes ? `<div class="p-meta">${esc(p.notes)}</div>` : '') +
+        (p.observed ? `<div class="p-meta p-obs">🔍 iNat obs ${esc(p.observed)}${p.observer ? ' · @' + esc(p.observer) : ''}${p.obscured ? ' · ⚠ location obscured' : ''}</div>` : '') +
+        (/^https?:\/\//i.test(p.inat || '') ? `<a class="p-guide" href="${esc(p.inat)}" target="_blank" rel="noopener">View on iNaturalist →</a>` : '') +
+        (p.plant ? `<a class="p-guide" href="/plants/${seg(p.plant)}">View plant guide →</a>` : '') +
         `<button type="button" class="scout-hide" data-hide="${id}">✕ Hide this pin</button>` +
       `</div>`
     );

@@ -31,10 +31,16 @@ TARBALL="/tmp/foraging-content-${TS}.tar.gz"
 # always backed up. We deliberately do NOT run db-export here — that would mutate
 # the git-tracked db/seed.json and leave the prod working tree perpetually dirty.
 # Refreshing the committed snapshot is a separate, deliberate step (`npm run db:export`).
+# Fold the WAL into the main DB file so the tarred data/foraging.db is
+# self-consistent — committed-but-not-yet-checkpointed rows live in the -wal file.
+if [ -f "$REPO_DIR/data/foraging.db" ]; then
+  ( cd "$REPO_DIR" && node -e "const D=require('better-sqlite3');const db=new D('data/foraging.db');db.pragma('wal_checkpoint(TRUNCATE)');db.close()" ) || true
+fi
+
 echo "==> Snapshotting data → $TARBALL"
 # Only tar paths that exist (data/ is absent on a fresh checkout before db:init).
 PATHS=()
-for p in db/seed.json data/foraging.db src/content public/data/foraging-spots.geojson public/photos public/images; do
+for p in db/seed.json data/foraging.db public/photos public/images; do
   [ -e "$REPO_DIR/$p" ] && PATHS+=("$p")
 done
 tar -czf "$TARBALL" -C "$REPO_DIR" "${PATHS[@]}"
@@ -65,7 +71,6 @@ print("  uploaded", key)
 mirror = [
     ("db/seed.json", "assets/db/seed.json"),
     ("data/foraging.db", "assets/data/foraging.db"),
-    ("public/data/foraging-spots.geojson", "assets/data/foraging-spots.geojson"),
 ]
 for d in ("public/photos/spots", "public/images/plants"):
     ad = os.path.join(repo, d)
