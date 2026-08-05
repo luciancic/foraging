@@ -203,19 +203,74 @@ const { fullscreen = false } = Astro.props;
   // the spots that link back to it (properties.plant === slug).
   const plantFilter = new URLSearchParams(location.search).get('plant');
 
-  fetch('/data/foraging-spots.geojson?t=' + Date.now(), { cache: 'no-store' })
-    .then((r) => r.json())
+  // ── Edit mode (?edit=1) ─────────────────────────────────────────────────
+  // Pins become draggable so you can correct a spot whose photo-geolocation
+  // landed it in the wrong place (the far side of a fence, etc.). Dropping a pin
+  // PATCHes the live API, which persists it to the DB — no rebuild, shows for
+  // everyone on the next load. Writes need the edit token (stored per-device).
+  const editMode = new URLSearchParams(location.search).get('edit') === '1';
+  const TOKEN_KEY = 'forage.editToken';
+  const getToken = () => { try { return localStorage.getItem(TOKEN_KEY) || ''; } catch { return ''; } };
+  const setToken = (t: string) => { try { localStorage.setItem(TOKEN_KEY, t); } catch {} };
+  const clearToken = () => { try { localStorage.removeItem(TOKEN_KEY); } catch {} };
+  function ensureToken(): string {
+    let t = getToken();
+    if (!t) {
+      const entered = window.prompt('Enter your edit token to save pin moves:');
+      if (entered) { t = entered.trim(); setToken(t); }
+    }
+    return t;
+  }
+
+  async function saveMove(id: number, marker: any, origin: any) {
+    const token = ensureToken();
+    if (!token) { marker.setLatLng(origin); flash('No token — move not saved.'); return; }
+    const { lat, lng } = marker.getLatLng();
+    flash('Saving…', true);
+    try {
+      const r = await fetch('/api/pins/' + id, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ lon: +lng.toFixed(6), lat: +lat.toFixed(6) }),
+      });
+      if (r.status === 401) { clearToken(); marker.setLatLng(origin); flash('Edit token rejected — moved back. Drag again to re-enter it.', true); return; }
+      if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.error || ('HTTP ' + r.status)); }
+      flash('Saved ✓');
+    } catch (err: any) {
+      marker.setLatLng(origin);
+      flash('Save failed (' + (err?.message || err) + ') — moved back.');
+    }
+  }
+
+  // Pins load live from the API; fall back to the build-time static export if the
+  // API is unreachable, so the map still renders when the service is down.
+  async function loadSpots() {
+    try {
+      const r = await fetch('/api/pins', { cache: 'no-store' });
+      if (r.ok) return await r.json();
+    } catch {}
+    const r = await fetch('/data/foraging-spots.geojson?t=' + Date.now(), { cache: 'no-store' });
+    return r.json();
+  }
+
+  loadSpots()
     .then((geo) => {
+      if (editMode) flash('✎ Edit mode — drag any pin to its real spot; it saves automatically.', true);
       const layer = L.geoJSON(geo, {
         filter: (feature) =>
           !plantFilter || feature.properties?.plant === plantFilter,
         pointToLayer: (feature, latlng) => {
           const cat = feature.properties?.category || 'other';
           usedCats.add(cat);
-          return L.marker(latlng, { icon: pinIcon(CAT_COLORS[cat] || CAT_COLORS.other) });
+          return L.marker(latlng, { icon: pinIcon(CAT_COLORS[cat] || CAT_COLORS.other), draggable: editMode });
         },
         onEachFeature: (feature, lyr) => {
           const p = feature.properties || {};
+          if (editMode && typeof feature.id === 'number') {
+            let origin: any = null;
+            lyr.on('dragstart', () => { origin = lyr.getLatLng(); });
+            lyr.on('dragend', () => saveMove(feature.id as number, lyr, origin));
+          }
           const photos: string[] = Array.isArray(p.photos) ? p.photos : [];
           const imgs = photos
             .map((f) => `<a href="/photos/spots/${f}" target="_blank" rel="noopener"><img src="/photos/spots/${f}" alt="${p.name || ''}" loading="lazy" /></a>`)

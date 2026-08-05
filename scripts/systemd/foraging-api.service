@@ -1,0 +1,18 @@
+[Unit]
+Description=Foraging map data API — live pin reads/writes from the SQLite data layer
+After=network-online.target
+
+[Service]
+Type=simple
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+Environment=FORAGING_API_PORT=8787
+# Holds FORAGING_EDIT_TOKEN. Optional (leading '-'): if absent the API still runs
+# but refuses writes (read-only) rather than crash-looping. install.sh creates it.
+EnvironmentFile=-%h/.config/foraging/foraging.env
+WorkingDirectory=%h/foraging
+ExecStart=/usr/bin/node %h/foraging/server/api.mjs
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=default.target

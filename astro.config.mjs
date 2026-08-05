@@ -1,9 +1,36 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
+import { writeFileSync, mkdirSync } from 'node:fs';
+import { spotsGeoJSON } from './src/lib/db.mjs';
 
-// Static site served by Caddy at https://foraging.condrea.dev
+// Emit the current pins as a static GeoJSON into the build output. The map fetches
+// live pins from /api/pins, but falls back to this file when the API is down — so
+// the static site never hard-depends on the data service being up.
+const exportSpotsFallback = {
+  name: 'export-spots-fallback',
+  hooks: {
+    'astro:build:done': ({ dir }) => {
+      const outDir = new URL('data/', dir);
+      mkdirSync(outDir, { recursive: true });
+      writeFileSync(new URL('foraging-spots.geojson', outDir), JSON.stringify(spotsGeoJSON(), null, 2));
+    },
+  },
+};
+
+// Static site served by Caddy at https://foraging.condrea.dev — plant pages +
+// spot counts render from the SQLite data layer at build time. Live pin reads/
+// writes go through the separate Node API (server/api.mjs), reverse-proxied at /api.
 export default defineConfig({
   site: 'https://foraging.condrea.dev',
   output: 'static',
   build: { format: 'directory' },
+  integrations: [exportSpotsFallback],
+  vite: {
+    // Native module — never bundle it into the SSR build; require it at runtime.
+    ssr: { external: ['better-sqlite3'] },
+    optimizeDeps: { exclude: ['better-sqlite3'] },
+    // Dev: proxy /api → the local API service so the map calls it same-origin,
+    // exactly as it does in prod behind Caddy. Prod Caddy does the same proxy.
+    server: { proxy: { '/api': 'http://localhost:8787' } },
+  },
 });

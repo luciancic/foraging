@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Back up the human-authored content (plant markdown, map GeoJSON, photos) to the
-# personal Storj "foraging" bucket. Git is the primary source of truth; this is an
-# extra offsite copy of the irreplaceable bits (your notes + your photos).
+# Back up the foraging data (SQLite DB + its committed seed snapshot + photos) to
+# the personal Storj "foraging" bucket. The live DB (data/foraging.db) is now the
+# runtime source of truth and is NOT in git, so this offsite copy — plus db/seed.json,
+# refreshed by `npm run db:export` — is the recovery path for field edits.
 #
 # Credentials: reuses the Storj S3 keys already in ~/myclaw/.env (STORJ_ACCESS_KEY_ID /
 # STORJ_SECRET_ACCESS_KEY). Override via a local .env or environment if you prefer.
@@ -26,12 +27,16 @@ export STORJ_BUCKET="${STORJ_BACKUP_BUCKET:-foraging}"
 TS="$(date -u +%Y%m%dT%H%M%SZ)"
 TARBALL="/tmp/foraging-content-${TS}.tar.gz"
 
-echo "==> Snapshotting content → $TARBALL"
-tar -czf "$TARBALL" -C "$REPO_DIR" \
-  src/content \
-  public/data/foraging-spots.geojson \
-  public/photos \
-  public/images
+# Refresh the committed seed from the live DB so the snapshot captures field edits.
+[ -f "$REPO_DIR/data/foraging.db" ] && node "$REPO_DIR/scripts/db-export.mjs" || true
+
+echo "==> Snapshotting data → $TARBALL"
+# Only tar paths that exist (data/ is absent on a fresh checkout before db:init).
+PATHS=()
+for p in db/seed.json data/foraging.db src/content public/data/foraging-spots.geojson public/photos public/images; do
+  [ -e "$REPO_DIR/$p" ] && PATHS+=("$p")
+done
+tar -czf "$TARBALL" -C "$REPO_DIR" "${PATHS[@]}"
 
 echo "==> Uploading to Storj bucket '$STORJ_BUCKET'"
 REPO_DIR="$REPO_DIR" TARBALL="$TARBALL" TS="$TS" python3 - <<'PY'
@@ -55,8 +60,10 @@ key = f"backups/{os.path.basename(tarball)}"
 s3.upload_file(tarball, bucket, key)
 print("  uploaded", key)
 
-# 2) plain mirror of the current photos + geojson (easy to browse/restore individually)
+# 2) plain mirror of the current data + photos (easy to browse/restore individually)
 mirror = [
+    ("db/seed.json", "assets/db/seed.json"),
+    ("data/foraging.db", "assets/data/foraging.db"),
     ("public/data/foraging-spots.geojson", "assets/data/foraging-spots.geojson"),
 ]
 for d in ("public/photos/spots", "public/images/plants"):

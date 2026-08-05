@@ -1,11 +1,11 @@
 ---
-import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import { effectiveStatus, STATUS_LABEL } from '../../lib/season';
 import { spotCount } from '../../lib/spots';
+import { getPlants } from '../../lib/content.mjs';
 
 const order = { 'ripe-now': 0, 'coming-soon': 1, 'year-round': 2, 'note-for-next-year': 3 };
-const plants = (await getCollection('plants'))
+const plants = getPlants()
   .map((p) => ({ ...p, live: effectiveStatus(p.data), spots: spotCount(p.slug) }))
   .sort((a, b) => order[a.live] - order[b.live] || a.data.order - b.data.order || a.data.title.localeCompare(b.data.title));
 ---

@@ -9,13 +9,22 @@
     "build": "astro build",
     "preview": "astro preview",
     "deploy": "bash scripts/deploy.sh",
-    "backup": "bash scripts/backup-storj.sh"
+    "backup": "bash scripts/backup-storj.sh",
+    "db:migrate": "node scripts/db-migrate.mjs",
+    "db:init": "node scripts/db-init.mjs",
+    "db:export": "node scripts/db-export.mjs",
+    "api": "node server/api.mjs"
   },
   "dependencies": {
     "astro": "^4.16.18",
-    "leaflet": "^1.9.4"
+    "better-sqlite3": "^13.0.3",
+    "leaflet": "^1.9.4",
+    "markdown-it": "^15.0.0"
   },
   "devDependencies": {
-    "@types/leaflet": "^1.9.12"
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/leaflet": "^1.9.12",
+    "@types/markdown-it": "^14.1.2",
+    "gray-matter": "^4.0.3"
   }
 }

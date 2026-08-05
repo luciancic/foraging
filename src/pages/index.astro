@@ -1,10 +1,10 @@
 ---
-import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import ForagingMap from '../components/ForagingMap.astro';
 import { effectiveStatus } from '../lib/season';
+import { getPlants } from '../lib/content.mjs';
 
-const plants = (await getCollection('plants'))
+const plants = getPlants()
   .map((p) => ({ ...p, live: effectiveStatus(p.data) }))
   .sort((a, b) => a.data.order - b.data.order);
 const ripeNow = plants.filter((p) => p.live === 'ripe-now');

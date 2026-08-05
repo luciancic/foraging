@@ -1,17 +1,14 @@
 ---
-import { getCollection, type CollectionEntry } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import { effectiveStatus, STATUS_LABEL } from '../../lib/season';
 import { spotCount } from '../../lib/spots';
+import { getPlants } from '../../lib/content.mjs';
 
 export async function getStaticPaths() {
-  const plants = await getCollection('plants');
-  return plants.map((p) => ({ params: { slug: p.slug }, props: { plant: p } }));
+  return getPlants().map((p) => ({ params: { slug: p.slug }, props: { plant: p } }));
 }
 
-type Props = { plant: CollectionEntry<'plants'> };
 const { plant } = Astro.props;
-const { Content } = await plant.render();
 const d = plant.data;
 const live = effectiveStatus(d);
 const statusLabel = STATUS_LABEL;
@@ -46,9 +43,8 @@ const spots = spotCount(plant.slug);
       </div>
     )}
 
-    <div class="prose">
-      <Content />
-    </div>
+    <div class="prose" set:html={plant.bodyHtml} />
+
 
     {d.gallery.length > 0 && (
       <div class="gallery">

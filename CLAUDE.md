@@ -4,24 +4,41 @@ Lucian's personal foraging site: an interactive map of logged foraging spots + a
 urban-edible plant field guide for Montréal. Live at **https://foraging.condrea.dev**.
 
 ## Stack & layout
-- **Astro** static site (Node 22). Build → `dist/`.
-- Plants are Markdown content: `src/content/plants/*.md` (schema `src/content/config.ts`).
-  The frontmatter body is free-form field notes (harvest, prep, recipes).
-- The map is **Leaflet** rendering `public/data/foraging-spots.geojson` client-side —
-  that GeoJSON is the source of truth for pins. `src/components/ForagingMap.astro`.
+- **Astro** static site (Node 22) for pages; a small **live data API** for pins.
+  Build → `dist/`.
+- **Data layer = local SQLite** at `data/foraging.db` (`better-sqlite3`), the runtime
+  source of truth for both `plants` and `spots`. It's mutable live state, so it's
+  **gitignored**; `db/seed.json` is the committed, human-readable snapshot. Access
+  goes through `src/lib/db.mjs` (shared by the Astro build and the Node scripts/API).
+- **Plants** render at **build time** from the DB (`src/lib/content.mjs` — body
+  Markdown → HTML via markdown-it). Content follows git: every deploy re-syncs the
+  `plants` table from `db/seed.json`.
+- **Spots** are served **live** by `server/api.mjs` (`GET /api/pins`, and token-gated
+  `POST`/`PATCH` to add/move) so field edits show without a rebuild. `ForagingMap.astro`
+  fetches `/api/pins`, falling back to a build-time `dist/data/foraging-spots.geojson`
+  export if the API is down. In prod Caddy reverse-proxies `/api/*` → `localhost:8787`.
 - Photos: `public/images/plants/` (ID shots), `public/photos/spots/` (map-pin shots).
 - Status badges ("ripe now" etc.) are **date-driven** from each plant's `ripeStart`/
   `ripeEnd` window — `src/lib/season.ts`. A nightly systemd timer rebuilds so they stay current.
 
 ## Common tasks
-- **Add a plant:** new `.md` in `src/content/plants/` (copy an existing one).
-- **Add a map spot:** edit `public/data/foraging-spots.geojson` (feature = Point `[lon,lat]`
-  + properties `name, category, species, season, location, notes, photos[]`;
-  categories: `tree berries greens herbs nuts mushrooms other`). Add optional `plant`
-  = a plant slug (filename in `src/content/plants/`) to interlink the pin with its
-  guide both ways; leave it out if no guide exists yet. Whether a plant shows as
-  "on map" is derived from these links at build time (`src/lib/spots.ts`) — no flag
-  to maintain on the plant.
+- **Add / edit a plant:** edit its entry in `db/seed.json` (or upsert into the DB and
+  run `npm run db:export` to refresh the snapshot), commit, deploy. `deploy.sh` runs
+  `db:init`, which re-syncs the `plants` table from the seed. Fields mirror the old
+  frontmatter (`title, scientificName, commonNames, category, season, status,
+  ripeStart, ripeEnd, heroImage, gallery, idCues, safety, guides, order, updated`)
+  plus a free-form Markdown `body`.
+- **Add a map spot:** `POST /api/pins` with the edit token (Point via `lon`/`lat` +
+  `name, category, species, season, location, notes, plant, photos[]`; categories:
+  `tree berries greens herbs nuts mushrooms other`). This writes to the live DB —
+  spots are NOT re-seeded on deploy, so don't hand-edit them in `seed.json` and expect
+  propagation. `plant` = a plant slug interlinks the pin with its guide both ways;
+  "on map" on a plant page is derived from these links at build time (`src/lib/spots.ts`).
+- **Move a pin (fix bad photo-geolocation):** open `/map?edit=1`, drag the pin, drop
+  it — it PATCHes `/api/pins/:id` and persists live. Needs the edit token (stored
+  per-device in `localStorage`; the value is in `~/.config/foraging/foraging.env`).
+- **Snapshot live edits back to git:** `npm run db:export` (DB → `db/seed.json`);
+  the Storj backup does this automatically. Commit the seed to keep git history.
 - **Better photos:** replace files in `public/images/plants/`.
 - **Scout a mission area (iNaturalist leads):** `public/data/scouting-spots.geojson`
   is a *separate, unverified* pin class (distinct tier-coloured circles vs. the
@@ -31,15 +48,22 @@ urban-edible plant field guide for Montréal. Live at **https://foraging.condrea
   the script's curated `FORAGE` table (tier = snack/prep/caution/avoid + a how-to
   note + optional guide slug). The map shows it under a filter toggle (off by
   default, fullscreen map page only). Confirming a lead in person = promote it
-  into `foraging-spots.geojson` as a real pin. Extend `FORAGE` when ranging into
+  into a real pin via `POST /api/pins`. Extend `FORAGE` when ranging into
   new species; iNat gives *where*, the table gives *edible/how*.
 
 ## Deploy & backup (this VPS)
-- Served by Caddy from `/srv/foraging`. `scripts/deploy.sh` = rebuild + publish;
-  `scripts/install.sh` = first-time / post-wipe (Caddy block + nightly timer + deploy).
+- Served by Caddy from `/srv/foraging` (static) + a reverse-proxy `/api/*` →
+  `localhost:8787` (the `foraging-api` systemd user service running `server/api.mjs`).
+- `scripts/deploy.sh` = `db:init` (sync plants; keep live spots) + build + publish +
+  restart the API. `scripts/install.sh` = first-time / post-wipe: Caddy block, edit
+  token (`~/.config/foraging/foraging.env`, generated + printed once), nightly rebuild
+  timer, the API service, DB seed, then deploy.
 - `scripts/backup-storj.sh` → personal Storj `foraging` bucket (reuses the Storj creds
-  in `~/myclaw/.env`; no separate credentials). Git is the primary source of truth.
-- VPS is wipeable — everything needed to rebuild lives in this repo.
+  in `~/myclaw/.env`); backs up `data/foraging.db` + `db/seed.json` + photos. Git holds
+  the code + `db/seed.json` snapshot; the **live DB is only in the backup**, not git.
+- VPS is wipeable: `install.sh` rebuilds the DB from the committed `db/seed.json` (or
+  restore `data/foraging.db` from the Storj backup to recover field edits since the
+  last `db:export`).
 
 ## Conventions
 - Verify UI changes in a real browser before claiming they work (Playwright lives in

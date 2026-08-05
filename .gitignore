@@ -1,6 +1,9 @@
 node_modules/
 dist/
 .astro/
+# Live SQLite database — runtime source of truth, not committed.
+# db/seed.json is the committed snapshot; restore/rebuild from it.
+data/
 .env
 .DS_Store
 npm-debug.log*
