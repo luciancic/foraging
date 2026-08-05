@@ -27,9 +27,10 @@ export STORJ_BUCKET="${STORJ_BACKUP_BUCKET:-foraging}"
 TS="$(date -u +%Y%m%dT%H%M%SZ)"
 TARBALL="/tmp/foraging-content-${TS}.tar.gz"
 
-# Refresh the committed seed from the live DB so the snapshot captures field edits.
-[ -f "$REPO_DIR/data/foraging.db" ] && node "$REPO_DIR/scripts/db-export.mjs" || true
-
+# The live DB (data/foraging.db) is captured directly below, so field edits are
+# always backed up. We deliberately do NOT run db-export here — that would mutate
+# the git-tracked db/seed.json and leave the prod working tree perpetually dirty.
+# Refreshing the committed snapshot is a separate, deliberate step (`npm run db:export`).
 echo "==> Snapshotting data → $TARBALL"
 # Only tar paths that exist (data/ is absent on a fresh checkout before db:init).
 PATHS=()

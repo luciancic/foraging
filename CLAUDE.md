@@ -37,8 +37,10 @@ urban-edible plant field guide for Montréal. Live at **https://foraging.condrea
 - **Move a pin (fix bad photo-geolocation):** open `/map?edit=1`, drag the pin, drop
   it — it PATCHes `/api/pins/:id` and persists live. Needs the edit token (stored
   per-device in `localStorage`; the value is in `~/.config/foraging/foraging.env`).
-- **Snapshot live edits back to git:** `npm run db:export` (DB → `db/seed.json`);
-  the Storj backup does this automatically. Commit the seed to keep git history.
+- **Snapshot live edits back to git:** `npm run db:export` (DB → `db/seed.json`),
+  then commit. This is a deliberate step — the nightly Storj backup captures the
+  live `data/foraging.db` directly (so field edits are safe) but does NOT touch the
+  git-tracked seed, to avoid a perpetually-dirty prod working tree.
 - **Better photos:** replace files in `public/images/plants/`.
 - **Scout a mission area (iNaturalist leads):** `public/data/scouting-spots.geojson`
   is a *separate, unverified* pin class (distinct tier-coloured circles vs. the

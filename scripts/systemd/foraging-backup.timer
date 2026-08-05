@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily offsite backup of the foraging data to Storj
+
+[Timer]
+# Every morning ~04:10 local (after the 03:40 rebuild). Catch up if the box was off.
+OnCalendar=*-*-* 04:10:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

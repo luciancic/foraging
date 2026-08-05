@@ -69,6 +69,9 @@ else
   echo "   already present: $TOKEN_FILE"
 fi
 
+echo "==> Installing deps (needed before seeding + before the API service starts)"
+( cd "$REPO_DIR" && { [ -f package-lock.json ] && npm ci || npm install; } )
+
 echo "==> Seeding the SQLite DB (create-if-missing from db/seed.json)"
 ( cd "$REPO_DIR" && node scripts/db-init.mjs )
 
@@ -78,12 +81,16 @@ mkdir -p "$HOME/.config/systemd/user"
 cp "$REPO_DIR/scripts/systemd/foraging-rebuild.service" "$HOME/.config/systemd/user/"
 cp "$REPO_DIR/scripts/systemd/foraging-rebuild.timer" "$HOME/.config/systemd/user/"
 cp "$REPO_DIR/scripts/systemd/foraging-api.service" "$HOME/.config/systemd/user/"
+cp "$REPO_DIR/scripts/systemd/foraging-backup.service" "$HOME/.config/systemd/user/"
+cp "$REPO_DIR/scripts/systemd/foraging-backup.timer" "$HOME/.config/systemd/user/"
 export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
 systemctl --user daemon-reload
 systemctl --user enable --now foraging-rebuild.timer
 systemctl --user enable --now foraging-api.service
+systemctl --user enable --now foraging-backup.timer
 echo "   rebuild timer: $(systemctl --user is-enabled foraging-rebuild.timer 2>/dev/null)"
 echo "   api service:   $(systemctl --user is-active foraging-api.service 2>/dev/null)"
+echo "   backup timer:  $(systemctl --user is-enabled foraging-backup.timer 2>/dev/null)"
 
 echo "==> Building + deploying"
 bash "$REPO_DIR/scripts/deploy.sh"

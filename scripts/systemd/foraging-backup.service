@@ -1,0 +1,9 @@
+[Unit]
+Description=Back up the foraging data (SQLite DB + seed snapshot + photos) to Storj
+After=network-online.target
+
+[Service]
+Type=oneshot
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+WorkingDirectory=%h/foraging
+ExecStart=/bin/bash %h/foraging/scripts/backup-storj.sh
