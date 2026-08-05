@@ -56,17 +56,20 @@ const { fullscreen = false } = Astro.props;
     });
   }
 
+  // Scouting pins encode SOURCE by shape, TIER by colour:
+  //   iNaturalist = circle, Falling Fruit = diamond.
   function scoutIcon(color: string) {
     const svg =
       `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">` +
       `<circle cx="10" cy="10" r="7" fill="${color}" fill-opacity="0.85" stroke="#fff" stroke-width="2.5"/></svg>`;
-    return L.divIcon({
-      className: 'scout-pin',
-      html: svg,
-      iconSize: [20, 20],
-      iconAnchor: [10, 10],
-      popupAnchor: [0, -10],
-    });
+    return L.divIcon({ className: 'scout-pin', html: svg, iconSize: [20, 20], iconAnchor: [10, 10], popupAnchor: [0, -10] });
+  }
+
+  function scoutDiamondIcon(color: string) {
+    const svg =
+      `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">` +
+      `<rect x="4.5" y="4.5" width="11" height="11" transform="rotate(45 10 10)" fill="${color}" fill-opacity="0.85" stroke="#fff" stroke-width="2.5"/></svg>`;
+    return L.divIcon({ className: 'scout-pin scout-diamond', html: svg, iconSize: [20, 20], iconAnchor: [10, 10], popupAnchor: [0, -11] });
   }
 
   const mapEl = document.getElementById('map');
@@ -468,135 +471,171 @@ const { fullscreen = false } = Astro.props;
   }
 
   // Locally-hidden scouting pins (e.g. one that turned out to sit in someone's
-  // private garden). Stored as a set of iNat observation ids in localStorage, so
-  // a hide is stable across reloads AND across data regenerations (the id keys
-  // the observation, not an array index). Per-device by nature.
-  function loadHidden(): Set<number> {
-    try { return new Set(JSON.parse(localStorage.getItem('scout.hidden') || '[]')); }
-    catch { return new Set(); }
+  // private garden). Stored as a set of `${source}:${id}` keys in localStorage so
+  // a hide is stable across reloads AND data regenerations, and never collides
+  // between sources. Per-device by nature. Legacy entries were bare iNat obs ids
+  // (numbers) — migrate those to `inat:<n>` on load.
+  function loadHidden(): Set<string> {
+    try {
+      const arr = JSON.parse(localStorage.getItem('scout.hidden') || '[]');
+      return new Set(arr.map((v: any) => (typeof v === 'number' ? 'inat:' + v : String(v))));
+    } catch { return new Set(); }
   }
-  function saveHidden(s: Set<number>) {
+  function saveHidden(s: Set<string>) {
     try { localStorage.setItem('scout.hidden', JSON.stringify([...s])); } catch {}
   }
 
-  function scoutPopup(p: any, id: number) {
+  function scoutPopup(p: any, key: string) {
     const tier = p.tier || 'snack';
+    const isFF = p.source === 'fallingfruit';
     return (
       `<div class="p-pop">` +
         `<h3>${esc(p.name) || 'Observation'}</h3>` +
         (p.species ? `<div class="p-sci">${esc(p.species)}</div>` : '') +
         `<div class="p-tier tier-${esc(tier)}">${TIER_LABEL[tier] || esc(tier)}</div>` +
         (p.notes ? `<div class="p-meta">${esc(p.notes)}</div>` : '') +
-        (p.observed ? `<div class="p-meta p-obs">🔍 iNat obs ${esc(p.observed)}${p.observer ? ' · @' + esc(p.observer) : ''}${p.obscured ? ' · ⚠ location obscured' : ''}</div>` : '') +
-        (/^https?:\/\//i.test(p.inat || '') ? `<a class="p-guide" href="${esc(p.inat)}" target="_blank" rel="noopener">View on iNaturalist →</a>` : '') +
+        (!isFF && p.observed ? `<div class="p-meta p-obs">🔍 iNat obs ${esc(p.observed)}${p.observer ? ' · @' + esc(p.observer) : ''}${p.obscured ? ' · ⚠ location obscured' : ''}</div>` : '') +
+        (isFF ? `<div class="p-meta p-obs">◆ Falling Fruit · community spot</div>` : '') +
+        (!isFF && /^https?:\/\//i.test(p.inat || '') ? `<a class="p-guide" href="${esc(p.inat)}" target="_blank" rel="noopener">View on iNaturalist →</a>` : '') +
+        (isFF && /^https?:\/\//i.test(p.ff || '') ? `<a class="p-guide" href="${esc(p.ff)}" target="_blank" rel="noopener">View on Falling Fruit →</a>` : '') +
         (p.plant ? `<a class="p-guide" href="/plants/${seg(p.plant)}">View plant guide →</a>` : '') +
-        `<button type="button" class="scout-hide" data-hide="${id}">✕ Hide this pin</button>` +
+        `<button type="button" class="scout-hide" data-hide="${esc(key)}">✕ Hide this pin</button>` +
       `</div>`
     );
   }
 
   function initScouting() {
-    fetch('/data/scouting-spots.geojson?t=' + Date.now(), { cache: 'no-store' })
-      .then((r) => (r.ok ? r.json() : Promise.reject('no scouting data')))
-      .then((geo) => {
-        const groups: Record<string, any> = {};
-        for (const t of TIER_ORDER) groups[t] = L.layerGroup();
-        const tiersPresent = new Set<string>();
-        const hidden = loadHidden();
-        // Every marker kept by id+tier so we can hide/unhide without a reload.
-        const records: Array<{ id: number; tier: string; marker: any }> = [];
+    // Scouting sources: shape encodes provenance (circle vs diamond), colour the
+    // tier. Each is an independent, separately-toggled layer; tier filters + Hide
+    // apply across both. `legacyOn` maps the old single `scout.on` pref onto iNat.
+    // Declared here (not module scope) so it initialises when the function runs —
+    // initScouting() is invoked earlier in the script than this point.
+    const SCOUT_SOURCES = [
+      { key: 'inat', label: 'iNaturalist', glyph: '●', tag: 'research-grade · unverified',
+        url: '/data/scouting-spots.geojson', icon: scoutIcon, legacyOn: true },
+      { key: 'ff', label: 'Falling Fruit', glyph: '◆', tag: 'community · CC BY-NC-SA',
+        url: '/data/falling-fruit.geojson', icon: scoutDiamondIcon, legacyOn: false },
+    ];
+    const hidden = loadHidden();
+    // groups[srcKey][tier] = LayerGroup; records track every marker for hide/show.
+    const groups: Record<string, Record<string, any>> = {};
+    const present: Record<string, Set<string>> = {};
+    const records: Array<{ srcKey: string; key: string; tier: string; marker: any }> = [];
 
-        (geo.features || []).forEach((f: any, i: number) => {
-          const p = f.properties || {};
-          const tier = p.tier || 'snack';
-          if (!groups[tier]) return;
-          tiersPresent.add(tier);
-          const id = typeof f.id === 'number' ? f.id : i;
-          const [lon, lat] = f.geometry.coordinates;
-          const marker = L.marker([lat, lon], { icon: scoutIcon(TIER_COLORS[tier] || '#7a7a7a') })
-            .bindPopup(scoutPopup(p, id), { maxWidth: 244, minWidth: 200, maxHeight: 300, autoPan: true, keepInView: true });
-          records.push({ id, tier, marker });
-          if (!hidden.has(id)) groups[tier].addLayer(marker);
-        });
-        if (!tiersPresent.size) return;
+    Promise.all(SCOUT_SOURCES.map(async (src) => {
+      let geo: any;
+      try {
+        const r = await fetch(src.url + '?t=' + Date.now(), { cache: 'no-store' });
+        if (!r.ok) return;
+        geo = await r.json();
+      } catch { return; }
+      groups[src.key] = {};
+      present[src.key] = new Set();
+      for (const t of TIER_ORDER) groups[src.key][t] = L.layerGroup();
+      (geo.features || []).forEach((f: any, i: number) => {
+        const p = f.properties || {};
+        const tier = p.tier || 'snack';
+        if (!groups[src.key][tier]) return;
+        present[src.key].add(tier);
+        const id = (f.id !== undefined && f.id !== null) ? f.id : `${src.key}${i}`;
+        const key = `${src.key}:${id}`;
+        const [lon, lat] = f.geometry.coordinates;
+        const marker = L.marker([lat, lon], { icon: src.icon(TIER_COLORS[tier] || '#7a7a7a') })
+          .bindPopup(scoutPopup(p, key), { maxWidth: 244, minWidth: 200, maxHeight: 300, autoPan: true, keepInView: true });
+        records.push({ srcKey: src.key, key, tier, marker });
+        if (!hidden.has(key)) groups[src.key][tier].addLayer(marker);
+      });
+    })).then(() => {
+      const div = panelScoutEl;
+      if (!div) return; // not the fullscreen map — nothing to draw into
+      const liveSources = SCOUT_SOURCES.filter((s) => present[s.key]?.size);
+      if (!liveSources.length) return;
+      div.hidden = false;
 
-        // Live, mutable UI state — read by apply() on every change; persisted.
-        const state = { master: loadPref('scout.on', false), tier: {} as Record<string, boolean> };
-        for (const t of TIER_ORDER) state.tier[t] = loadPref('scout.tier.' + t, true);
+      // Per-source master toggles (persisted); shared per-tier filters.
+      const state = { master: {} as Record<string, boolean>, tier: {} as Record<string, boolean> };
+      for (const s of SCOUT_SOURCES) {
+        const fallback = s.legacyOn ? loadPref('scout.on', false) : false;
+        state.master[s.key] = loadPref('scout.on.' + s.key, fallback);
+      }
+      for (const t of TIER_ORDER) state.tier[t] = loadPref('scout.tier.' + t, true);
 
-        const apply = () => {
+      const apply = () => {
+        for (const s of liveSources) {
           for (const t of TIER_ORDER) {
-            if (!tiersPresent.has(t)) continue;
-            const show = state.master && state.tier[t];
-            if (show && !map.hasLayer(groups[t])) groups[t].addTo(map);
-            else if (!show && map.hasLayer(groups[t])) map.removeLayer(groups[t]);
+            if (!present[s.key].has(t)) continue;
+            const g = groups[s.key][t];
+            const show = state.master[s.key] && state.tier[t];
+            if (show && !map.hasLayer(g)) g.addTo(map);
+            else if (!show && map.hasLayer(g)) map.removeLayer(g);
           }
-        };
+        }
+      };
+      apply();
+
+      let renderCtl = () => {};
+      const hidePin = (key: string) => {
+        const rec = records.find((r) => r.key === key);
+        if (!rec) return;
+        hidden.add(key);
+        saveHidden(hidden);
+        groups[rec.srcKey][rec.tier].removeLayer(rec.marker);
+        map.closePopup();
+        renderCtl();
+      };
+      const unhideAll = () => {
+        for (const rec of records) if (hidden.has(rec.key)) groups[rec.srcKey][rec.tier].addLayer(rec.marker);
+        hidden.clear();
+        saveHidden(hidden);
         apply();
+        renderCtl();
+      };
+      // Popups are HTML strings — wire their Hide button when the popup opens.
+      map.on('popupopen', (e: any) => {
+        const btn = e.popup.getElement()?.querySelector('.scout-hide');
+        if (btn) btn.addEventListener('click', () => hidePin(String(btn.dataset.hide)), { once: true });
+      });
 
-        let renderCtl = () => {};
-        const hidePin = (id: number) => {
-          const rec = records.find((r) => r.id === id);
-          if (!rec) return;
-          hidden.add(id);
-          saveHidden(hidden);
-          groups[rec.tier].removeLayer(rec.marker);
-          map.closePopup();
-          renderCtl();
-        };
-        const unhideAll = () => {
-          for (const rec of records) if (hidden.has(rec.id)) groups[rec.tier].addLayer(rec.marker);
-          hidden.clear();
-          saveHidden(hidden);
-          apply();
-          renderCtl();
-        };
-        // Popups are HTML strings — wire their Hide button when the popup opens.
-        map.on('popupopen', (e: any) => {
-          const btn = e.popup.getElement()?.querySelector('.scout-hide');
-          if (btn) btn.addEventListener('click', () => hidePin(Number(btn.dataset.hide)), { once: true });
-        });
+      const tiersShown = TIER_ORDER.filter((t) => records.some((r) => r.tier === t));
+      const tierCount = (t: string) => records.filter((r) => r.tier === t && !hidden.has(r.key)).length;
 
-        // The scouting UI renders into the shared bottom-right layers panel's
-        // scouting section (created by initPanel, alongside the legend).
-        const div = panelScoutEl;
-        if (!div) return; // no panel (not the fullscreen map) — nothing to draw into
-        div.hidden = false;
-        const tiers = TIER_ORDER.filter((t) => tiersPresent.has(t));
-        renderCtl = () => {
-          div.innerHTML =
-            `<h4 class="panel-h">Scouting leads <em>iNat · unverified</em></h4>` +
-            `<label class="scout-master"><input type="checkbox" id="scout-master"${state.master ? ' checked' : ''}>` +
-            `<span>Show on map</span></label>` +
-            `<div class="scout-tiers"${state.master ? '' : ' hidden'} id="scout-tiers">` +
-            tiers.map((t) =>
-              `<label class="scout-tier"><input type="checkbox" data-tier="${t}"${state.tier[t] ? ' checked' : ''}>` +
-              `<i class="dot" style="background:${TIER_COLORS[t]}"></i>${TIER_LABEL[t]} <b>${groups[t].getLayers().length}</b></label>`,
-            ).join('') +
-            (hidden.size ? `<button type="button" class="scout-unhide">↺ Restore ${hidden.size} hidden pin${hidden.size === 1 ? '' : 's'}</button>` : '') +
-            `</div>`;
-          const masterEl = div.querySelector('#scout-master') as HTMLInputElement;
-          const tiersEl = div.querySelector('#scout-tiers') as HTMLElement;
-          masterEl.addEventListener('change', () => {
-            state.master = masterEl.checked;
-            savePref('scout.on', state.master);
-            tiersEl.hidden = !state.master;
+      renderCtl = () => {
+        div.innerHTML =
+          `<h4 class="panel-h">Scouting leads <em>unverified — go confirm</em></h4>` +
+          liveSources.map((s) =>
+            `<label class="scout-master"><input type="checkbox" data-src="${s.key}"${state.master[s.key] ? ' checked' : ''}>` +
+            `<span class="scout-src"><b>${s.glyph} ${s.label}</b><em>${s.tag}</em></span></label>`,
+          ).join('') +
+          `<div class="scout-tiers" id="scout-tiers">` +
+          `<div class="scout-tiers-h">Filter by type</div>` +
+          tiersShown.map((t) =>
+            `<label class="scout-tier"><input type="checkbox" data-tier="${t}"${state.tier[t] ? ' checked' : ''}>` +
+            `<i class="dot" style="background:${TIER_COLORS[t]}"></i>${TIER_LABEL[t]} <b>${tierCount(t)}</b></label>`,
+          ).join('') +
+          (hidden.size ? `<button type="button" class="scout-unhide">↺ Restore ${hidden.size} hidden pin${hidden.size === 1 ? '' : 's'}</button>` : '') +
+          `</div>` +
+          `<p class="scout-attrib">Community spots via <a href="https://fallingfruit.org" target="_blank" rel="noopener">Falling Fruit</a> (CC BY-NC-SA)</p>`;
+        div.querySelectorAll('input[data-src]').forEach((el) => {
+          el.addEventListener('change', () => {
+            const k = (el as HTMLInputElement).dataset.src as string;
+            state.master[k] = (el as HTMLInputElement).checked;
+            savePref('scout.on.' + k, state.master[k]);
             apply();
           });
-          div.querySelectorAll('input[data-tier]').forEach((el) => {
-            el.addEventListener('change', () => {
-              const t = (el as HTMLInputElement).dataset.tier as string;
-              state.tier[t] = (el as HTMLInputElement).checked;
-              savePref('scout.tier.' + t, state.tier[t]);
-              apply();
-            });
+        });
+        div.querySelectorAll('input[data-tier]').forEach((el) => {
+          el.addEventListener('change', () => {
+            const t = (el as HTMLInputElement).dataset.tier as string;
+            state.tier[t] = (el as HTMLInputElement).checked;
+            savePref('scout.tier.' + t, state.tier[t]);
+            apply();
           });
-          const unhideEl = div.querySelector('.scout-unhide');
-          if (unhideEl) unhideEl.addEventListener('click', unhideAll);
-        };
-        renderCtl();
-      })
-      .catch(() => { /* no scouting layer for this deploy */ });
+        });
+        const unhideEl = div.querySelector('.scout-unhide');
+        if (unhideEl) unhideEl.addEventListener('click', unhideAll);
+      };
+      renderCtl();
+    });
   }
 
   window.addEventListener('resize', () => map.invalidateSize());

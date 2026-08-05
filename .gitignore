@@ -3,7 +3,9 @@ dist/
 .astro/
 # Live SQLite database — runtime source of truth, not committed.
 # db/seed.json is the committed snapshot; restore/rebuild from it.
-data/
+# Anchored to repo root so it does NOT also swallow public/data/ (the committed
+# map GeoJSONs live there).
+/data/
 # Photos live in Storj (bucket prefix media/), served by the API — not committed.
 # media-cache/ is the API's local read-through cache of them.
 public/photos/

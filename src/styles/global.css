@@ -230,9 +230,15 @@ body.fullbleed main { flex: 1 1 auto; min-height: 0; display: flex; }
 /* scouting section inside the panel: master toggle + per-tier filter */
 .scout-ctl label { display: flex; align-items: center; gap: 7px; cursor: pointer; }
 .scout-ctl input { margin: 0; flex: none; }
-.scout-master { font-weight: 600; }
+.scout-master { font-weight: 600; align-items: flex-start; margin-top: 6px; }
+.scout-master:first-of-type { margin-top: 0; }
+.scout-master .scout-src { display: flex; flex-direction: column; }
+.scout-master .scout-src b { font-weight: 600; }
 .scout-master em { display: block; font-style: normal; font-weight: 400; font-size: .72rem; color: var(--ink-soft); }
 .scout-tiers { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 5px; }
+.scout-tiers-h { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-soft); }
+.scout-attrib { margin: 8px 0 0; padding-top: 8px; border-top: 1px solid var(--line); font-size: .68rem; color: var(--ink-soft); line-height: 1.4; }
+.scout-attrib a { color: var(--accent, #2f7d4f); }
 .scout-tier { font-size: .8rem; }
 .scout-tier .dot { width: 10px; height: 10px; flex: none; }
 .scout-tier b { margin-left: auto; font-weight: 600; color: var(--ink-soft); font-variant-numeric: tabular-nums; }

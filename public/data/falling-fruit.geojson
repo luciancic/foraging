@@ -1,0 +1,555 @@
+{
+  "type": "FeatureCollection",
+  "name": "falling-fruit",
+  "attribution": "Locations from Falling Fruit (fallingfruit.org), CC BY-NC-SA",
+  "note": "UNVERIFIED community scouting leads for 'Verdun', from the Falling Fruit API (CC BY-NC-SA) via scripts/fallingfruit-scout.py. A SEPARATE source from the iNaturalist scouting layer and from foraging-spots.geojson (the source of truth). Confirm in person before promoting to a real pin.",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "ff2293342",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.566259,
+          45.471439
+        ]
+      },
+      "properties": {
+        "name": "Apple / crabapple",
+        "species": "Malus",
+        "tier": "snack",
+        "notes": "Wild & feral apples/crabapples — taste one; cook the sour crabapples into jelly.",
+        "source": "fallingfruit",
+        "ff": "https://fallingfruit.org/locations/2293342",
+        "plant": "apple"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ff2293343",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.592955,
+          45.45134
+        ]
+      },
+      "properties": {
+        "name": "Apple / crabapple",
+        "species": "Malus",
+        "tier": "snack",
+        "notes": "Wild & feral apples/crabapples — taste one; cook the sour crabapples into jelly.",
+        "source": "fallingfruit",
+        "ff": "https://fallingfruit.org/locations/2293343",
+        "plant": "apple"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ff1758698",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.572631,
+          45.451355
+        ]
+      },
+      "properties": {
+        "name": "Apple / crabapple",
+        "species": "Malus",
+        "tier": "snack",
+        "notes": "Wild & feral apples/crabapples — taste one; cook the sour crabapples into jelly.",
+        "source": "fallingfruit",
+        "ff": "https://fallingfruit.org/locations/1758698",
+        "plant": "apple"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ff1758697",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.58184,
+          45.453867
+        ]
+      },
+      "properties": {
+        "name": "Serviceberry",
+        "species": "Amelanchier",
+        "tier": "snack",
+        "notes": "Sweet blueberry-like pomes in early summer — eat raw off the branch.",
+        "source": "fallingfruit",
+        "ff": "https://fallingfruit.org/locations/1758697",
+        "plant": "serviceberry"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ff1766165",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.576883,
+          45.440988
+        ]
+      },
+      "properties": {
+        "name": "Stinging nettle",
+        "species": "Urtica",
+        "tier": "prep",
+        "notes": "Wear gloves; cook or blanch the young tops to kill the sting. Excellent cooked green.",
+        "source": "fallingfruit",
+        "ff": "https://fallingfruit.org/locations/1766165"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ff1832343",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.559097,
+          45.476596
+        ]
+      },
+      "properties": {
+        "name": "Walnut",
+        "species": "Juglans nigra",
+        "tier": "prep",
+        "notes": "Husk and cure the nuts in fall (the husks stain everything).",
+        "source": "fallingfruit",
+        "ff": "https://fallingfruit.org/locations/1832343"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ff1832342",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.559771,
+          45.47546
+        ]
+      },
+      "properties": {
+        "name": "Serviceberry",
+        "species": "Amelanchier",
+        "tier": "snack",
+        "notes": "Sweet blueberry-like pomes in early summer — eat raw off the branch.",
+        "source": "fallingfruit",
+        "ff": "https://fallingfruit.org/locations/1832342",
+        "plant": "serviceberry"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ff1829785",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.58359,
+          45.436014
+        ]
+      },
+      "properties": {
+        "name": "Thimbleberry",
+        "species": "Rubus parviflorus",
+        "tier": "snack",
+        "notes": "Soft red raspberry-like fruit — eat raw.",
+        "source": "fallingfruit",
+        "ff": "https://fallingfruit.org/locations/1829785"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ff1829782",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.585359,
+          45.435528
+        ]
+      },
+      "properties": {
+        "name": "Horse-chestnut",
+        "species": "Aesculus hippocastanum 'Baumannii'",
+        "tier": "avoid",
+        "notes": "TOXIC — this is NOT the edible sweet chestnut (Castanea). Do not eat the conkers.",
+        "source": "fallingfruit",
+        "ff": "https://fallingfruit.org/locations/1829782"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ff1829381",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.577531,
+          45.443316
+        ]
+      },
+      "properties": {
+        "name": "Pineappleweed",
+        "species": "Matricaria discoidea",
+        "tier": "snack",
+        "notes": "Pineapple-scented flowerheads — steep for tea.",
+        "source": "fallingfruit",
+        "ff": "https://fallingfruit.org/locations/1829381"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ff1829171",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.588707,
+          45.441194
+        ]
+      },
+      "properties": {
+        "name": "St. John's wort",
+        "species": "Hypericum perforatum",
+        "tier": "caution",
+        "notes": "Medicinal, not a food; photosensitizing and interacts with many meds. Learn it, harvest sparingly.",
+        "source": "fallingfruit",
+        "ff": "https://fallingfruit.org/locations/1829171"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ff1829170",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.591613,
+          45.441817
+        ]
+      },
+      "properties": {
+        "name": "Wild strawberry",
+        "species": "Fragaria",
+        "tier": "snack",
+        "notes": "Tiny, intense berries; safe and easy. (Bland mock-strawberry is harmless too.)",
+        "source": "fallingfruit",
+        "ff": "https://fallingfruit.org/locations/1829170"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ff1829169",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.591613,
+          45.441817
+        ]
+      },
+      "properties": {
+        "name": "Wild strawberry",
+        "species": "Fragaria",
+        "tier": "snack",
+        "notes": "Tiny, intense berries; safe and easy. (Bland mock-strawberry is harmless too.)",
+        "source": "fallingfruit",
+        "ff": "https://fallingfruit.org/locations/1829169"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ff1805334",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.575702,
+          45.458722
+        ]
+      },
+      "properties": {
+        "name": "Elderberry",
+        "species": "Sambucus nigra",
+        "tier": "prep",
+        "notes": "Cook the ripe blue-black berries (and elderflowers). Raw berries/stems are mildly toxic; red elder is a different, riskier species.",
+        "source": "fallingfruit",
+        "ff": "https://fallingfruit.org/locations/1805334",
+        "plant": "elderberry"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ff1805333",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.575702,
+          45.458722
+        ]
+      },
+      "properties": {
+        "name": "Elderberry",
+        "species": "Sambucus nigra",
+        "tier": "prep",
+        "notes": "Cook the ripe blue-black berries (and elderflowers). Raw berries/stems are mildly toxic; red elder is a different, riskier species.",
+        "source": "fallingfruit",
+        "ff": "https://fallingfruit.org/locations/1805333",
+        "plant": "elderberry"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ff1805332",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.575702,
+          45.458722
+        ]
+      },
+      "properties": {
+        "name": "Elderberry",
+        "species": "Sambucus nigra",
+        "tier": "prep",
+        "notes": "Cook the ripe blue-black berries (and elderflowers). Raw berries/stems are mildly toxic; red elder is a different, riskier species.",
+        "source": "fallingfruit",
+        "ff": "https://fallingfruit.org/locations/1805332",
+        "plant": "elderberry"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ff1775957",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.565773,
+          45.468457
+        ]
+      },
+      "properties": {
+        "name": "Mulberry",
+        "species": "Morus alba 'Laciniata'",
+        "tier": "snack",
+        "notes": "Ripe near-black berries eat raw; unripe/white ones can upset the stomach.",
+        "source": "fallingfruit",
+        "ff": "https://fallingfruit.org/locations/1775957",
+        "plant": "mulberry"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ff1775830",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.583614,
+          45.473276
+        ]
+      },
+      "properties": {
+        "name": "Serviceberry",
+        "species": "Amelanchier canadensis",
+        "tier": "snack",
+        "notes": "Sweet blueberry-like pomes in early summer — eat raw off the branch.",
+        "source": "fallingfruit",
+        "ff": "https://fallingfruit.org/locations/1775830",
+        "plant": "serviceberry"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ff1775699",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.582531,
+          45.471804
+        ]
+      },
+      "properties": {
+        "name": "Wild onion / garlic",
+        "species": "Allium schoenoprasum",
+        "tier": "caution",
+        "notes": "Edible ONLY if it smells of onion/garlic — no smell means a toxic lookalike (e.g. death camas). Confirm the smell.",
+        "source": "fallingfruit",
+        "ff": "https://fallingfruit.org/locations/1775699"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ff1775508",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.571955,
+          45.458896
+        ]
+      },
+      "properties": {
+        "name": "Apple / crabapple",
+        "species": "Malus",
+        "tier": "snack",
+        "notes": "Wild & feral apples/crabapples — taste one; cook the sour crabapples into jelly.",
+        "source": "fallingfruit",
+        "ff": "https://fallingfruit.org/locations/1775508",
+        "plant": "apple"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ff1775506",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.573459,
+          45.45941
+        ]
+      },
+      "properties": {
+        "name": "Chokecherry",
+        "species": "Prunus virginiana",
+        "tier": "prep",
+        "notes": "Cook only for jelly/syrup — astringent raw and the seeds are cyanogenic. Never eat the pits.",
+        "source": "fallingfruit",
+        "ff": "https://fallingfruit.org/locations/1775506"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ff1775507",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.580067,
+          45.46444
+        ]
+      },
+      "properties": {
+        "name": "Grape",
+        "species": "Vitis vinifera",
+        "tier": "caution",
+        "notes": "Grapes + young leaves edible. Moonseed is a toxic lookalike — grapes have tendrils and several seeds; moonseed has one crescent seed and no tendrils.",
+        "source": "fallingfruit",
+        "ff": "https://fallingfruit.org/locations/1775507"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ff1775505",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.57298,
+          45.45936
+        ]
+      },
+      "properties": {
+        "name": "Chokecherry",
+        "species": "Prunus virginiana",
+        "tier": "prep",
+        "notes": "Cook only for jelly/syrup — astringent raw and the seeds are cyanogenic. Never eat the pits.",
+        "source": "fallingfruit",
+        "ff": "https://fallingfruit.org/locations/1775505"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ff1775347",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.564245,
+          45.454182
+        ]
+      },
+      "properties": {
+        "name": "Apple / crabapple",
+        "species": "Malus domestica 'Granny Smith'",
+        "tier": "snack",
+        "notes": "Wild & feral apples/crabapples — taste one; cook the sour crabapples into jelly.",
+        "source": "fallingfruit",
+        "ff": "https://fallingfruit.org/locations/1775347",
+        "plant": "apple"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ff606080",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.572462,
+          45.466418
+        ]
+      },
+      "properties": {
+        "name": "Apple / crabapple",
+        "species": "Malus",
+        "tier": "snack",
+        "notes": "Wild & feral apples/crabapples — taste one; cook the sour crabapples into jelly.",
+        "source": "fallingfruit",
+        "ff": "https://fallingfruit.org/locations/606080",
+        "plant": "apple"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ff1517859",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.588225,
+          45.428766
+        ]
+      },
+      "properties": {
+        "name": "Rose (hips)",
+        "species": "Rosa",
+        "tier": "snack",
+        "notes": "Rosehips after frost for tea/syrup; strain out the irritating seed hairs.",
+        "source": "fallingfruit",
+        "ff": "https://fallingfruit.org/locations/1517859"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ff1067550",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.582253,
+          45.456376
+        ]
+      },
+      "properties": {
+        "name": "Apple / crabapple",
+        "species": "Malus",
+        "tier": "snack",
+        "notes": "Wild & feral apples/crabapples — taste one; cook the sour crabapples into jelly.",
+        "source": "fallingfruit",
+        "ff": "https://fallingfruit.org/locations/1067550",
+        "plant": "apple"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ff611309",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.56883,
+          45.464932
+        ]
+      },
+      "properties": {
+        "name": "Apple / crabapple",
+        "species": "Malus",
+        "tier": "snack",
+        "notes": "Wild & feral apples/crabapples — taste one; cook the sour crabapples into jelly.",
+        "source": "fallingfruit",
+        "ff": "https://fallingfruit.org/locations/611309",
+        "plant": "apple"
+      }
+    }
+  ]
+}

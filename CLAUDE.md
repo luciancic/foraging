@@ -60,6 +60,18 @@ urban-edible plant field guide for Montréal. Live at **https://foraging.condrea
   default, fullscreen map page only). Confirming a lead in person = promote it
   into a real pin via `POST /api/pins`. Extend `FORAGE` when ranging into
   new species; iNat gives *where*, the table gives *edible/how*.
+- **Second scouting source — Falling Fruit:** `public/data/falling-fruit.geojson`
+  is a parallel scouting class from the community edible-plant map
+  [fallingfruit.org] — regenerate with `scripts/fallingfruit-scout.py --bbox
+  SWLAT SWLNG NELAT NELNG --name "..." --out public/data/falling-fruit.geojson`.
+  Same tier vocabulary + curated `FORAGE` table (keyed by scientific name/genus;
+  uncurated/non-plant types like "Dumpster" are skipped). On the map, **shape
+  encodes source** (iNat = circles, Falling Fruit = diamonds) and **colour the
+  tier**; each source has its own toggle in the layers panel, tier filters + Hide
+  apply across both. Data is **CC BY-NC-SA** — the panel carries a required
+  Falling Fruit attribution and each pin links to its source page; keep both if
+  you touch this. Uses Falling Fruit's public read API key (`AKDJGHSD`, from their
+  own web-app setup docs). Non-commercial use only.
 
 ## Deploy & backup (this VPS)
 - Served by Caddy from `/srv/foraging` (static) + a reverse-proxy for `/api/*`,
