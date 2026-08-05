@@ -361,8 +361,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -73.565274,
-          45.452609
+          -73.564924,
+          45.452560
         ]
       },
       "properties": {
@@ -374,6 +374,30 @@
         "notes": "Confirmed in person Aug 4 (iNat lead promoted). Translucent red berries in hanging clusters on lobed maple-like leaves, thornless — growing on the public/outside edge of the community-garden fence, not inside the plot. Eat raw or cook into jelly. Tart.",
         "added": "2026-08-04",
         "photos": []
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.566467,
+          45.450692
+        ]
+      },
+      "properties": {
+        "name": "Chokecherry (Verdun)",
+        "category": "berries",
+        "species": "chokecherry (Prunus virginiana)",
+        "plant": "chokecherry",
+        "season": "fruit ripe late Jul–Sep (cook)",
+        "location": "Verdun — along the community-garden fence by the path",
+        "notes": "Photographed Aug 4; small dark cherries in long drooping racemes (grape-like clusters) on finely-toothed oval leaves. Ripe now. Cook-and-strain only — astringent raw and the pits are cyanogenic; never eat the stones. Makes a deep-red jelly/syrup.",
+        "added": "2026-08-04",
+        "photos": [
+          "chokecherry-1.jpg",
+          "chokecherry-2.jpg"
+        ]
       }
     }
   ]
