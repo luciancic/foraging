@@ -207,6 +207,49 @@ const { fullscreen = false } = Astro.props;
 
   const usedCats = new Set<string>();
 
+  // ── Layers panel (fullscreen map) ────────────────────────────────────────
+  // One collapsible panel in the bottom-right (thumb reach) holding BOTH the
+  // verified-pin legend and the scouting-leads filter. Collapsed by default so
+  // it doesn't eat the screen; open state persists per-device. loadSpots() fills
+  // the legend section, initScouting() fills the scouting section — both write
+  // into the sections this creates, so it must exist before either runs.
+  let panelLegendEl: HTMLElement | null = null;
+  let panelScoutEl: HTMLElement | null = null;
+
+  function initPanel() {
+    let open = loadPref('panel.open', false);
+    const PanelCtl = L.Control.extend({
+      onAdd: function () {
+        const wrap = L.DomUtil.create('div', 'map-panel' + (open ? ' open' : ''));
+        L.DomEvent.disableClickPropagation(wrap);
+        L.DomEvent.disableScrollPropagation(wrap);
+        wrap.innerHTML =
+          `<button type="button" class="map-panel-toggle" aria-expanded="${open}" aria-label="Map layers & legend">` +
+            `<svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true">` +
+              `<path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" d="M12 3l9 5-9 5-9-5 9-5zM3 12l9 5 9-5M3 16l9 5 9-5"/></svg>` +
+            `<span>Layers</span></button>` +
+          `<div class="map-panel-body"${open ? '' : ' hidden'}>` +
+            `<div class="panel-sec" id="panel-legend" hidden></div>` +
+            `<div class="panel-sec scout-ctl" id="panel-scout" hidden></div>` +
+          `</div>`;
+        const btn = wrap.querySelector('.map-panel-toggle') as HTMLElement;
+        const body = wrap.querySelector('.map-panel-body') as HTMLElement;
+        panelLegendEl = wrap.querySelector('#panel-legend');
+        panelScoutEl = wrap.querySelector('#panel-scout');
+        btn.addEventListener('click', () => {
+          open = !open;
+          savePref('panel.open', open);
+          wrap.classList.toggle('open', open);
+          body.hidden = !open;
+          btn.setAttribute('aria-expanded', String(open));
+        });
+        return wrap;
+      },
+    });
+    new PanelCtl({ position: 'bottomright' }).addTo(map);
+  }
+  if (isFullMap) initPanel();
+
   // Optional ?plant=<slug> filter: a plant page can deep-link here to show only
   // the spots that link back to it (properties.plant === slug).
   const plantFilter = new URLSearchParams(location.search).get('plant');
@@ -391,12 +434,18 @@ const { fullscreen = false } = Astro.props;
       // Re-measure once the container has its final (flex/fullscreen) size.
       setTimeout(() => map.invalidateSize(), 60);
 
-      const legend = document.getElementById('legend');
-      if (legend) {
-        legend.innerHTML = [...usedCats]
-          .sort()
-          .map((c) => `<span><i class="dot" style="background:${CAT_COLORS[c] || CAT_COLORS.other}"></i>${esc(c)}</span>`)
-          .join('');
+      const legendItems = [...usedCats]
+        .sort()
+        .map((c) => `<span><i class="dot" style="background:${CAT_COLORS[c] || CAT_COLORS.other}"></i>${esc(c)}</span>`)
+        .join('');
+      // Fullscreen: the legend lives inside the collapsible bottom-right panel.
+      // Home embed: it stays inline below the map.
+      if (isFullMap && panelLegendEl) {
+        panelLegendEl.innerHTML = `<h4 class="panel-h">Foraging spots</h4><div class="legend">${legendItems}</div>`;
+        panelLegendEl.hidden = false;
+      } else {
+        const legend = document.getElementById('legend');
+        if (legend) legend.innerHTML = legendItems;
       }
     })
     .catch((err) => {
@@ -508,47 +557,44 @@ const { fullscreen = false } = Astro.props;
           if (btn) btn.addEventListener('click', () => hidePin(Number(btn.dataset.hide)), { once: true });
         });
 
-        const Ctl = L.Control.extend({
-          onAdd: function () {
-            const div = L.DomUtil.create('div', 'scout-ctl');
-            L.DomEvent.disableClickPropagation(div);
-            L.DomEvent.disableScrollPropagation(div);
-            const tiers = TIER_ORDER.filter((t) => tiersPresent.has(t));
-            renderCtl = () => {
-              div.innerHTML =
-                `<label class="scout-master"><input type="checkbox" id="scout-master"${state.master ? ' checked' : ''}>` +
-                `<span>Scouting leads <em>iNat · unverified</em></span></label>` +
-                `<div class="scout-tiers"${state.master ? '' : ' hidden'} id="scout-tiers">` +
-                tiers.map((t) =>
-                  `<label class="scout-tier"><input type="checkbox" data-tier="${t}"${state.tier[t] ? ' checked' : ''}>` +
-                  `<i class="dot" style="background:${TIER_COLORS[t]}"></i>${TIER_LABEL[t]} <b>${groups[t].getLayers().length}</b></label>`,
-                ).join('') +
-                (hidden.size ? `<button type="button" class="scout-unhide">↺ Restore ${hidden.size} hidden pin${hidden.size === 1 ? '' : 's'}</button>` : '') +
-                `</div>`;
-              const masterEl = div.querySelector('#scout-master') as HTMLInputElement;
-              const tiersEl = div.querySelector('#scout-tiers') as HTMLElement;
-              masterEl.addEventListener('change', () => {
-                state.master = masterEl.checked;
-                savePref('scout.on', state.master);
-                tiersEl.hidden = !state.master;
-                apply();
-              });
-              div.querySelectorAll('input[data-tier]').forEach((el) => {
-                el.addEventListener('change', () => {
-                  const t = (el as HTMLInputElement).dataset.tier as string;
-                  state.tier[t] = (el as HTMLInputElement).checked;
-                  savePref('scout.tier.' + t, state.tier[t]);
-                  apply();
-                });
-              });
-              const unhideEl = div.querySelector('.scout-unhide');
-              if (unhideEl) unhideEl.addEventListener('click', unhideAll);
-            };
-            renderCtl();
-            return div;
-          },
-        });
-        new Ctl({ position: 'topright' }).addTo(map);
+        // The scouting UI renders into the shared bottom-right layers panel's
+        // scouting section (created by initPanel, alongside the legend).
+        const div = panelScoutEl;
+        if (!div) return; // no panel (not the fullscreen map) — nothing to draw into
+        div.hidden = false;
+        const tiers = TIER_ORDER.filter((t) => tiersPresent.has(t));
+        renderCtl = () => {
+          div.innerHTML =
+            `<h4 class="panel-h">Scouting leads <em>iNat · unverified</em></h4>` +
+            `<label class="scout-master"><input type="checkbox" id="scout-master"${state.master ? ' checked' : ''}>` +
+            `<span>Show on map</span></label>` +
+            `<div class="scout-tiers"${state.master ? '' : ' hidden'} id="scout-tiers">` +
+            tiers.map((t) =>
+              `<label class="scout-tier"><input type="checkbox" data-tier="${t}"${state.tier[t] ? ' checked' : ''}>` +
+              `<i class="dot" style="background:${TIER_COLORS[t]}"></i>${TIER_LABEL[t]} <b>${groups[t].getLayers().length}</b></label>`,
+            ).join('') +
+            (hidden.size ? `<button type="button" class="scout-unhide">↺ Restore ${hidden.size} hidden pin${hidden.size === 1 ? '' : 's'}</button>` : '') +
+            `</div>`;
+          const masterEl = div.querySelector('#scout-master') as HTMLInputElement;
+          const tiersEl = div.querySelector('#scout-tiers') as HTMLElement;
+          masterEl.addEventListener('change', () => {
+            state.master = masterEl.checked;
+            savePref('scout.on', state.master);
+            tiersEl.hidden = !state.master;
+            apply();
+          });
+          div.querySelectorAll('input[data-tier]').forEach((el) => {
+            el.addEventListener('change', () => {
+              const t = (el as HTMLInputElement).dataset.tier as string;
+              state.tier[t] = (el as HTMLInputElement).checked;
+              savePref('scout.tier.' + t, state.tier[t]);
+              apply();
+            });
+          });
+          const unhideEl = div.querySelector('.scout-unhide');
+          if (unhideEl) unhideEl.addEventListener('click', unhideAll);
+        };
+        renderCtl();
       })
       .catch(() => { /* no scouting layer for this deploy */ });
   }

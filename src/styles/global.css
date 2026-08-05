@@ -132,18 +132,11 @@ body.fullbleed main { flex: 1 1 auto; min-height: 0; display: flex; }
 #map { height: min(64vh, 560px); width: 100%; background: #e8eae4; }
 .home-map #map { height: min(56vh, 480px); }
 
-/* map — fullscreen (map page): fills main; legend floats over the map */
+/* map — fullscreen (map page): fills main; the legend + scouting filter live in
+   the collapsible bottom-right layers panel (see .map-panel), not floating loose */
 .map-wrap.full { flex: 1 1 auto; min-height: 0; position: relative; }
 .map-wrap.full .map-shell { flex: 1 1 auto; min-height: 0; height: 100%; border-radius: 0; border: 0; box-shadow: none; }
 .map-wrap.full #map { height: 100%; }
-.map-wrap.full .legend {
-  position: absolute; z-index: 600; margin: 0;
-  left: max(12px, env(safe-area-inset-left));
-  bottom: max(22px, calc(env(safe-area-inset-bottom) + 12px));
-  background: color-mix(in srgb, var(--surface) 92%, transparent);
-  border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px;
-  box-shadow: var(--shadow); backdrop-filter: blur(4px); max-width: calc(100% - 24px);
-}
 
 /* keep Leaflet's own controls (zoom, attribution) out of the notch / home indicator */
 .leaflet-top .leaflet-control { margin-top: max(10px, env(safe-area-inset-top)); }
@@ -166,6 +159,7 @@ body.fullbleed main { flex: 1 1 auto; min-height: 0; display: flex; }
 
 .legend { display: flex; flex-wrap: wrap; gap: 14px; margin: 14px 0 0; font-size: .85rem; color: var(--ink-soft); }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend:empty { display: none; } /* the inline (home) legend collapses when unfilled */
 
 /* "you are here" marker: blue dot */
 .user-loc { position: relative; }
@@ -205,13 +199,35 @@ body.fullbleed main { flex: 1 1 auto; min-height: 0; display: flex; }
 }
 .locate-btn:hover { color: #1a73e8; background: #f4f4f4; }
 
-/* scouting control (fullscreen map): master toggle + per-tier filter */
-.scout-ctl {
+/* ── Layers panel (fullscreen map): collapsible, bottom-right, thumb reach ──
+   One panel holding the verified-pin legend + the scouting-leads filter. A pill
+   toggle (FAB) sits at the bottom; the body expands upward above it (the panel is
+   column-reverse) so the toggle stays low near the thumb. Collapsed by default. */
+.map-panel { display: flex; flex-direction: column-reverse; align-items: flex-end; gap: 8px; }
+.map-panel-toggle {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 9px 14px; font: inherit; font-size: .82rem; font-weight: 600; color: var(--ink);
   background: color-mix(in srgb, var(--surface) 94%, transparent);
-  border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px;
-  box-shadow: var(--shadow); backdrop-filter: blur(4px);
-  font-size: .82rem; color: var(--ink); max-width: 210px; line-height: 1.3;
+  border: 1px solid var(--line); border-radius: 999px;
+  box-shadow: var(--shadow); backdrop-filter: blur(4px); cursor: pointer;
 }
+.map-panel-toggle svg { color: var(--accent, #2f7d4f); }
+.map-panel-toggle:hover { border-color: var(--ink-soft); }
+.map-panel.open .map-panel-toggle { border-radius: 12px; }
+.map-panel-body {
+  width: 210px; max-width: calc(100vw - 24px);
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px;
+  box-shadow: var(--shadow); backdrop-filter: blur(4px);
+  font-size: .82rem; color: var(--ink); line-height: 1.3;
+  max-height: min(60vh, 460px); overflow-y: auto; overscroll-behavior: contain;
+}
+.panel-sec + .panel-sec { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
+.panel-h { margin: 0 0 8px; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-soft); }
+.panel-h em { display: block; text-transform: none; letter-spacing: 0; font-style: normal; font-weight: 400; font-size: .72rem; color: var(--ink-soft); }
+.map-panel .legend { flex-direction: column; flex-wrap: nowrap; gap: 6px; margin: 0; font-size: .8rem; text-transform: capitalize; }
+
+/* scouting section inside the panel: master toggle + per-tier filter */
 .scout-ctl label { display: flex; align-items: center; gap: 7px; cursor: pointer; }
 .scout-ctl input { margin: 0; flex: none; }
 .scout-master { font-weight: 600; }
