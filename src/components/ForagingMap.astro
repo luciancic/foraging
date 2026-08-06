@@ -336,6 +336,36 @@ const { fullscreen = false } = Astro.props;
     return t;
   }
 
+  // A pencil toggle to enter/leave edit mode without hand-editing the URL — shown
+  // only once an edit token is stored on this device, so it never surfaces for
+  // public visitors. Toggling reloads with ?edit set/cleared, which is how edit
+  // mode wires long-press-move + the promote button throughout the script.
+  if (isFullMap && getToken()) {
+    const EditCtl = L.Control.extend({
+      onAdd: function () {
+        const a = L.DomUtil.create('a', 'leaflet-bar edit-btn' + (editMode ? ' active' : ''));
+        a.href = '#';
+        a.title = editMode ? 'Exit edit mode' : 'Edit mode — move pins, promote leads';
+        a.setAttribute('role', 'button');
+        a.setAttribute('aria-label', a.title);
+        a.setAttribute('aria-pressed', String(editMode));
+        a.innerHTML =
+          `<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">` +
+          `<path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" d="M4 20l4.5-1L20 7.5 16.5 4 5 15.5 4 20zM14.5 6l3.5 3.5"/></svg>`;
+        L.DomEvent.disableClickPropagation(a);
+        L.DomEvent.on(a, 'click', L.DomEvent.stop);
+        L.DomEvent.on(a, 'click', () => {
+          const u = new URL(location.href);
+          if (editMode) u.searchParams.delete('edit');
+          else u.searchParams.set('edit', '1');
+          location.href = u.toString();
+        });
+        return a;
+      },
+    });
+    new EditCtl({ position: 'bottomright' }).addTo(map);
+  }
+
   async function saveMove(id: number, marker: any, origin: any) {
     const token = ensureToken();
     if (!token) { marker.setLatLng(origin); flash('No token — move not saved.'); return; }

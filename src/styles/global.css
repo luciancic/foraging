@@ -199,6 +199,16 @@ body.fullbleed main { flex: 1 1 auto; min-height: 0; display: flex; }
 }
 .locate-btn:hover { color: #1a73e8; background: #f4f4f4; }
 
+/* edit-mode pencil toggle (bottom-right, by the Layers panel) — small, and only
+   rendered when an edit token is already stored. Green + filled when active. */
+.edit-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; color: #4a5a48; background: #fff;
+}
+.edit-btn:hover { color: var(--forest-deep); background: #f4f4f4; }
+.edit-btn.active { color: #fff; background: var(--forest); }
+.edit-btn.active:hover { background: var(--forest-deep); }
+
 /* ── Layers panel (fullscreen map): collapsible, bottom-right, thumb reach ──
    One panel holding the verified-pin legend + the scouting-leads filter. A pill
    toggle (FAB) sits at the bottom; the body expands upward above it (the panel is
