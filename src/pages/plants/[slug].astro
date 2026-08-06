@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import { effectiveStatus, STATUS_LABEL } from '../../lib/season';
 import { spotCount } from '../../lib/spots';
+import { scoutCount } from '../../lib/scouting.mjs';
 import { getPlants } from '../../lib/content.mjs';
 
 export async function getStaticPaths() {
@@ -12,9 +13,13 @@ const { plant } = Astro.props;
 const d = plant.data;
 const live = effectiveStatus(d);
 const statusLabel = STATUS_LABEL;
-// Derived from the map GeoJSON at build time — a spot with `plant: <slug>`
-// lights this up automatically, no manual `onMap` flag to keep in sync.
+// Derived at build time — a confirmed spot (SQLite) with `plant: <slug>` lights
+// this up automatically, no manual `onMap` flag to keep in sync. Unverified
+// scouting leads (the static GeoJSON sources) referencing this plant are counted
+// too, so the badge shows the total on the map with confirmed broken out.
 const spots = spotCount(plant.id);
+const leads = scoutCount(plant.id);
+const onMap = spots + leads;
 ---
 <Base title={`${d.title} — Forage MTL`} page="plants" description={d.scientificName ? `${d.title} (${d.scientificName}) — ID, safety, harvest & prep.` : d.title}>
   <article class="plant wrap">
@@ -24,7 +29,7 @@ const spots = spotCount(plant.id);
     <p style="margin:-6px 0 20px;">
       <span class={`badge ${live}`}>{statusLabel[live]}</span>
       {d.season && <span style="color:var(--ink-soft); margin-left:10px;">🗓 {d.season}</span>}
-      {spots > 0 && <a href={`/map?plant=${plant.id}`} style="margin-left:10px;">📍 {spots} {spots === 1 ? 'spot' : 'spots'} on map</a>}
+      {onMap > 0 && <a href={`/map?plant=${plant.id}`} style="margin-left:10px;">📍 {onMap} on map{leads > 0 && ` (${spots} confirmed)`}</a>}
     </p>
 
     {d.heroImage && <img class="hero-img" src={d.heroImage} alt={d.title} loading="eager" />}

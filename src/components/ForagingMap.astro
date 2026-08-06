@@ -38,6 +38,24 @@ const { fullscreen = false } = Astro.props;
   };
   const TIER_ORDER = ['snack', 'prep', 'caution', 'avoid'];
 
+  // Promoting a scouting lead → a confirmed spot (POST /api/pins) needs a
+  // `category` (the verified-pin vocabulary); leads only carry a `tier`, so we
+  // guess a sensible default from the name/species and let the picker override.
+  const CATEGORIES = ['tree', 'berries', 'greens', 'herbs', 'nuts', 'mushrooms', 'other'];
+  const SRC_LABEL: Record<string, string> = {
+    inat: 'iNaturalist', fallingfruit: 'Falling Fruit', montreal: 'Ville de Montréal',
+  };
+  function guessCategory(p: any): string {
+    if (p.source === 'montreal') return 'tree';
+    const s = ((p.name || '') + ' ' + (p.species || '')).toLowerCase();
+    if (/mushroom|bolet|morel|chanterelle|puffball|oyster/.test(s)) return 'mushrooms';
+    if (/berr|grape|currant|elder|mulberry|serviceberry|raspberr|blackberr|haskap|cherry|plum|apple|pear|rose ?hip|hawthorn|rowan|sumac|juneberr/.test(s)) return 'berries';
+    if (/walnut|butternut|hazel|chestnut|acorn|oak|hickory|ginkgo|beechnut|pine ?nut/.test(s)) return 'nuts';
+    if (/mint|thyme|sage|balm|nettle|oregano|bergamot|yarrow|catnip/.test(s)) return 'herbs';
+    if (/dandelion|chicory|purslane|lamb|sorrel|plantain|garlic mustard|clover|violet|chickweed|amaranth/.test(s)) return 'greens';
+    return 'other';
+  }
+
   // Popups are built as HTML strings, so any text that originates from the DB
   // (pin fields) or third parties (iNaturalist usernames on scouting pins) must be
   // escaped before interpolation. `seg` makes a value safe inside an href/src path.
@@ -264,8 +282,40 @@ const { fullscreen = false } = Astro.props;
   if (isFullMap) initPanel();
 
   // Optional ?plant=<slug> filter: a plant page can deep-link here to show only
-  // the spots that link back to it (properties.plant === slug).
+  // the spots that link back to it (properties.plant === slug) — both confirmed
+  // pins AND scouting leads for that plant.
   const plantFilter = new URLSearchParams(location.search).get('plant');
+
+  // The deep-linked banner reports confirmed + lead counts, but those arrive via
+  // two independent async paths (loadSpots / initScouting); each updates its own
+  // slice then re-renders so the banner is correct whichever finishes last.
+  let fbConfirmed = 0, fbLeads = 0, fbLabel = '';
+  function renderFilterBanner() {
+    const el = document.getElementById('map-filter');
+    if (!el || !plantFilter) return;
+    const parts = [`${fbConfirmed} confirmed spot${fbConfirmed === 1 ? '' : 's'}`];
+    if (fbLeads) parts.push(`${fbLeads} scouting lead${fbLeads === 1 ? '' : 's'}`);
+    el.innerHTML =
+      `<span>Showing ${parts.join(' + ')} for <strong>${esc(fbLabel || plantFilter)}</strong>.</span>` +
+      `<a href="/map">Show all spots →</a>`;
+    el.hidden = false;
+  }
+
+  // Drop a freshly-created confirmed pin onto the map immediately after a promote,
+  // so it shows without a reload (the DB is already updated). `spot` is the flat
+  // row the API returns from POST /api/pins.
+  function addConfirmedMarker(spot: any, category: string) {
+    const cat = category || spot.category || 'other';
+    const m = L.marker([spot.lat, spot.lon], { icon: pinIcon(CAT_COLORS[cat] || CAT_COLORS.other) }).addTo(map);
+    m.bindPopup(
+      `<div class="p-pop"><h3>${esc(spot.name) || 'Spot'}</h3>` +
+        (spot.species ? `<div class="p-sci">${esc(spot.species)}</div>` : '') +
+        (spot.notes ? `<div class="p-meta">${esc(spot.notes)}</div>` : '') +
+        (spot.plant ? `<a class="p-guide" href="/plants/${seg(spot.plant)}">View plant guide →</a>` : '') +
+      `</div>`,
+      { maxWidth: 244, minWidth: 200, maxHeight: 300, autoPan: true, keepInView: true },
+    ).openPopup();
+  }
 
   // ── Edit mode (?edit=1) ─────────────────────────────────────────────────
   // Pins become draggable so you can correct a spot whose photo-geolocation
@@ -429,19 +479,15 @@ const { fullscreen = false } = Astro.props;
         if (b.isValid()) { spotsBounds = b; if (!didLocate) map.fitBounds(b.pad(0.35)); }
       } catch {}
 
-      // When deep-linked to one plant, show a banner + "show all" reset. Label
-      // uses that plant's species text from the first matching feature.
-      const filterEl = document.getElementById('map-filter');
-      if (filterEl && plantFilter) {
+      // When deep-linked to one plant, feed the confirmed count + label into the
+      // shared banner (initScouting adds the lead count via the same renderer).
+      if (plantFilter) {
         const match = (geo.features || []).find(
           (f: any) => f.properties?.plant === plantFilter,
         );
-        const label = match?.properties?.species || match?.properties?.name || plantFilter;
-        const n = layer.getLayers().length;
-        filterEl.innerHTML =
-          `<span>Showing ${n} spot${n === 1 ? '' : 's'} for <strong>${esc(label)}</strong>.</span>` +
-          `<a href="/map">Show all spots →</a>`;
-        filterEl.hidden = false;
+        fbConfirmed = layer.getLayers().length;
+        if (match) fbLabel = match.properties?.species || match.properties?.name || '';
+        renderFilterBanner();
       }
 
       // Re-measure once the container has its final (flex/fullscreen) size.
@@ -469,8 +515,11 @@ const { fullscreen = false } = Astro.props;
   // ── Scouting layer ──────────────────────────────────────────────────────
   // Only on the fullscreen map page, never the home embed. Unverified iNat
   // leads, off by default; visibility + per-tier filter persist in localStorage.
+  // Under a ?plant= filter we still run it, but restricted to that plant's leads
+  // and forced visible (so the guide's "on map" link surfaces leads, not just
+  // confirmed pins). Unfiltered, it's the full off-by-default layer as before.
   const isMapPage = document.querySelector('.map-wrap')?.classList.contains('full');
-  if (isMapPage && !plantFilter) initScouting();
+  if (isMapPage) initScouting();
 
   function loadPref(key: string, fallback: boolean) {
     try { const v = localStorage.getItem(key); return v === null ? fallback : v === '1'; }
@@ -514,6 +563,7 @@ const { fullscreen = false } = Astro.props;
         (isFF && /^https?:\/\//i.test(p.ff || '') ? `<a class="p-guide" href="${esc(p.ff)}" target="_blank" rel="noopener">View on Falling Fruit →</a>` : '') +
         (isMtl && /^https?:\/\//i.test(p.mtl || '') ? `<a class="p-guide" href="${esc(p.mtl)}" target="_blank" rel="noopener">City tree dataset →</a>` : '') +
         (p.plant ? `<a class="p-guide" href="/plants/${seg(p.plant)}">View plant guide →</a>` : '') +
+        (editMode ? `<button type="button" class="scout-promote" data-promote="${esc(key)}">➕ Promote to confirmed spot</button>` : '') +
         `<button type="button" class="scout-hide" data-hide="${esc(key)}">✕ Hide this pin</button>` +
       `</div>`
     );
@@ -554,7 +604,7 @@ const { fullscreen = false } = Astro.props;
       },
     });
     const present: Record<string, Set<string>> = {};
-    const records: Array<{ srcKey: string; key: string; tier: string; marker: any }> = [];
+    const records: Array<{ srcKey: string; key: string; tier: string; marker: any; props: any; lat: number; lon: number }> = [];
     const inCluster = new Set<string>();
 
     Promise.all(SCOUT_SOURCES.map(async (src) => {
@@ -567,6 +617,7 @@ const { fullscreen = false } = Astro.props;
       present[src.key] = new Set();
       (geo.features || []).forEach((f: any, i: number) => {
         const p = f.properties || {};
+        if (plantFilter && p.plant !== plantFilter) return; // deep-linked: this plant's leads only
         const tier = p.tier || 'snack';
         if (!TIER_ORDER.includes(tier)) return;
         present[src.key].add(tier);
@@ -574,10 +625,20 @@ const { fullscreen = false } = Astro.props;
         const key = `${src.key}:${id}`;
         const [lon, lat] = f.geometry.coordinates;
         const marker = L.marker([lat, lon], { icon: src.icon(TIER_COLORS[tier] || '#7a7a7a') })
-          .bindPopup(scoutPopup(p, key), { maxWidth: 244, minWidth: 200, maxHeight: 300, autoPan: true, keepInView: true });
-        records.push({ srcKey: src.key, key, tier, marker });
+          // closeOnClick/autoClose off: the Promote flow expands an inline form in
+          // the popup, so a stray map click must not tear it down mid-edit. The
+          // popup's own X (and Hide/Cancel) still close it explicitly.
+          .bindPopup(scoutPopup(p, key), { maxWidth: 244, minWidth: 200, maxHeight: 300, autoPan: true, keepInView: true, closeOnClick: false, autoClose: false });
+        records.push({ srcKey: src.key, key, tier, marker, props: p, lat, lon });
       });
     })).then(() => {
+      // Under a plant filter, feed the lead count into the shared deep-link banner
+      // (loadSpots supplies the confirmed count + label; either may finish first).
+      if (plantFilter) {
+        fbLeads = records.length;
+        if (!fbLabel && records[0]) fbLabel = records[0].props.species || records[0].props.name || '';
+        renderFilterBanner();
+      }
       const div = panelScoutEl;
       if (!div) return; // not the fullscreen map — nothing to draw into
       const liveSources = SCOUT_SOURCES.filter((s) => present[s.key]?.size);
@@ -585,11 +646,13 @@ const { fullscreen = false } = Astro.props;
       div.hidden = false;
       cluster.addTo(map);
 
-      // Per-source master toggles (persisted); shared per-tier filters.
+      // Per-source master toggles (persisted); shared per-tier filters. Under a
+      // plant filter the leads are forced visible (the guide link means to show
+      // them) rather than honouring the off-by-default persisted prefs.
       const state = { master: {} as Record<string, boolean>, tier: {} as Record<string, boolean> };
       for (const s of SCOUT_SOURCES) {
         const fallback = s.legacyOn ? loadPref('scout.on', false) : false;
-        state.master[s.key] = loadPref('scout.on.' + s.key, fallback);
+        state.master[s.key] = plantFilter ? true : loadPref('scout.on.' + s.key, fallback);
       }
       for (const t of TIER_ORDER) state.tier[t] = loadPref('scout.tier.' + t, true);
 
@@ -622,10 +685,75 @@ const { fullscreen = false } = Astro.props;
         apply();
         renderCtl();
       };
-      // Popups are HTML strings — wire their Hide button when the popup opens.
+      // Promote a lead → a confirmed spot. The lead has everything a pin needs
+      // except `category`, so the button expands to a category picker in-place,
+      // then POSTs /api/pins with the token. On success we drop a real pin now and
+      // retire the lead locally (hidden, so a data regen won't resurrect it).
+      const startPromote = (key: string, popupEl: HTMLElement) => {
+        const rec = records.find((r) => r.key === key);
+        const btn = popupEl.querySelector('.scout-promote') as HTMLElement | null;
+        if (!rec || !btn) return;
+        const guess = guessCategory(rec.props);
+        const opts = CATEGORIES.map((c) => `<option value="${c}"${c === guess ? ' selected' : ''}>${c}</option>`).join('');
+        const form = document.createElement('div');
+        form.className = 'promote-form';
+        form.innerHTML =
+          `<label class="promote-cat-l">Category <select class="promote-cat">${opts}</select></label>` +
+          `<div class="promote-actions">` +
+            `<button type="button" class="promote-go">Confirm spot</button>` +
+            `<button type="button" class="promote-cancel">Cancel</button>` +
+          `</div>`;
+        btn.replaceWith(form);
+        (form.querySelector('.promote-cancel') as HTMLElement).addEventListener('click', () => map.closePopup());
+        (form.querySelector('.promote-go') as HTMLElement).addEventListener('click', () =>
+          doPromote(rec, (form.querySelector('.promote-cat') as HTMLSelectElement).value, form));
+      };
+
+      const doPromote = async (rec: any, category: string, form: HTMLElement) => {
+        const token = ensureToken();
+        const go = form.querySelector('.promote-go') as HTMLButtonElement | null;
+        if (!token) { flash('No token — spot not created.'); return; }
+        if (go) { go.disabled = true; go.textContent = 'Saving…'; }
+        const p = rec.props;
+        const notes = [p.notes, `↗ promoted from ${SRC_LABEL[p.source] || 'scouting'} lead`].filter(Boolean).join(' · ');
+        try {
+          const r = await fetch('/api/pins', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+            body: JSON.stringify({
+              name: p.name || p.species || 'Spot',
+              category,
+              species: p.species ?? null,
+              notes,
+              plant: p.plant ?? null,
+              lon: +Number(rec.lon).toFixed(6),
+              lat: +Number(rec.lat).toFixed(6),
+            }),
+          });
+          if (r.status === 401) { clearToken(); flash('Edit token rejected — try again to re-enter it.', true); if (go) { go.disabled = false; go.textContent = 'Confirm spot'; } return; }
+          if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.error || ('HTTP ' + r.status)); }
+          const { spot } = await r.json();
+          map.closePopup();
+          hidePin(rec.key);                 // retire the lead (persists across regens)
+          addConfirmedMarker(spot, category); // show the new pin immediately
+          flash('Promoted ✓ — now a confirmed spot.');
+        } catch (err: any) {
+          flash('Promote failed (' + (err?.message || err) + ').');
+          if (go) { go.disabled = false; go.textContent = 'Confirm spot'; }
+        }
+      };
+
+      // Popups are HTML strings — wire their Hide / Promote buttons on open.
       map.on('popupopen', (e: any) => {
-        const btn = e.popup.getElement()?.querySelector('.scout-hide');
-        if (btn) btn.addEventListener('click', () => hidePin(String(btn.dataset.hide)), { once: true });
+        const el = e.popup.getElement();
+        if (!el) return;
+        // Keep in-popup clicks (esp. Promote → its inline form) from bubbling to
+        // the map, which would close the popup and tear the form down mid-flow.
+        L.DomEvent.disableClickPropagation(el);
+        const hb = el.querySelector('.scout-hide');
+        if (hb) hb.addEventListener('click', () => hidePin(String(hb.dataset.hide)), { once: true });
+        const pb = el.querySelector('.scout-promote');
+        if (pb) pb.addEventListener('click', () => startPromote(String(pb.dataset.promote), el), { once: true });
       });
 
       const tiersShown = TIER_ORDER.filter((t) => records.some((r) => r.tier === t));
