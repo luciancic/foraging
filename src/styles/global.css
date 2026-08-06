@@ -262,10 +262,15 @@ body.fullbleed main { flex: 1 1 auto; min-height: 0; display: flex; }
 
 /* Scouting marker clusters (Leaflet.markercluster) — one on-brand green bubble
    with a count, sized by how many pins it holds; splits apart as you zoom in. */
-.scout-cluster { display: flex; align-items: center; justify-content: center;
+/* Selector carries .leaflet-marker-icon too, to out-specify Leaflet's own
+   `.leaflet-marker-icon { display:block }` (loaded after this file) — otherwise the
+   flex centering is overridden and the count floats to the top of the bubble. */
+.leaflet-marker-icon.scout-cluster { display: flex; align-items: center; justify-content: center;
+  box-sizing: border-box; line-height: 1;
   background: rgba(47, 125, 79, .85); border: 2.5px solid #fff; border-radius: 50%;
   box-shadow: 0 1px 5px rgba(0, 0, 0, .35); }
-.scout-cluster span { color: #fff; font-weight: 700; font-size: .82rem; font-variant-numeric: tabular-nums; }
+.scout-cluster span { display: block; color: #fff; font-weight: 700; font-size: .82rem;
+  line-height: 1; font-variant-numeric: tabular-nums; }
 .scout-tier { font-size: .8rem; }
 .scout-tier .dot { width: 10px; height: 10px; flex: none; }
 .scout-tier b { margin-left: auto; font-weight: 600; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
