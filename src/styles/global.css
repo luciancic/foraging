@@ -199,21 +199,30 @@ body.fullbleed main { flex: 1 1 auto; min-height: 0; display: flex; }
 }
 .locate-btn:hover { color: #1a73e8; background: #f4f4f4; }
 
-/* edit-mode pencil toggle (bottom-right, by the Layers panel) — small, and only
-   rendered when an edit token is already stored. Green + filled when active. */
-.edit-btn {
-  display: flex; align-items: center; justify-content: center;
-  width: 26px; height: 26px; color: #4a5a48; background: #fff;
-}
-.edit-btn:hover { color: var(--forest-deep); background: #f4f4f4; }
-.edit-btn.active { color: #fff; background: var(--forest); }
-.edit-btn.active:hover { background: var(--forest-deep); }
 
 /* ── Layers panel (fullscreen map): collapsible, bottom-right, thumb reach ──
    One panel holding the verified-pin legend + the scouting-leads filter. A pill
    toggle (FAB) sits at the bottom; the body expands upward above it (the panel is
    column-reverse) so the toggle stays low near the thumb. Collapsed by default. */
 .map-panel { display: flex; flex-direction: column-reverse; align-items: flex-end; gap: 8px; }
+/* bottom row: pencil edit-toggle (left) + Layers pill (right), same baseline */
+.map-panel-bar { display: flex; align-items: center; gap: 8px; }
+/* green circular pencil — matches the pill's chrome (shadow, blur), only shown
+   when an edit token is stored. Solid green by default; gains a halo ring when
+   edit mode is active so its on/off state reads at a glance. */
+.map-panel-edit {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; flex: none; padding: 0;
+  color: #fff; background: var(--forest);
+  border: 1px solid var(--forest-deep); border-radius: 999px;
+  box-shadow: var(--shadow); backdrop-filter: blur(4px); cursor: pointer;
+  transition: background .15s ease, box-shadow .15s ease;
+}
+.map-panel-edit:hover { background: var(--forest-deep); }
+.map-panel-edit.active {
+  background: var(--forest-deep);
+  box-shadow: var(--shadow), 0 0 0 3px color-mix(in srgb, var(--forest) 30%, transparent);
+}
 .map-panel-toggle {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 9px 14px; font: inherit; font-size: .82rem; font-weight: 600; color: var(--ink);

@@ -247,18 +247,52 @@ const { fullscreen = false } = Astro.props;
   let panelLegendEl: HTMLElement | null = null;
   let panelScoutEl: HTMLElement | null = null;
 
+  // ── Edit mode (?edit=1) ─────────────────────────────────────────────────
+  // Pins become draggable so you can correct a spot whose photo-geolocation
+  // landed it in the wrong place (the far side of a fence, etc.). Dropping a pin
+  // PATCHes the live API, which persists it to the DB — no rebuild, shows for
+  // everyone on the next load. Writes need the edit token (stored per-device).
+  // Defined above initPanel so the panel's pencil toggle can gate on the token.
+  const editMode = new URLSearchParams(location.search).get('edit') === '1';
+  const TOKEN_KEY = 'forage.editToken';
+  const getToken = () => { try { return localStorage.getItem(TOKEN_KEY) || ''; } catch { return ''; } };
+  const setToken = (t: string) => { try { localStorage.setItem(TOKEN_KEY, t); } catch {} };
+  const clearToken = () => { try { localStorage.removeItem(TOKEN_KEY); } catch {} };
+  function ensureToken(): string {
+    let t = getToken();
+    if (!t) {
+      const entered = window.prompt('Enter your edit token to save pin moves:');
+      if (entered) { t = entered.trim(); setToken(t); }
+    }
+    return t;
+  }
+
   function initPanel() {
     let open = loadPref('panel.open', false);
+    // The pencil edit-toggle sits to the LEFT of the Layers pill on the same row,
+    // but only once an edit token is stored (never shown to public visitors).
+    // Toggling reloads with ?edit set/cleared — how edit mode wires long-press-move
+    // + the promote button throughout the script.
+    const canEdit = !!getToken();
+    const editTitle = editMode ? 'Exit edit mode' : 'Edit mode — move pins, promote leads';
     const PanelCtl = L.Control.extend({
       onAdd: function () {
         const wrap = L.DomUtil.create('div', 'map-panel' + (open ? ' open' : ''));
         L.DomEvent.disableClickPropagation(wrap);
         L.DomEvent.disableScrollPropagation(wrap);
         wrap.innerHTML =
-          `<button type="button" class="map-panel-toggle" aria-expanded="${open}" aria-label="Map layers & legend">` +
-            `<svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true">` +
-              `<path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" d="M12 3l9 5-9 5-9-5 9-5zM3 12l9 5 9-5M3 16l9 5 9-5"/></svg>` +
-            `<span>Layers</span></button>` +
+          `<div class="map-panel-bar">` +
+            (canEdit
+              ? `<button type="button" class="map-panel-edit${editMode ? ' active' : ''}" aria-pressed="${editMode}" title="${editTitle}" aria-label="${editTitle}">` +
+                  `<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">` +
+                    `<path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" d="M4 20l4.5-1L20 7.5 16.5 4 5 15.5 4 20zM14.5 6l3.5 3.5"/></svg>` +
+                `</button>`
+              : '') +
+            `<button type="button" class="map-panel-toggle" aria-expanded="${open}" aria-label="Map layers & legend">` +
+              `<svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true">` +
+                `<path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" d="M12 3l9 5-9 5-9-5 9-5zM3 12l9 5 9-5M3 16l9 5 9-5"/></svg>` +
+              `<span>Layers</span></button>` +
+          `</div>` +
           `<div class="map-panel-body"${open ? '' : ' hidden'}>` +
             `<div class="panel-sec" id="panel-legend" hidden></div>` +
             `<div class="panel-sec scout-ctl" id="panel-scout" hidden></div>` +
@@ -273,6 +307,13 @@ const { fullscreen = false } = Astro.props;
           wrap.classList.toggle('open', open);
           body.hidden = !open;
           btn.setAttribute('aria-expanded', String(open));
+        });
+        const editBtn = wrap.querySelector('.map-panel-edit') as HTMLElement | null;
+        if (editBtn) editBtn.addEventListener('click', () => {
+          const u = new URL(location.href);
+          if (editMode) u.searchParams.delete('edit');
+          else u.searchParams.set('edit', '1');
+          location.href = u.toString();
         });
         return wrap;
       },
@@ -315,55 +356,6 @@ const { fullscreen = false } = Astro.props;
       `</div>`,
       { maxWidth: 244, minWidth: 200, maxHeight: 300, autoPan: true, keepInView: true },
     ).openPopup();
-  }
-
-  // ── Edit mode (?edit=1) ─────────────────────────────────────────────────
-  // Pins become draggable so you can correct a spot whose photo-geolocation
-  // landed it in the wrong place (the far side of a fence, etc.). Dropping a pin
-  // PATCHes the live API, which persists it to the DB — no rebuild, shows for
-  // everyone on the next load. Writes need the edit token (stored per-device).
-  const editMode = new URLSearchParams(location.search).get('edit') === '1';
-  const TOKEN_KEY = 'forage.editToken';
-  const getToken = () => { try { return localStorage.getItem(TOKEN_KEY) || ''; } catch { return ''; } };
-  const setToken = (t: string) => { try { localStorage.setItem(TOKEN_KEY, t); } catch {} };
-  const clearToken = () => { try { localStorage.removeItem(TOKEN_KEY); } catch {} };
-  function ensureToken(): string {
-    let t = getToken();
-    if (!t) {
-      const entered = window.prompt('Enter your edit token to save pin moves:');
-      if (entered) { t = entered.trim(); setToken(t); }
-    }
-    return t;
-  }
-
-  // A pencil toggle to enter/leave edit mode without hand-editing the URL — shown
-  // only once an edit token is stored on this device, so it never surfaces for
-  // public visitors. Toggling reloads with ?edit set/cleared, which is how edit
-  // mode wires long-press-move + the promote button throughout the script.
-  if (isFullMap && getToken()) {
-    const EditCtl = L.Control.extend({
-      onAdd: function () {
-        const a = L.DomUtil.create('a', 'leaflet-bar edit-btn' + (editMode ? ' active' : ''));
-        a.href = '#';
-        a.title = editMode ? 'Exit edit mode' : 'Edit mode — move pins, promote leads';
-        a.setAttribute('role', 'button');
-        a.setAttribute('aria-label', a.title);
-        a.setAttribute('aria-pressed', String(editMode));
-        a.innerHTML =
-          `<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">` +
-          `<path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" d="M4 20l4.5-1L20 7.5 16.5 4 5 15.5 4 20zM14.5 6l3.5 3.5"/></svg>`;
-        L.DomEvent.disableClickPropagation(a);
-        L.DomEvent.on(a, 'click', L.DomEvent.stop);
-        L.DomEvent.on(a, 'click', () => {
-          const u = new URL(location.href);
-          if (editMode) u.searchParams.delete('edit');
-          else u.searchParams.set('edit', '1');
-          location.href = u.toString();
-        });
-        return a;
-      },
-    });
-    new EditCtl({ position: 'bottomright' }).addTo(map);
   }
 
   async function saveMove(id: number, marker: any, origin: any) {
