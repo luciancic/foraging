@@ -55,16 +55,19 @@ FORAGE = {
     52821:  ("caution", "Yarrow",           "Achillea millefolium",  "Feathery leaves for tea/medicinal. Its ferny foliage can be confused with poison hemlock before flowering — confirm the flat white flower clusters + strong scent.", None),
     56077:  ("caution", "St. John's wort",  "Hypericum perforatum",  "Medicinal (not food); photosensitizing and interacts with many meds. Learn it, harvest sparingly.", None),
     55969:  ("caution", "Guelder-rose",     "Viburnum opulus",       "Highbush-cranberry-type fruit — edible cooked, mildly toxic & unpleasant raw. Cook into jelly.", None),
-    # avoid — toxic; pinned to learn & steer clear
-    59778:  ("avoid",   "Wild parsnip",     "Pastinaca sativa",      "DO NOT TOUCH bare-skinned — sap + sunlight causes burning blisters (phytophotodermatitis). Yellow flat flower umbels, celery-like ridged stem.", None),
-    54811:  ("avoid",   "Common buckthorn", "Rhamnus cathartica",    "Black berries are a violent purgative — toxic. Learn it: thorn-tipped twigs, 3-5 curved leaf veins. Do not eat.", None),
-    55972:  ("avoid",   "Alder buckthorn",  "Frangula alnus",        "Toxic laxative berries (red→black). Do not eat.", None),
-    55620:  ("avoid",   "Bittersweet nightshade","Solanum dulcamara","Red egg-shaped berries + purple/yellow flowers — toxic. Do not eat.", None),
-    124544: ("avoid",   "Cow parsley",      "Anthriscus sylvestris", "White umbel — the family that includes deadly poison hemlock. Not worth the risk; learn it as a 'do-not-touch' benchmark.", None),
-    47779:  ("avoid",   "Yellow iris",      "Iris pseudacorus",      "Waterside yellow flag — all parts toxic/irritant. Do not forage.", None),
 }
 
-TIER_LABEL = {"snack": "Snackable", "prep": "Needs prep", "caution": "Caution — lookalike", "avoid": "Toxic — avoid"}
+# One category (type / food-part) per taxon id — the single colour axis on the map.
+# fruit | nuts | greens | herbs | mushrooms | other. `caution` (dangerous lookalike /
+# handle-with-care) is derived from the FORAGE tier, not a separate colour.
+CATEGORY = {
+    167829: "herbs", 51875: "herbs", 55745: "herbs", 52913: "greens", 51148: "fruit",
+    54431: "fruit", 54857: "fruit", 56061: "greens", 52992: "herbs", 469472: "fruit",
+    132600: "greens", 54854: "greens", 47911: "greens", 54835: "fruit", 56063: "fruit",
+    59571: "greens", 54504: "nuts", 76584: "nuts", 49005: "nuts", 54781: "nuts",
+    52856: "herbs", 76610: "greens", 119936: "fruit", 52821: "herbs", 56077: "herbs",
+    55969: "fruit",
+}
 
 
 def fetch(bbox, per_species_cap):
@@ -95,11 +98,15 @@ def fetch(bbox, per_species_cap):
         tier, common, sci, blurb, slug = FORAGE[tid]
         lon, lat = o["geojson"]["coordinates"]
         obscured = o.get("obscured") or o.get("geoprivacy") == "obscured"
+        # Source-specific display bits go in `meta` (stored as a JSON column on
+        # import, re-expanded into the popup); category/caution are the shared axes.
+        meta = {"observed": o.get("observed_on"), "observer": (o.get("user") or {}).get("login")}
+        if obscured:
+            meta["obscured"] = True
         props = {
-            "name": common, "species": sci, "tier": tier, "notes": blurb,
-            "source": "inat", "inat": f"https://www.inaturalist.org/observations/{o['id']}",
-            "observed": o.get("observed_on"), "observer": (o.get("user") or {}).get("login"),
-            "obscured": bool(obscured),
+            "name": common, "species": sci, "category": CATEGORY.get(tid, "other"),
+            "caution": tier == "caution", "notes": blurb, "source": "inat",
+            "sourceUrl": f"https://www.inaturalist.org/observations/{o['id']}", "meta": meta,
         }
         if slug:
             props["plant"] = slug
@@ -126,11 +133,14 @@ def main():
     with open(a.out, "w") as f:
         json.dump(fc, f, indent=2, ensure_ascii=False)
         f.write("\n")
-    by_tier = {}
+    by_cat = {}
     for feat in feats:
-        by_tier[feat["properties"]["tier"]] = by_tier.get(feat["properties"]["tier"], 0) + 1
+        c = feat["properties"]["category"]
+        by_cat[c] = by_cat.get(c, 0) + 1
+    n_caution = sum(1 for f in feats if f["properties"].get("caution"))
     print(f"{len(feats)} pins → {a.out}", file=sys.stderr)
-    print("  by tier: " + ", ".join(f"{k}={v}" for k, v in sorted(by_tier.items())), file=sys.stderr)
+    print("  by category: " + ", ".join(f"{k}={v}" for k, v in sorted(by_cat.items()))
+          + f"  ·  caution flagged: {n_caution}", file=sys.stderr)
     print(f"  species: {len(counts)}", file=sys.stderr)
 
 

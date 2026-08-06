@@ -56,8 +56,31 @@ FORAGE = {
     "vitis":                 ("caution", "Grape",             "Grapes + young leaves edible. Moonseed is a toxic lookalike — grapes have tendrils and several seeds; moonseed has one crescent seed and no tendrils.", None),
     "allium":                ("caution", "Wild onion / garlic", "Edible ONLY if it smells of onion/garlic — no smell means a toxic lookalike (e.g. death camas). Confirm the smell.", None),
     "hypericum":             ("caution", "St. John's wort",   "Medicinal, not a food; photosensitizing and interacts with many meds. Learn it, harvest sparingly.", None),
-    "aesculus":              ("avoid",   "Horse-chestnut",    "TOXIC — this is NOT the edible sweet chestnut (Castanea). Do not eat the conkers.", None),
 }
+
+# One category (type / food-part) per taxon — the single colour axis on the map,
+# keyed like FORAGE (full "genus species" wins over a bare genus). fruit | nuts |
+# greens | herbs | mushrooms | other. `caution` is derived from the FORAGE tier.
+CATEGORY = {
+    "malus": "fruit", "amelanchier": "fruit", "fragaria": "fruit", "rubus parviflorus": "fruit",
+    "rubus": "fruit", "morus": "fruit", "ribes": "fruit", "crataegus": "fruit", "rosa": "fruit",
+    "vaccinium": "fruit", "prunus virginiana": "fruit", "prunus": "fruit", "sambucus": "fruit",
+    "vitis": "fruit",
+    "tilia": "greens", "urtica": "greens",
+    "rhus typhina": "herbs", "matricaria discoidea": "herbs", "hypericum": "herbs", "allium": "herbs",
+    "juglans": "nuts", "castanea": "nuts", "quercus": "nuts",
+}
+
+
+def category_for(sci):
+    """Map a scientific name to a type category (full 'genus species' then genus)."""
+    s = _norm(sci)
+    toks = s.split()
+    if len(toks) >= 2 and " ".join(toks[:2]) in CATEGORY:
+        return CATEGORY[" ".join(toks[:2])]
+    if toks and toks[0] in CATEGORY:
+        return CATEGORY[toks[0]]
+    return "other"
 
 
 def _norm(sci):
@@ -113,8 +136,9 @@ def fetch(bbox):
         t, (tier, name, note, slug) = hit
         sci = (t.get("scientific_names") or [None])[0]
         props = {
-            "name": name, "species": sci, "tier": tier, "notes": note,
-            "source": "fallingfruit", "ff": FF_LOC_URL.format(id=loc["id"]),
+            "name": name, "species": sci, "category": category_for(sci),
+            "caution": tier == "caution", "notes": note,
+            "source": "fallingfruit", "sourceUrl": FF_LOC_URL.format(id=loc["id"]), "meta": {},
         }
         if slug:
             props["plant"] = slug
@@ -141,11 +165,14 @@ def main():
     with open(a.out, "w") as f:
         json.dump(fc, f, indent=2, ensure_ascii=False)
         f.write("\n")
-    by_tier = {}
+    by_cat = {}
     for feat in feats:
-        by_tier[feat["properties"]["tier"]] = by_tier.get(feat["properties"]["tier"], 0) + 1
+        c = feat["properties"]["category"]
+        by_cat[c] = by_cat.get(c, 0) + 1
+    n_caution = sum(1 for f in feats if f["properties"].get("caution"))
     print(f"{len(feats)} pins → {a.out}", file=sys.stderr)
-    print("  by tier: " + ", ".join(f"{k}={v}" for k, v in sorted(by_tier.items())), file=sys.stderr)
+    print("  by category: " + ", ".join(f"{k}={v}" for k, v in sorted(by_cat.items()))
+          + f"  ·  caution flagged: {n_caution}", file=sys.stderr)
     if skipped:
         top = sorted(skipped.items(), key=lambda kv: -kv[1])[:12]
         print("  skipped (uncurated/non-plant): " + ", ".join(f"{k}×{v}" for k, v in top), file=sys.stderr)

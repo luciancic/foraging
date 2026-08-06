@@ -1,96 +1,8 @@
 {
   "type": "FeatureCollection",
   "name": "scouting-spots",
-  "note": "UNVERIFIED scouting leads for 'Quai de la Tortue → Parc Desmarchais', generated from iNaturalist research-grade observations by scripts/inat-scout.py. NOT the source of truth — that is foraging-spots.geojson. Each pin is a lead to go confirm in person; once confirmed, promote it into foraging-spots.geojson.",
+  "note": "UNVERIFIED scouting leads for 'Quai de la Tortue → Parc Desmarchais', generated from iNaturalist research-grade observations by scripts/inat-scout.py. NOT the source of truth — that is the SQLite DB. Each pin is a lead to go confirm in person; once confirmed, promote it into a real pin via POST /api/pins.",
   "features": [
-    {
-      "type": "Feature",
-      "id": 386398266,
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -73.567263,
-          45.449825
-        ]
-      },
-      "properties": {
-        "name": "Wild parsnip",
-        "species": "Pastinaca sativa",
-        "tier": "avoid",
-        "notes": "DO NOT TOUCH bare-skinned — sap + sunlight causes burning blisters (phytophotodermatitis). Yellow flat flower umbels, celery-like ridged stem.",
-        "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/386398266",
-        "observed": "2026-07-29",
-        "observer": "therapsid74",
-        "obscured": false
-      }
-    },
-    {
-      "type": "Feature",
-      "id": 386395275,
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -73.568788,
-          45.44802
-        ]
-      },
-      "properties": {
-        "name": "Alder buckthorn",
-        "species": "Frangula alnus",
-        "tier": "avoid",
-        "notes": "Toxic laxative berries (red→black). Do not eat.",
-        "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/386395275",
-        "observed": "2026-07-29",
-        "observer": "therapsid74",
-        "obscured": false
-      }
-    },
-    {
-      "type": "Feature",
-      "id": 386393853,
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -73.567585,
-          45.449132
-        ]
-      },
-      "properties": {
-        "name": "Alder buckthorn",
-        "species": "Frangula alnus",
-        "tier": "avoid",
-        "notes": "Toxic laxative berries (red→black). Do not eat.",
-        "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/386393853",
-        "observed": "2026-07-29",
-        "observer": "therapsid74",
-        "obscured": false
-      }
-    },
-    {
-      "type": "Feature",
-      "id": 386393144,
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -73.567174,
-          45.449554
-        ]
-      },
-      "properties": {
-        "name": "Alder buckthorn",
-        "species": "Frangula alnus",
-        "tier": "avoid",
-        "notes": "Toxic laxative berries (red→black). Do not eat.",
-        "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/386393144",
-        "observed": "2026-07-29",
-        "observer": "therapsid74",
-        "obscured": false
-      }
-    },
     {
       "type": "Feature",
       "id": 384076309,
@@ -104,13 +16,15 @@
       "properties": {
         "name": "Chokecherry",
         "species": "Prunus virginiana",
-        "tier": "prep",
+        "category": "fruit",
+        "caution": false,
         "notes": "Cook only for jelly/syrup — raw fruit is astringent and the seeds are cyanogenic. Never eat the pits.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/384076309",
-        "observed": "2026-07-22",
-        "observer": "frau_von_nebelung",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/384076309",
+        "meta": {
+          "observed": "2026-07-22",
+          "observer": "frau_von_nebelung"
+        }
       }
     },
     {
@@ -126,36 +40,16 @@
       "properties": {
         "name": "Apple",
         "species": "Malus domestica",
-        "tier": "snack",
+        "category": "fruit",
+        "caution": false,
         "notes": "Wild/feral apples — taste one; many roadside trees fruit well.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/380427086",
-        "observed": "2026-07-11",
-        "observer": "brennanrcohen",
-        "obscured": false,
+        "sourceUrl": "https://www.inaturalist.org/observations/380427086",
+        "meta": {
+          "observed": "2026-07-11",
+          "observer": "brennanrcohen"
+        },
         "plant": "apple"
-      }
-    },
-    {
-      "type": "Feature",
-      "id": 372668455,
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -73.565287,
-          45.453125
-        ]
-      },
-      "properties": {
-        "name": "Common buckthorn",
-        "species": "Rhamnus cathartica",
-        "tier": "avoid",
-        "notes": "Black berries are a violent purgative — toxic. Learn it: thorn-tipped twigs, 3-5 curved leaf veins. Do not eat.",
-        "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/372668455",
-        "observed": "2026-06-17",
-        "observer": "phyleme",
-        "obscured": false
       }
     },
     {
@@ -171,13 +65,15 @@
       "properties": {
         "name": "Black walnut",
         "species": "Juglans nigra",
-        "tier": "prep",
+        "category": "nuts",
+        "caution": false,
         "notes": "Husk & cure the nuts (staining!) in fall. Round green husks under the tree.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/372147312",
-        "observed": "2026-06-15",
-        "observer": "jshcwn",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/372147312",
+        "meta": {
+          "observed": "2026-06-15",
+          "observer": "jshcwn"
+        }
       }
     },
     {
@@ -193,13 +89,15 @@
       "properties": {
         "name": "Red clover",
         "species": "Trifolium pratense",
-        "tier": "snack",
+        "category": "herbs",
+        "caution": false,
         "notes": "Nibble the flower heads or dry for tea. Ubiquitous, safe.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/361832372",
-        "observed": "2026-05-03",
-        "observer": "brennanrcohen",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/361832372",
+        "meta": {
+          "observed": "2026-05-03",
+          "observer": "brennanrcohen"
+        }
       }
     },
     {
@@ -215,13 +113,15 @@
       "properties": {
         "name": "Red clover",
         "species": "Trifolium pratense",
-        "tier": "snack",
+        "category": "herbs",
+        "caution": false,
         "notes": "Nibble the flower heads or dry for tea. Ubiquitous, safe.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/353040144",
-        "observed": "2026-04-24",
-        "observer": "hobbiesera",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/353040144",
+        "meta": {
+          "observed": "2026-04-24",
+          "observer": "hobbiesera"
+        }
       }
     },
     {
@@ -237,13 +137,15 @@
       "properties": {
         "name": "Red oak",
         "species": "Quercus rubra",
-        "tier": "prep",
+        "category": "nuts",
+        "caution": false,
         "notes": "Acorns need leaching (cold-water, several changes) to remove tannins, then flour.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/347802674",
-        "observed": "2026-03-28",
-        "observer": "birderbb",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/347802674",
+        "meta": {
+          "observed": "2026-03-28",
+          "observer": "birderbb"
+        }
       }
     },
     {
@@ -259,13 +161,15 @@
       "properties": {
         "name": "Common milkweed",
         "species": "Asclepias syriaca",
-        "tier": "prep",
+        "category": "greens",
+        "caution": false,
         "notes": "Cook shoots / flower buds / young pods (change water). NOT raw. Young shoots resemble toxic dogbane — milkweed has hairy stem + milky sap.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/321123966",
-        "observed": "2025-10-15",
-        "observer": "benedicte44380",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/321123966",
+        "meta": {
+          "observed": "2025-10-15",
+          "observer": "benedicte44380"
+        }
       }
     },
     {
@@ -281,13 +185,15 @@
       "properties": {
         "name": "Common milkweed",
         "species": "Asclepias syriaca",
-        "tier": "prep",
+        "category": "greens",
+        "caution": false,
         "notes": "Cook shoots / flower buds / young pods (change water). NOT raw. Young shoots resemble toxic dogbane — milkweed has hairy stem + milky sap.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/313943414",
-        "observed": "2025-09-14",
-        "observer": "jundai",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/313943414",
+        "meta": {
+          "observed": "2025-09-14",
+          "observer": "jundai"
+        }
       }
     },
     {
@@ -303,13 +209,15 @@
       "properties": {
         "name": "Common milkweed",
         "species": "Asclepias syriaca",
-        "tier": "prep",
+        "category": "greens",
+        "caution": false,
         "notes": "Cook shoots / flower buds / young pods (change water). NOT raw. Young shoots resemble toxic dogbane — milkweed has hairy stem + milky sap.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/313768018",
-        "observed": "2025-09-13",
-        "observer": "marcolivierbeausoleil",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/313768018",
+        "meta": {
+          "observed": "2025-09-13",
+          "observer": "marcolivierbeausoleil"
+        }
       }
     },
     {
@@ -325,36 +233,16 @@
       "properties": {
         "name": "Staghorn sumac",
         "species": "Rhus typhina",
-        "tier": "snack",
+        "category": "herbs",
+        "caution": false,
         "notes": "Steep the red drupe cones in cold water for pink lemonade. No toxic lookalike (poison sumac has white berries, lives in swamps).",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/310641724",
-        "observed": "2025-08-31",
-        "observer": "frederique91857",
-        "obscured": false,
+        "sourceUrl": "https://www.inaturalist.org/observations/310641724",
+        "meta": {
+          "observed": "2025-08-31",
+          "observer": "frederique91857"
+        },
         "plant": "staghorn-sumac"
-      }
-    },
-    {
-      "type": "Feature",
-      "id": 305304954,
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -73.565454,
-          45.451705
-        ]
-      },
-      "properties": {
-        "name": "Common buckthorn",
-        "species": "Rhamnus cathartica",
-        "tier": "avoid",
-        "notes": "Black berries are a violent purgative — toxic. Learn it: thorn-tipped twigs, 3-5 curved leaf veins. Do not eat.",
-        "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/305304954",
-        "observed": "2025-08-10",
-        "observer": "therapsid74",
-        "obscured": false
       }
     },
     {
@@ -370,13 +258,15 @@
       "properties": {
         "name": "Mugwort",
         "species": "Artemisia vulgaris",
-        "tier": "prep",
+        "category": "herbs",
+        "caution": false,
         "notes": "Bitter aromatic herb — dry young leaves as a poultry seasoning; silver leaf underside.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/298808314",
-        "observed": "2025-07-17",
-        "observer": "therapsid74",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/298808314",
+        "meta": {
+          "observed": "2025-07-17",
+          "observer": "therapsid74"
+        }
       }
     },
     {
@@ -392,13 +282,15 @@
       "properties": {
         "name": "Common milkweed",
         "species": "Asclepias syriaca",
-        "tier": "prep",
+        "category": "greens",
+        "caution": false,
         "notes": "Cook shoots / flower buds / young pods (change water). NOT raw. Young shoots resemble toxic dogbane — milkweed has hairy stem + milky sap.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/298808120",
-        "observed": "2025-07-17",
-        "observer": "therapsid74",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/298808120",
+        "meta": {
+          "observed": "2025-07-17",
+          "observer": "therapsid74"
+        }
       }
     },
     {
@@ -414,13 +306,15 @@
       "properties": {
         "name": "Red clover",
         "species": "Trifolium pratense",
-        "tier": "snack",
+        "category": "herbs",
+        "caution": false,
         "notes": "Nibble the flower heads or dry for tea. Ubiquitous, safe.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/298807543",
-        "observed": "2025-07-17",
-        "observer": "therapsid74",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/298807543",
+        "meta": {
+          "observed": "2025-07-17",
+          "observer": "therapsid74"
+        }
       }
     },
     {
@@ -436,79 +330,15 @@
       "properties": {
         "name": "Wild carrot",
         "species": "Daucus carota",
-        "tier": "caution",
+        "category": "greens",
+        "caution": true,
         "notes": "Edible taproot BUT the carrot family has DEADLY lookalikes (poison hemlock, water hemlock). Only forage if 100% certain: hairy stem, carrot smell, single dark central floret. When unsure, don't.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/297190376",
-        "observed": "2025-07-11",
-        "observer": "karuquebec",
-        "obscured": false
-      }
-    },
-    {
-      "type": "Feature",
-      "id": 295193431,
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -73.567627,
-          45.449789
-        ]
-      },
-      "properties": {
-        "name": "Wild parsnip",
-        "species": "Pastinaca sativa",
-        "tier": "avoid",
-        "notes": "DO NOT TOUCH bare-skinned — sap + sunlight causes burning blisters (phytophotodermatitis). Yellow flat flower umbels, celery-like ridged stem.",
-        "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/295193431",
-        "observed": "2025-07-04",
-        "observer": "efslarson",
-        "obscured": false
-      }
-    },
-    {
-      "type": "Feature",
-      "id": 290704399,
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -73.565405,
-          45.451685
-        ]
-      },
-      "properties": {
-        "name": "Common buckthorn",
-        "species": "Rhamnus cathartica",
-        "tier": "avoid",
-        "notes": "Black berries are a violent purgative — toxic. Learn it: thorn-tipped twigs, 3-5 curved leaf veins. Do not eat.",
-        "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/290704399",
-        "observed": "2025-06-18",
-        "observer": "therapsid74",
-        "obscured": false
-      }
-    },
-    {
-      "type": "Feature",
-      "id": 289619313,
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -73.564955,
-          45.452355
-        ]
-      },
-      "properties": {
-        "name": "Wild parsnip",
-        "species": "Pastinaca sativa",
-        "tier": "avoid",
-        "notes": "DO NOT TOUCH bare-skinned — sap + sunlight causes burning blisters (phytophotodermatitis). Yellow flat flower umbels, celery-like ridged stem.",
-        "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/289619313",
-        "observed": "2025-06-14",
-        "observer": "therapsid74",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/297190376",
+        "meta": {
+          "observed": "2025-07-11",
+          "observer": "karuquebec"
+        }
       }
     },
     {
@@ -524,13 +354,15 @@
       "properties": {
         "name": "Common hackberry",
         "species": "Celtis occidentalis",
-        "tier": "snack",
+        "category": "fruit",
+        "caution": false,
         "notes": "Small sweet date-like drupes on a warty-barked tree; crunch the whole thing.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/289602518",
-        "observed": "2025-06-14",
-        "observer": "therapsid74",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/289602518",
+        "meta": {
+          "observed": "2025-06-14",
+          "observer": "therapsid74"
+        }
       }
     },
     {
@@ -546,13 +378,15 @@
       "properties": {
         "name": "Common hackberry",
         "species": "Celtis occidentalis",
-        "tier": "snack",
+        "category": "fruit",
+        "caution": false,
         "notes": "Small sweet date-like drupes on a warty-barked tree; crunch the whole thing.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/286020873",
-        "observed": "2025-06-01",
-        "observer": "therapsid74",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/286020873",
+        "meta": {
+          "observed": "2025-06-01",
+          "observer": "therapsid74"
+        }
       }
     },
     {
@@ -568,13 +402,15 @@
       "properties": {
         "name": "Little-leaf linden",
         "species": "Tilia cordata",
-        "tier": "snack",
+        "category": "greens",
+        "caution": false,
         "notes": "Young heart-shaped leaves are a mild salad green; flowers for tea.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/284104528",
-        "observed": "2025-05-25",
-        "observer": "viandemoisie",
-        "obscured": false,
+        "sourceUrl": "https://www.inaturalist.org/observations/284104528",
+        "meta": {
+          "observed": "2025-05-25",
+          "observer": "viandemoisie"
+        },
         "plant": "linden"
       }
     },
@@ -591,35 +427,15 @@
       "properties": {
         "name": "Common milkweed",
         "species": "Asclepias syriaca",
-        "tier": "prep",
+        "category": "greens",
+        "caution": false,
         "notes": "Cook shoots / flower buds / young pods (change water). NOT raw. Young shoots resemble toxic dogbane — milkweed has hairy stem + milky sap.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/282486555",
-        "observed": "2025-05-19",
-        "observer": "francois52096",
-        "obscured": false
-      }
-    },
-    {
-      "type": "Feature",
-      "id": 281625628,
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -73.565877,
-          45.451377
-        ]
-      },
-      "properties": {
-        "name": "Common buckthorn",
-        "species": "Rhamnus cathartica",
-        "tier": "avoid",
-        "notes": "Black berries are a violent purgative — toxic. Learn it: thorn-tipped twigs, 3-5 curved leaf veins. Do not eat.",
-        "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/281625628",
-        "observed": "2025-05-16",
-        "observer": "therapsid74",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/282486555",
+        "meta": {
+          "observed": "2025-05-19",
+          "observer": "francois52096"
+        }
       }
     },
     {
@@ -635,13 +451,15 @@
       "properties": {
         "name": "Guelder-rose",
         "species": "Viburnum opulus",
-        "tier": "caution",
+        "category": "fruit",
+        "caution": true,
         "notes": "Highbush-cranberry-type fruit — edible cooked, mildly toxic & unpleasant raw. Cook into jelly.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/261089875",
-        "observed": "2025-02-08",
-        "observer": "patrice_dupont",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/261089875",
+        "meta": {
+          "observed": "2025-02-08",
+          "observer": "patrice_dupont"
+        }
       }
     },
     {
@@ -657,13 +475,15 @@
       "properties": {
         "name": "Staghorn sumac",
         "species": "Rhus typhina",
-        "tier": "snack",
+        "category": "herbs",
+        "caution": false,
         "notes": "Steep the red drupe cones in cold water for pink lemonade. No toxic lookalike (poison sumac has white berries, lives in swamps).",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/261060997",
-        "observed": "2025-02-08",
-        "observer": "patrice_dupont",
-        "obscured": false,
+        "sourceUrl": "https://www.inaturalist.org/observations/261060997",
+        "meta": {
+          "observed": "2025-02-08",
+          "observer": "patrice_dupont"
+        },
         "plant": "staghorn-sumac"
       }
     },
@@ -680,13 +500,15 @@
       "properties": {
         "name": "Red oak",
         "species": "Quercus rubra",
-        "tier": "prep",
+        "category": "nuts",
+        "caution": false,
         "notes": "Acorns need leaching (cold-water, several changes) to remove tannins, then flour.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/260406345",
-        "observed": "2025-02-02",
-        "observer": "therapsid74",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/260406345",
+        "meta": {
+          "observed": "2025-02-02",
+          "observer": "therapsid74"
+        }
       }
     },
     {
@@ -702,13 +524,15 @@
       "properties": {
         "name": "Red oak",
         "species": "Quercus rubra",
-        "tier": "prep",
+        "category": "nuts",
+        "caution": false,
         "notes": "Acorns need leaching (cold-water, several changes) to remove tannins, then flour.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/259564007",
-        "observed": "2025-01-25",
-        "observer": "therapsid74",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/259564007",
+        "meta": {
+          "observed": "2025-01-25",
+          "observer": "therapsid74"
+        }
       }
     },
     {
@@ -724,13 +548,15 @@
       "properties": {
         "name": "Little-leaf linden",
         "species": "Tilia cordata",
-        "tier": "snack",
+        "category": "greens",
+        "caution": false,
         "notes": "Young heart-shaped leaves are a mild salad green; flowers for tea.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/258871458",
-        "observed": "2025-01-18",
-        "observer": "therapsid74",
-        "obscured": false,
+        "sourceUrl": "https://www.inaturalist.org/observations/258871458",
+        "meta": {
+          "observed": "2025-01-18",
+          "observer": "therapsid74"
+        },
         "plant": "linden"
       }
     },
@@ -747,13 +573,15 @@
       "properties": {
         "name": "Bur oak",
         "species": "Quercus macrocarpa",
-        "tier": "prep",
+        "category": "nuts",
+        "caution": false,
         "notes": "Big low-tannin acorns; still leach before use.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/253785082",
-        "observed": "2024-12-01",
-        "observer": "therapsid74",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/253785082",
+        "meta": {
+          "observed": "2024-12-01",
+          "observer": "therapsid74"
+        }
       }
     },
     {
@@ -769,13 +597,15 @@
       "properties": {
         "name": "Guelder-rose",
         "species": "Viburnum opulus",
-        "tier": "caution",
+        "category": "fruit",
+        "caution": true,
         "notes": "Highbush-cranberry-type fruit — edible cooked, mildly toxic & unpleasant raw. Cook into jelly.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/253790850",
-        "observed": "2024-12-01",
-        "observer": "therapsid74",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/253790850",
+        "meta": {
+          "observed": "2024-12-01",
+          "observer": "therapsid74"
+        }
       }
     },
     {
@@ -791,13 +621,15 @@
       "properties": {
         "name": "Staghorn sumac",
         "species": "Rhus typhina",
-        "tier": "snack",
+        "category": "herbs",
+        "caution": false,
         "notes": "Steep the red drupe cones in cold water for pink lemonade. No toxic lookalike (poison sumac has white berries, lives in swamps).",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/253790835",
-        "observed": "2024-12-01",
-        "observer": "therapsid74",
-        "obscured": false,
+        "sourceUrl": "https://www.inaturalist.org/observations/253790835",
+        "meta": {
+          "observed": "2024-12-01",
+          "observer": "therapsid74"
+        },
         "plant": "staghorn-sumac"
       }
     },
@@ -814,13 +646,15 @@
       "properties": {
         "name": "Little-leaf linden",
         "species": "Tilia cordata",
-        "tier": "snack",
+        "category": "greens",
+        "caution": false,
         "notes": "Young heart-shaped leaves are a mild salad green; flowers for tea.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/253790782",
-        "observed": "2024-12-01",
-        "observer": "therapsid74",
-        "obscured": false,
+        "sourceUrl": "https://www.inaturalist.org/observations/253790782",
+        "meta": {
+          "observed": "2024-12-01",
+          "observer": "therapsid74"
+        },
         "plant": "linden"
       }
     },
@@ -837,36 +671,16 @@
       "properties": {
         "name": "Basswood (linden)",
         "species": "Tilia americana",
-        "tier": "snack",
+        "category": "greens",
+        "caution": false,
         "notes": "Same as little-leaf linden — young leaves edible, flowers for tea.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/248555493",
-        "observed": "2024-10-19",
-        "observer": "patrice_dupont",
-        "obscured": false,
+        "sourceUrl": "https://www.inaturalist.org/observations/248555493",
+        "meta": {
+          "observed": "2024-10-19",
+          "observer": "patrice_dupont"
+        },
         "plant": "linden"
-      }
-    },
-    {
-      "type": "Feature",
-      "id": 248554735,
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -73.565437,
-          45.45168
-        ]
-      },
-      "properties": {
-        "name": "Common buckthorn",
-        "species": "Rhamnus cathartica",
-        "tier": "avoid",
-        "notes": "Black berries are a violent purgative — toxic. Learn it: thorn-tipped twigs, 3-5 curved leaf veins. Do not eat.",
-        "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/248554735",
-        "observed": "2024-10-19",
-        "observer": "patrice_dupont",
-        "obscured": false
       }
     },
     {
@@ -882,13 +696,15 @@
       "properties": {
         "name": "Little-leaf linden",
         "species": "Tilia cordata",
-        "tier": "snack",
+        "category": "greens",
+        "caution": false,
         "notes": "Young heart-shaped leaves are a mild salad green; flowers for tea.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/248331762",
-        "observed": "2024-10-18",
-        "observer": "patrice_dupont",
-        "obscured": false,
+        "sourceUrl": "https://www.inaturalist.org/observations/248331762",
+        "meta": {
+          "observed": "2024-10-18",
+          "observer": "patrice_dupont"
+        },
         "plant": "linden"
       }
     },
@@ -905,13 +721,15 @@
       "properties": {
         "name": "Little-leaf linden",
         "species": "Tilia cordata",
-        "tier": "snack",
+        "category": "greens",
+        "caution": false,
         "notes": "Young heart-shaped leaves are a mild salad green; flowers for tea.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/248329088",
-        "observed": "2024-10-18",
-        "observer": "patrice_dupont",
-        "obscured": false,
+        "sourceUrl": "https://www.inaturalist.org/observations/248329088",
+        "meta": {
+          "observed": "2024-10-18",
+          "observer": "patrice_dupont"
+        },
         "plant": "linden"
       }
     },
@@ -928,13 +746,15 @@
       "properties": {
         "name": "Yellow nutsedge",
         "species": "Cyperus esculentus",
-        "tier": "prep",
+        "category": "nuts",
+        "caution": false,
         "notes": "Dig the tiny tubers (tigernuts) — sweet, nutty; triangular stem.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/238636086",
-        "observed": "2024-08-29",
-        "observer": "therapsid74",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/238636086",
+        "meta": {
+          "observed": "2024-08-29",
+          "observer": "therapsid74"
+        }
       }
     },
     {
@@ -950,13 +770,15 @@
       "properties": {
         "name": "Guelder-rose",
         "species": "Viburnum opulus",
-        "tier": "caution",
+        "category": "fruit",
+        "caution": true,
         "notes": "Highbush-cranberry-type fruit — edible cooked, mildly toxic & unpleasant raw. Cook into jelly.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/236772098",
-        "observed": "2024-08-19",
-        "observer": "sanguinaria-canadensis",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/236772098",
+        "meta": {
+          "observed": "2024-08-19",
+          "observer": "sanguinaria-canadensis"
+        }
       }
     },
     {
@@ -972,13 +794,15 @@
       "properties": {
         "name": "Common milkweed",
         "species": "Asclepias syriaca",
-        "tier": "prep",
+        "category": "greens",
+        "caution": false,
         "notes": "Cook shoots / flower buds / young pods (change water). NOT raw. Young shoots resemble toxic dogbane — milkweed has hairy stem + milky sap.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/236185243",
-        "observed": "2024-08-16",
-        "observer": "therapsid74",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/236185243",
+        "meta": {
+          "observed": "2024-08-16",
+          "observer": "therapsid74"
+        }
       }
     },
     {
@@ -994,13 +818,15 @@
       "properties": {
         "name": "Common milkweed",
         "species": "Asclepias syriaca",
-        "tier": "prep",
+        "category": "greens",
+        "caution": false,
         "notes": "Cook shoots / flower buds / young pods (change water). NOT raw. Young shoots resemble toxic dogbane — milkweed has hairy stem + milky sap.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/236185103",
-        "observed": "2024-08-16",
-        "observer": "therapsid74",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/236185103",
+        "meta": {
+          "observed": "2024-08-16",
+          "observer": "therapsid74"
+        }
       }
     },
     {
@@ -1016,57 +842,15 @@
       "properties": {
         "name": "Common milkweed",
         "species": "Asclepias syriaca",
-        "tier": "prep",
+        "category": "greens",
+        "caution": false,
         "notes": "Cook shoots / flower buds / young pods (change water). NOT raw. Young shoots resemble toxic dogbane — milkweed has hairy stem + milky sap.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/236184719",
-        "observed": "2024-08-16",
-        "observer": "therapsid74",
-        "obscured": false
-      }
-    },
-    {
-      "type": "Feature",
-      "id": 231430733,
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -73.567139,
-          45.449765
-        ]
-      },
-      "properties": {
-        "name": "Wild parsnip",
-        "species": "Pastinaca sativa",
-        "tier": "avoid",
-        "notes": "DO NOT TOUCH bare-skinned — sap + sunlight causes burning blisters (phytophotodermatitis). Yellow flat flower umbels, celery-like ridged stem.",
-        "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/231430733",
-        "observed": "2024-07-23",
-        "observer": "therapsid74",
-        "obscured": false
-      }
-    },
-    {
-      "type": "Feature",
-      "id": 229070778,
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -73.569302,
-          45.448227
-        ]
-      },
-      "properties": {
-        "name": "Wild parsnip",
-        "species": "Pastinaca sativa",
-        "tier": "avoid",
-        "notes": "DO NOT TOUCH bare-skinned — sap + sunlight causes burning blisters (phytophotodermatitis). Yellow flat flower umbels, celery-like ridged stem.",
-        "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/229070778",
-        "observed": "2024-07-13",
-        "observer": "viandemoisie",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/236184719",
+        "meta": {
+          "observed": "2024-08-16",
+          "observer": "therapsid74"
+        }
       }
     },
     {
@@ -1082,13 +866,15 @@
       "properties": {
         "name": "Yarrow",
         "species": "Achillea millefolium",
-        "tier": "caution",
+        "category": "herbs",
+        "caution": true,
         "notes": "Feathery leaves for tea/medicinal. Its ferny foliage can be confused with poison hemlock before flowering — confirm the flat white flower clusters + strong scent.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/227551199",
-        "observed": "2024-07-06",
-        "observer": "jmcrawford",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/227551199",
+        "meta": {
+          "observed": "2024-07-06",
+          "observer": "jmcrawford"
+        }
       }
     },
     {
@@ -1104,13 +890,15 @@
       "properties": {
         "name": "Bur oak",
         "species": "Quercus macrocarpa",
-        "tier": "prep",
+        "category": "nuts",
+        "caution": false,
         "notes": "Big low-tannin acorns; still leach before use.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/228496765",
-        "observed": "2024-07-03",
-        "observer": "therapsid74",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/228496765",
+        "meta": {
+          "observed": "2024-07-03",
+          "observer": "therapsid74"
+        }
       }
     },
     {
@@ -1126,13 +914,15 @@
       "properties": {
         "name": "Staghorn sumac",
         "species": "Rhus typhina",
-        "tier": "snack",
+        "category": "herbs",
+        "caution": false,
         "notes": "Steep the red drupe cones in cold water for pink lemonade. No toxic lookalike (poison sumac has white berries, lives in swamps).",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/228328902",
-        "observed": "2024-07-03",
-        "observer": "therapsid74",
-        "obscured": false,
+        "sourceUrl": "https://www.inaturalist.org/observations/228328902",
+        "meta": {
+          "observed": "2024-07-03",
+          "observer": "therapsid74"
+        },
         "plant": "staghorn-sumac"
       }
     },
@@ -1149,58 +939,16 @@
       "properties": {
         "name": "Staghorn sumac",
         "species": "Rhus typhina",
-        "tier": "snack",
+        "category": "herbs",
+        "caution": false,
         "notes": "Steep the red drupe cones in cold water for pink lemonade. No toxic lookalike (poison sumac has white berries, lives in swamps).",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/226570247",
-        "observed": "2024-07-01",
-        "observer": "ghi",
-        "obscured": false,
+        "sourceUrl": "https://www.inaturalist.org/observations/226570247",
+        "meta": {
+          "observed": "2024-07-01",
+          "observer": "ghi"
+        },
         "plant": "staghorn-sumac"
-      }
-    },
-    {
-      "type": "Feature",
-      "id": 226575208,
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -73.567117,
-          45.449833
-        ]
-      },
-      "properties": {
-        "name": "Wild parsnip",
-        "species": "Pastinaca sativa",
-        "tier": "avoid",
-        "notes": "DO NOT TOUCH bare-skinned — sap + sunlight causes burning blisters (phytophotodermatitis). Yellow flat flower umbels, celery-like ridged stem.",
-        "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/226575208",
-        "observed": "2024-07-01",
-        "observer": "ghi",
-        "obscured": false
-      }
-    },
-    {
-      "type": "Feature",
-      "id": 226580879,
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -73.56575,
-          45.45152
-        ]
-      },
-      "properties": {
-        "name": "Cow parsley",
-        "species": "Anthriscus sylvestris",
-        "tier": "avoid",
-        "notes": "White umbel — the family that includes deadly poison hemlock. Not worth the risk; learn it as a 'do-not-touch' benchmark.",
-        "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/226580879",
-        "observed": "2024-07-01",
-        "observer": "ghi",
-        "obscured": false
       }
     },
     {
@@ -1216,13 +964,15 @@
       "properties": {
         "name": "Wild carrot",
         "species": "Daucus carota",
-        "tier": "caution",
+        "category": "greens",
+        "caution": true,
         "notes": "Edible taproot BUT the carrot family has DEADLY lookalikes (poison hemlock, water hemlock). Only forage if 100% certain: hairy stem, carrot smell, single dark central floret. When unsure, don't.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/226579113",
-        "observed": "2024-07-01",
-        "observer": "ghi",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/226579113",
+        "meta": {
+          "observed": "2024-07-01",
+          "observer": "ghi"
+        }
       }
     },
     {
@@ -1238,35 +988,15 @@
       "properties": {
         "name": "Yarrow",
         "species": "Achillea millefolium",
-        "tier": "caution",
+        "category": "herbs",
+        "caution": true,
         "notes": "Feathery leaves for tea/medicinal. Its ferny foliage can be confused with poison hemlock before flowering — confirm the flat white flower clusters + strong scent.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/225115197",
-        "observed": "2024-06-25",
-        "observer": "brennanrcohen",
-        "obscured": false
-      }
-    },
-    {
-      "type": "Feature",
-      "id": 221923028,
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -73.565186,
-          45.452019
-        ]
-      },
-      "properties": {
-        "name": "Yellow iris",
-        "species": "Iris pseudacorus",
-        "tier": "avoid",
-        "notes": "Waterside yellow flag — all parts toxic/irritant. Do not forage.",
-        "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/221923028",
-        "observed": "2024-06-09",
-        "observer": "therapsid74",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/225115197",
+        "meta": {
+          "observed": "2024-06-25",
+          "observer": "brennanrcohen"
+        }
       }
     },
     {
@@ -1282,13 +1012,39 @@
       "properties": {
         "name": "Garlic mustard",
         "species": "Alliaria petiolata",
-        "tier": "snack",
+        "category": "greens",
+        "caution": false,
         "notes": "Invasive — forage freely. Crush a leaf: garlic smell confirms it. Raw in pesto/salad.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/215487556",
-        "observed": "2024-05-12",
-        "observer": "viandemoisie",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/215487556",
+        "meta": {
+          "observed": "2024-05-12",
+          "observer": "viandemoisie"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 215326707,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.565274,
+          45.452609
+        ]
+      },
+      "properties": {
+        "name": "Red currant",
+        "species": "Ribes rubrum",
+        "category": "fruit",
+        "caution": false,
+        "notes": "Translucent red berries in hanging clusters, eat raw or jelly.",
+        "source": "inat",
+        "sourceUrl": "https://www.inaturalist.org/observations/215326707",
+        "meta": {
+          "observed": "2024-05-12",
+          "observer": "viandemoisie"
+        }
       }
     },
     {
@@ -1304,13 +1060,15 @@
       "properties": {
         "name": "Garlic mustard",
         "species": "Alliaria petiolata",
-        "tier": "snack",
+        "category": "greens",
+        "caution": false,
         "notes": "Invasive — forage freely. Crush a leaf: garlic smell confirms it. Raw in pesto/salad.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/215381481",
-        "observed": "2024-05-07",
-        "observer": "therapsid74",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/215381481",
+        "meta": {
+          "observed": "2024-05-07",
+          "observer": "therapsid74"
+        }
       }
     },
     {
@@ -1326,13 +1084,15 @@
       "properties": {
         "name": "Staghorn sumac",
         "species": "Rhus typhina",
-        "tier": "snack",
+        "category": "herbs",
+        "caution": false,
         "notes": "Steep the red drupe cones in cold water for pink lemonade. No toxic lookalike (poison sumac has white berries, lives in swamps).",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/199043172",
-        "observed": "2024-02-11",
-        "observer": "therapsid74",
-        "obscured": false,
+        "sourceUrl": "https://www.inaturalist.org/observations/199043172",
+        "meta": {
+          "observed": "2024-02-11",
+          "observer": "therapsid74"
+        },
         "plant": "staghorn-sumac"
       }
     },
@@ -1349,13 +1109,15 @@
       "properties": {
         "name": "Staghorn sumac",
         "species": "Rhus typhina",
-        "tier": "snack",
+        "category": "herbs",
+        "caution": false,
         "notes": "Steep the red drupe cones in cold water for pink lemonade. No toxic lookalike (poison sumac has white berries, lives in swamps).",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/199043053",
-        "observed": "2024-02-11",
-        "observer": "therapsid74",
-        "obscured": false,
+        "sourceUrl": "https://www.inaturalist.org/observations/199043053",
+        "meta": {
+          "observed": "2024-02-11",
+          "observer": "therapsid74"
+        },
         "plant": "staghorn-sumac"
       }
     },
@@ -1372,13 +1134,15 @@
       "properties": {
         "name": "Staghorn sumac",
         "species": "Rhus typhina",
-        "tier": "snack",
+        "category": "herbs",
+        "caution": false,
         "notes": "Steep the red drupe cones in cold water for pink lemonade. No toxic lookalike (poison sumac has white berries, lives in swamps).",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/199042673",
-        "observed": "2024-02-11",
-        "observer": "therapsid74",
-        "obscured": false,
+        "sourceUrl": "https://www.inaturalist.org/observations/199042673",
+        "meta": {
+          "observed": "2024-02-11",
+          "observer": "therapsid74"
+        },
         "plant": "staghorn-sumac"
       }
     },
@@ -1395,13 +1159,15 @@
       "properties": {
         "name": "Rowan",
         "species": "Sorbus aucuparia",
-        "tier": "prep",
+        "category": "fruit",
+        "caution": false,
         "notes": "Cook the orange berries into jelly after first frost; bitter & mildly purgative raw.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/195681094",
-        "observed": "2024-01-03",
-        "observer": "therapsid74",
-        "obscured": false,
+        "sourceUrl": "https://www.inaturalist.org/observations/195681094",
+        "meta": {
+          "observed": "2024-01-03",
+          "observer": "therapsid74"
+        },
         "plant": "rowan"
       }
     },
@@ -1418,13 +1184,15 @@
       "properties": {
         "name": "Riverbank grape",
         "species": "Vitis riparia",
-        "tier": "caution",
+        "category": "fruit",
+        "caution": true,
         "notes": "Grapes for jelly, leaves for dolmas. Lookalike: moonseed (toxic) — grapes have tendrils + several seeds; moonseed has one crescent seed & no tendrils.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/181426178",
-        "observed": "2023-09-02",
-        "observer": "viandemoisie",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/181426178",
+        "meta": {
+          "observed": "2023-09-02",
+          "observer": "viandemoisie"
+        }
       }
     },
     {
@@ -1440,35 +1208,15 @@
       "properties": {
         "name": "Riverbank grape",
         "species": "Vitis riparia",
-        "tier": "caution",
+        "category": "fruit",
+        "caution": true,
         "notes": "Grapes for jelly, leaves for dolmas. Lookalike: moonseed (toxic) — grapes have tendrils + several seeds; moonseed has one crescent seed & no tendrils.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/183242783",
-        "observed": "2023-09-02",
-        "observer": "viandemoisie",
-        "obscured": false
-      }
-    },
-    {
-      "type": "Feature",
-      "id": 179170731,
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -73.565983,
-          45.454628
-        ]
-      },
-      "properties": {
-        "name": "White clover",
-        "species": "Trifolium repens",
-        "tier": "snack",
-        "notes": "Flowers & young leaves edible raw; better cooked in quantity.",
-        "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/179170731",
-        "observed": "2023-08-19",
-        "observer": "therapsid74",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/183242783",
+        "meta": {
+          "observed": "2023-09-02",
+          "observer": "viandemoisie"
+        }
       }
     },
     {
@@ -1484,13 +1232,15 @@
       "properties": {
         "name": "Chokecherry",
         "species": "Prunus virginiana",
-        "tier": "prep",
+        "category": "fruit",
+        "caution": false,
         "notes": "Cook only for jelly/syrup — raw fruit is astringent and the seeds are cyanogenic. Never eat the pits.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/177210156",
-        "observed": "2023-08-05",
-        "observer": "therapsid74",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/177210156",
+        "meta": {
+          "observed": "2023-08-05",
+          "observer": "therapsid74"
+        }
       }
     },
     {
@@ -1506,13 +1256,15 @@
       "properties": {
         "name": "St. John's wort",
         "species": "Hypericum perforatum",
-        "tier": "caution",
+        "category": "herbs",
+        "caution": true,
         "notes": "Medicinal (not food); photosensitizing and interacts with many meds. Learn it, harvest sparingly.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/176838286",
-        "observed": "2023-08-05",
-        "observer": "viandemoisie",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/176838286",
+        "meta": {
+          "observed": "2023-08-05",
+          "observer": "viandemoisie"
+        }
       }
     },
     {
@@ -1528,13 +1280,15 @@
       "properties": {
         "name": "Chicory",
         "species": "Cichorium intybus",
-        "tier": "snack",
+        "category": "greens",
+        "caution": false,
         "notes": "Young leaves (bitter) in salad; roast the root as a coffee sub. Sky-blue flowers confirm ID.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/176839477",
-        "observed": "2023-08-05",
-        "observer": "viandemoisie",
-        "obscured": false,
+        "sourceUrl": "https://www.inaturalist.org/observations/176839477",
+        "meta": {
+          "observed": "2023-08-05",
+          "observer": "viandemoisie"
+        },
         "plant": "chicory"
       }
     },
@@ -1551,13 +1305,15 @@
       "properties": {
         "name": "Wild carrot",
         "species": "Daucus carota",
-        "tier": "caution",
+        "category": "greens",
+        "caution": true,
         "notes": "Edible taproot BUT the carrot family has DEADLY lookalikes (poison hemlock, water hemlock). Only forage if 100% certain: hairy stem, carrot smell, single dark central floret. When unsure, don't.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/176862762",
-        "observed": "2023-08-05",
-        "observer": "viandemoisie",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/176862762",
+        "meta": {
+          "observed": "2023-08-05",
+          "observer": "viandemoisie"
+        }
       }
     },
     {
@@ -1573,13 +1329,15 @@
       "properties": {
         "name": "Chokecherry",
         "species": "Prunus virginiana",
-        "tier": "prep",
+        "category": "fruit",
+        "caution": false,
         "notes": "Cook only for jelly/syrup — raw fruit is astringent and the seeds are cyanogenic. Never eat the pits.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/174635432",
-        "observed": "2023-07-23",
-        "observer": "viandemoisie",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/174635432",
+        "meta": {
+          "observed": "2023-07-23",
+          "observer": "viandemoisie"
+        }
       }
     },
     {
@@ -1595,13 +1353,15 @@
       "properties": {
         "name": "Chicory",
         "species": "Cichorium intybus",
-        "tier": "snack",
+        "category": "greens",
+        "caution": false,
         "notes": "Young leaves (bitter) in salad; roast the root as a coffee sub. Sky-blue flowers confirm ID.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/141312662",
-        "observed": "2022-10-19",
-        "observer": "fendabenda",
-        "obscured": false,
+        "sourceUrl": "https://www.inaturalist.org/observations/141312662",
+        "meta": {
+          "observed": "2022-10-19",
+          "observer": "fendabenda"
+        },
         "plant": "chicory"
       }
     },
@@ -1618,13 +1378,15 @@
       "properties": {
         "name": "Red clover",
         "species": "Trifolium pratense",
-        "tier": "snack",
+        "category": "herbs",
+        "caution": false,
         "notes": "Nibble the flower heads or dry for tea. Ubiquitous, safe.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/197245819",
-        "observed": "2022-09-15",
-        "observer": "therapsid74",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/197245819",
+        "meta": {
+          "observed": "2022-09-15",
+          "observer": "therapsid74"
+        }
       }
     },
     {
@@ -1640,13 +1402,15 @@
       "properties": {
         "name": "Pineappleweed",
         "species": "Matricaria discoidea",
-        "tier": "snack",
+        "category": "herbs",
+        "caution": false,
         "notes": "Cone-shaped flowerheads smell of pineapple when crushed; steep for tea.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/197246033",
-        "observed": "2022-09-10",
-        "observer": "therapsid74",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/197246033",
+        "meta": {
+          "observed": "2022-09-10",
+          "observer": "therapsid74"
+        }
       }
     },
     {
@@ -1662,13 +1426,15 @@
       "properties": {
         "name": "Wild carrot",
         "species": "Daucus carota",
-        "tier": "caution",
+        "category": "greens",
+        "caution": true,
         "notes": "Edible taproot BUT the carrot family has DEADLY lookalikes (poison hemlock, water hemlock). Only forage if 100% certain: hairy stem, carrot smell, single dark central floret. When unsure, don't.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/130045664",
-        "observed": "2022-08-08",
-        "observer": "yoguilours",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/130045664",
+        "meta": {
+          "observed": "2022-08-08",
+          "observer": "yoguilours"
+        }
       }
     },
     {
@@ -1684,13 +1450,15 @@
       "properties": {
         "name": "Chokecherry",
         "species": "Prunus virginiana",
-        "tier": "prep",
+        "category": "fruit",
+        "caution": false,
         "notes": "Cook only for jelly/syrup — raw fruit is astringent and the seeds are cyanogenic. Never eat the pits.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/127906860",
-        "observed": "2022-07-25",
-        "observer": "agh_bbs",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/127906860",
+        "meta": {
+          "observed": "2022-07-25",
+          "observer": "agh_bbs"
+        }
       }
     },
     {
@@ -1706,13 +1474,15 @@
       "properties": {
         "name": "Hawthorn",
         "species": "Crataegus sp.",
-        "tier": "snack",
+        "category": "fruit",
+        "caution": false,
         "notes": "Eat the red haws off the tree (spit the seeds — don't chew them). Thorns + lobed leaves.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/124159606",
-        "observed": "2022-06-30",
-        "observer": "therapsid74",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/124159606",
+        "meta": {
+          "observed": "2022-06-30",
+          "observer": "therapsid74"
+        }
       }
     },
     {
@@ -1728,13 +1498,15 @@
       "properties": {
         "name": "Common hackberry",
         "species": "Celtis occidentalis",
-        "tier": "snack",
+        "category": "fruit",
+        "caution": false,
         "notes": "Small sweet date-like drupes on a warty-barked tree; crunch the whole thing.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/121868438",
-        "observed": "2022-06-15",
-        "observer": "therapsid74",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/121868438",
+        "meta": {
+          "observed": "2022-06-15",
+          "observer": "therapsid74"
+        }
       }
     },
     {
@@ -1750,35 +1522,15 @@
       "properties": {
         "name": "Burdock",
         "species": "Arctium sp.",
-        "tier": "prep",
+        "category": "greens",
+        "caution": false,
         "notes": "Dig first-year taproot (gobo); peel & cook. Big rhubarb-like basal leaves.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/117886579",
-        "observed": "2022-05-20",
-        "observer": "telusjennk",
-        "obscured": false
-      }
-    },
-    {
-      "type": "Feature",
-      "id": 101151251,
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -73.566497,
-          45.450638
-        ]
-      },
-      "properties": {
-        "name": "Bittersweet nightshade",
-        "species": "Solanum dulcamara",
-        "tier": "avoid",
-        "notes": "Red egg-shaped berries + purple/yellow flowers — toxic. Do not eat.",
-        "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/101151251",
-        "observed": "2021-11-07",
-        "observer": "bana1",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/117886579",
+        "meta": {
+          "observed": "2022-05-20",
+          "observer": "telusjennk"
+        }
       }
     },
     {
@@ -1794,13 +1546,15 @@
       "properties": {
         "name": "Wild carrot",
         "species": "Daucus carota",
-        "tier": "caution",
+        "category": "greens",
+        "caution": true,
         "notes": "Edible taproot BUT the carrot family has DEADLY lookalikes (poison hemlock, water hemlock). Only forage if 100% certain: hairy stem, carrot smell, single dark central floret. When unsure, don't.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/61700113",
-        "observed": "2020-10-04",
-        "observer": "michel_jacques",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/61700113",
+        "meta": {
+          "observed": "2020-10-04",
+          "observer": "michel_jacques"
+        }
       }
     },
     {
@@ -1816,13 +1570,15 @@
       "properties": {
         "name": "Red clover",
         "species": "Trifolium pratense",
-        "tier": "snack",
+        "category": "herbs",
+        "caution": false,
         "notes": "Nibble the flower heads or dry for tea. Ubiquitous, safe.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/61699090",
-        "observed": "2020-10-04",
-        "observer": "michel_jacques",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/61699090",
+        "meta": {
+          "observed": "2020-10-04",
+          "observer": "michel_jacques"
+        }
       }
     },
     {
@@ -1838,35 +1594,15 @@
       "properties": {
         "name": "Red clover",
         "species": "Trifolium pratense",
-        "tier": "snack",
+        "category": "herbs",
+        "caution": false,
         "notes": "Nibble the flower heads or dry for tea. Ubiquitous, safe.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/61698207",
-        "observed": "2020-10-04",
-        "observer": "michel_jacques",
-        "obscured": false
-      }
-    },
-    {
-      "type": "Feature",
-      "id": 60226616,
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -73.570139,
-          45.447427
-        ]
-      },
-      "properties": {
-        "name": "Common buckthorn",
-        "species": "Rhamnus cathartica",
-        "tier": "avoid",
-        "notes": "Black berries are a violent purgative — toxic. Learn it: thorn-tipped twigs, 3-5 curved leaf veins. Do not eat.",
-        "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/60226616",
-        "observed": "2020-09-20",
-        "observer": "nchoy98",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/61698207",
+        "meta": {
+          "observed": "2020-10-04",
+          "observer": "michel_jacques"
+        }
       }
     },
     {
@@ -1882,35 +1618,15 @@
       "properties": {
         "name": "Red clover",
         "species": "Trifolium pratense",
-        "tier": "snack",
+        "category": "herbs",
+        "caution": false,
         "notes": "Nibble the flower heads or dry for tea. Ubiquitous, safe.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/48952796",
-        "observed": "2020-06-08",
-        "observer": "ashlow",
-        "obscured": false
-      }
-    },
-    {
-      "type": "Feature",
-      "id": 48952450,
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -73.566432,
-          45.450819
-        ]
-      },
-      "properties": {
-        "name": "Common buckthorn",
-        "species": "Rhamnus cathartica",
-        "tier": "avoid",
-        "notes": "Black berries are a violent purgative — toxic. Learn it: thorn-tipped twigs, 3-5 curved leaf veins. Do not eat.",
-        "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/48952450",
-        "observed": "2020-06-08",
-        "observer": "ashlow",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/48952796",
+        "meta": {
+          "observed": "2020-06-08",
+          "observer": "ashlow"
+        }
       }
     },
     {
@@ -1926,13 +1642,15 @@
       "properties": {
         "name": "Chokecherry",
         "species": "Prunus virginiana",
-        "tier": "prep",
+        "category": "fruit",
+        "caution": false,
         "notes": "Cook only for jelly/syrup — raw fruit is astringent and the seeds are cyanogenic. Never eat the pits.",
         "source": "inat",
-        "inat": "https://www.inaturalist.org/observations/260258451",
-        "observed": "2019-05-29",
-        "observer": "therapsid74",
-        "obscured": false
+        "sourceUrl": "https://www.inaturalist.org/observations/260258451",
+        "meta": {
+          "observed": "2019-05-29",
+          "observer": "therapsid74"
+        }
       }
     }
   ]

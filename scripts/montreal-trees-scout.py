@@ -74,10 +74,33 @@ FORAGE = {
     "gleditsia":          ("caution", "Honey locust",      "Sweet pulp inside the long twisted pods is edible — but do NOT confuse it with the TOXIC Kentucky coffeetree (thick flat pods) or black locust. Honey locust has fine branching thorns and tiny leaflets.", None),
     "robinia":            ("caution", "Black locust",      "The flowers are edible (fritters); everything else — bark, leaves, pods, seeds — is TOXIC. Take only the blossoms, and be sure it's not a look-alike.", None),
 
-    # ── avoid: toxic — pinned so you learn to NOT pick it ───────────────────────
-    "gymnocladus":        ("avoid",   "Kentucky coffeetree","TOXIC raw — the pulp and seeds in the thick flat pods contain cytisine. (Roasting was a historical workaround, but treat it as do-not-eat.) Learn it so you don't mistake it for honey locust.", None),
-    "aesculus":           ("avoid",   "Horse-chestnut",    "TOXIC — the shiny conkers are NOT the edible sweet chestnut (Castanea, which the city doesn't plant here). Do not eat.", None),
 }
+
+# One category (type / food-part) per taxon — the single colour axis on the map,
+# keyed like FORAGE (full "genus species" wins over a bare genus). fruit | nuts |
+# greens | herbs | mushrooms | other. `caution` (dangerous lookalike / handle-with-
+# care) is derived from the FORAGE tier instead of a second colour.
+CATEGORY = {
+    "malus": "fruit", "amelanchier": "fruit", "celtis": "fruit", "morus": "fruit",
+    "crataegus": "fruit", "pyrus": "fruit", "prunus": "fruit", "sorbus": "fruit",
+    "quercus": "nuts", "juglans": "nuts", "carya": "nuts", "fagus": "nuts",
+    "corylus": "nuts", "ginkgo": "nuts",
+    "tilia": "greens",
+    "rhus typhina": "herbs", "betula": "herbs", "acer saccharum": "herbs",
+    "acer nigrum": "herbs", "robinia": "herbs",
+    "gleditsia": "other",
+}
+
+
+def category_for(sci):
+    """Map a scientific name to a type category (same key resolution as FORAGE)."""
+    s = _norm(sci)
+    toks = s.split()
+    if len(toks) >= 2 and " ".join(toks[:2]) in CATEGORY:
+        return CATEGORY[" ".join(toks[:2])]
+    if toks and toks[0] in CATEGORY:
+        return CATEGORY[toks[0]]
+    return "other"
 
 
 def _norm(sci):
@@ -169,14 +192,18 @@ def build(bbox, cell_m, cap):
             continue
         where = r.get("NOM_PARC") or r.get("Rue") or None
         planted = (r.get("Date_Plantation") or "")[:4] or None
-        props = {
-            "name": name, "species": sci, "tier": tier, "notes": note,
-            "source": "montreal", "mtl": DATASET_URL,
-        }
+        # Source-specific display bits go in `meta` (stored as a JSON column on
+        # import, re-expanded into the popup); category/caution are the shared axes.
+        meta = {}
         if where:
-            props["where"] = where.strip().title() if where.isupper() else where.strip()
+            meta["where"] = where.strip().title() if where.isupper() else where.strip()
         if planted and planted.isdigit():
-            props["planted"] = planted
+            meta["planted"] = planted
+        props = {
+            "name": name, "species": sci, "category": category_for(sci),
+            "caution": tier == "caution", "notes": note,
+            "source": "montreal", "sourceUrl": DATASET_URL, "meta": meta,
+        }
         if slug:
             props["plant"] = slug
         feat = {"type": "Feature", "id": f"mtl{r['_id']}",
@@ -215,12 +242,15 @@ def main():
         json.dump(fc, f, indent=2, ensure_ascii=False)
         f.write("\n")
 
-    by_tier = {}
+    by_cat = {}
     for feat in feats:
-        by_tier[feat["properties"]["tier"]] = by_tier.get(feat["properties"]["tier"], 0) + 1
+        c = feat["properties"]["category"]
+        by_cat[c] = by_cat.get(c, 0) + 1
+    n_caution = sum(1 for f in feats if f["properties"].get("caution"))
     print(f"{len(feats)} pins → {a.out}  (thinned from {sum(raw_totals.values())} forageable; "
           f"{dropped} dropped by cap/grid)", file=sys.stderr)
-    print("  by tier: " + ", ".join(f"{k}={v}" for k, v in sorted(by_tier.items())), file=sys.stderr)
+    print("  by category: " + ", ".join(f"{k}={v}" for k, v in sorted(by_cat.items()))
+          + f"  ·  caution flagged: {n_caution}", file=sys.stderr)
     print("  species kept (shown / total in area): " + ", ".join(
         f"{n}={sum(1 for x in feats if x['properties']['name']==n)}/{raw_totals[n]}"
         for n in sorted(raw_totals, key=lambda k: -raw_totals[k])), file=sys.stderr)
