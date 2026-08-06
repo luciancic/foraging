@@ -186,10 +186,10 @@ function toFeature(p) {
     id: p.id,
     geometry: { type: 'Point', coordinates: [p.lon, p.lat] },
     properties: {
-      source: p.source, verified: !!p.verified, name: p.name, category: p.category,
-      caution: !!p.caution, species: p.species, season: p.season, location: p.location,
-      notes: p.notes, plant: p.plant, photos: p.photos, sourceUrl: p.source_url,
-      added: p.added, updated: p.updated, ...p.meta,
+      source: p.source, verified: !!p.verified, ext_id: p.ext_id, name: p.name,
+      category: p.category, caution: !!p.caution, species: p.species, season: p.season,
+      location: p.location, notes: p.notes, plant: p.plant, photos: p.photos,
+      sourceUrl: p.source_url, added: p.added, updated: p.updated, ...p.meta,
     },
   };
 }
