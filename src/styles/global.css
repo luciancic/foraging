@@ -207,22 +207,24 @@ body.fullbleed main { flex: 1 1 auto; min-height: 0; display: flex; }
 .map-panel { display: flex; flex-direction: column-reverse; align-items: flex-end; gap: 8px; }
 /* bottom row: pencil edit-toggle (left) + Layers pill (right), same baseline */
 .map-panel-bar { display: flex; align-items: center; gap: 8px; }
-/* green circular pencil — matches the pill's chrome (shadow, blur), only shown
-   when an edit token is stored. Solid green by default; gains a halo ring when
-   edit mode is active so its on/off state reads at a glance. */
+/* circular pencil — matches the Layers pill's chrome (shadow, blur), only shown
+   when an edit token is stored. White with a green icon when idle (like the pill);
+   inverts to a solid green fill with a white icon while edit mode is active, so
+   its on/off state reads at a glance. */
 .map-panel-edit {
   display: inline-flex; align-items: center; justify-content: center;
   width: 40px; height: 40px; flex: none; padding: 0;
-  color: #fff; background: var(--forest);
-  border: 1px solid var(--forest-deep); border-radius: 999px;
+  color: var(--forest);
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  border: 1px solid var(--line); border-radius: 999px;
   box-shadow: var(--shadow); backdrop-filter: blur(4px); cursor: pointer;
-  transition: background .15s ease, box-shadow .15s ease;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
 }
-.map-panel-edit:hover { background: var(--forest-deep); }
+.map-panel-edit:hover { border-color: var(--ink-soft); }
 .map-panel-edit.active {
-  background: var(--forest-deep);
-  box-shadow: var(--shadow), 0 0 0 3px color-mix(in srgb, var(--forest) 30%, transparent);
+  color: #fff; background: var(--forest); border-color: var(--forest-deep);
 }
+.map-panel-edit.active:hover { background: var(--forest-deep); }
 .map-panel-toggle {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 9px 14px; font: inherit; font-size: .82rem; font-weight: 600; color: var(--ink);
@@ -287,6 +289,9 @@ body.fullbleed main { flex: 1 1 auto; min-height: 0; display: flex; }
 .leaflet-popup-content .scout-hide:hover { background: #f7d2cb; }
 /* promote-a-lead button + its inline category picker in a scouting popup */
 .leaflet-popup-content .scout-promote { display: block; width: 100%; margin-top: 10px; padding: 7px 10px; font: inherit; font-size: .82rem; font-weight: 600; color: #1f6b34; background: #e7f3e9; border: 1px solid #bfe0c7; border-radius: 8px; cursor: pointer; }
+/* Promote is an edit action — only surfaced while edit mode is active (the popup
+   is HTML, so the body class gates it reactively without rebinding). */
+body:not(.map-editing) .leaflet-popup-content .scout-promote { display: none; }
 .leaflet-popup-content .scout-promote:hover { background: #d8ecdd; }
 .leaflet-popup-content .promote-form { margin-top: 10px; padding: 9px; background: #f3faf4; border: 1px solid #bfe0c7; border-radius: 8px; }
 .leaflet-popup-content .promote-cat-l { display: flex; align-items: center; gap: 6px; font-size: .8rem; font-weight: 600; color: #1f6b34; }

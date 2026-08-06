@@ -253,7 +253,12 @@ const { fullscreen = false } = Astro.props;
   // PATCHes the live API, which persists it to the DB — no rebuild, shows for
   // everyone on the next load. Writes need the edit token (stored per-device).
   // Defined above initPanel so the panel's pencil toggle can gate on the token.
-  const editMode = new URLSearchParams(location.search).get('edit') === '1';
+  // `editMode` is a live `let`, not a load-time const: the pencil flips it in
+  // place (no reload, so map position/zoom are preserved) — long-press-move and
+  // the promote button react to the current value rather than being wired once.
+  let editMode = new URLSearchParams(location.search).get('edit') === '1';
+  let editBtnEl: HTMLElement | null = null;
+  const EDIT_MSG = '✎ Edit mode — press & hold a pin to lift it, then drag to its real spot.';
   const TOKEN_KEY = 'forage.editToken';
   const getToken = () => { try { return localStorage.getItem(TOKEN_KEY) || ''; } catch { return ''; } };
   const setToken = (t: string) => { try { localStorage.setItem(TOKEN_KEY, t); } catch {} };
@@ -267,12 +272,36 @@ const { fullscreen = false } = Astro.props;
     return t;
   }
 
+  // Reflect the current editMode onto the DOM: a body class drives promote-button
+  // visibility (popups are HTML, so CSS gates them reactively) and the pencil's
+  // fill/label. Called on load and on every toggle.
+  function applyEditState() {
+    document.body.classList.toggle('map-editing', editMode);
+    if (editBtnEl) {
+      const t = editMode ? 'Exit edit mode' : 'Edit mode — move pins, promote leads';
+      editBtnEl.classList.toggle('active', editMode);
+      editBtnEl.title = t;
+      editBtnEl.setAttribute('aria-label', t);
+      editBtnEl.setAttribute('aria-pressed', String(editMode));
+    }
+  }
+  // Flip edit mode without reloading — keep ?edit in the URL in sync (replaceState,
+  // so it's still shareable/bookmarkable) but leave the map view untouched.
+  function setEditMode(on: boolean) {
+    editMode = on;
+    const u = new URL(location.href);
+    if (on) u.searchParams.set('edit', '1'); else u.searchParams.delete('edit');
+    history.replaceState(null, '', u);
+    applyEditState();
+    if (on) flash(EDIT_MSG, true); else clearFlash();
+  }
+
   function initPanel() {
     let open = loadPref('panel.open', false);
     // The pencil edit-toggle sits to the LEFT of the Layers pill on the same row,
     // but only once an edit token is stored (never shown to public visitors).
-    // Toggling reloads with ?edit set/cleared — how edit mode wires long-press-move
-    // + the promote button throughout the script.
+    // Clicking flips edit mode in place (setEditMode) — no reload, so the map view
+    // is preserved.
     const canEdit = !!getToken();
     const editTitle = editMode ? 'Exit edit mode' : 'Edit mode — move pins, promote leads';
     const PanelCtl = L.Control.extend({
@@ -308,19 +337,15 @@ const { fullscreen = false } = Astro.props;
           body.hidden = !open;
           btn.setAttribute('aria-expanded', String(open));
         });
-        const editBtn = wrap.querySelector('.map-panel-edit') as HTMLElement | null;
-        if (editBtn) editBtn.addEventListener('click', () => {
-          const u = new URL(location.href);
-          if (editMode) u.searchParams.delete('edit');
-          else u.searchParams.set('edit', '1');
-          location.href = u.toString();
-        });
+        editBtnEl = wrap.querySelector('.map-panel-edit') as HTMLElement | null;
+        if (editBtnEl) editBtnEl.addEventListener('click', () => setEditMode(!editMode));
         return wrap;
       },
     });
     new PanelCtl({ position: 'bottomright' }).addTo(map);
   }
   if (isFullMap) initPanel();
+  applyEditState(); // reflect the initial ?edit state onto body + pencil
 
   // Optional ?plant=<slug> filter: a plant page can deep-link here to show only
   // the spots that link back to it (properties.plant === slug) — both confirmed
@@ -429,6 +454,7 @@ const { fullscreen = false } = Astro.props;
       window.removeEventListener('pointercancel', onCancel);
     };
     const onDown = (e: any) => {
+      if (!editMode) return; // handler is always attached; only arms while editing
       if (e.button != null && e.button > 0) return; // primary button / touch only
       start = { x: e.clientX, y: e.clientY };
       timer = setTimeout(arm, ARM_MS);
@@ -459,7 +485,7 @@ const { fullscreen = false } = Astro.props;
 
   loadSpots()
     .then((geo) => {
-      if (editMode) flash('✎ Edit mode — press & hold a pin to lift it, then drag to its real spot.', true);
+      if (editMode) flash(EDIT_MSG, true);
       const layer = L.geoJSON(geo, {
         filter: (feature) =>
           !plantFilter || feature.properties?.plant === plantFilter,
@@ -470,7 +496,9 @@ const { fullscreen = false } = Astro.props;
         },
         onEachFeature: (feature, lyr) => {
           const p = feature.properties || {};
-          if (editMode && typeof feature.id === 'number') {
+          // Always wire long-press-move; it only arms while editMode is on, so a
+          // live toggle needs no re-binding.
+          if (typeof feature.id === 'number') {
             enableLongPressMove(lyr, feature.id as number);
           }
           const photos: string[] = Array.isArray(p.photos) ? p.photos : [];
@@ -585,7 +613,7 @@ const { fullscreen = false } = Astro.props;
         (isFF && /^https?:\/\//i.test(p.ff || '') ? `<a class="p-guide" href="${esc(p.ff)}" target="_blank" rel="noopener">View on Falling Fruit →</a>` : '') +
         (isMtl && /^https?:\/\//i.test(p.mtl || '') ? `<a class="p-guide" href="${esc(p.mtl)}" target="_blank" rel="noopener">City tree dataset →</a>` : '') +
         (p.plant ? `<a class="p-guide" href="/plants/${seg(p.plant)}">View plant guide →</a>` : '') +
-        (editMode ? `<button type="button" class="scout-promote" data-promote="${esc(key)}">➕ Promote to confirmed spot</button>` : '') +
+        `<button type="button" class="scout-promote" data-promote="${esc(key)}">➕ Promote to confirmed spot</button>` +
         `<button type="button" class="scout-hide" data-hide="${esc(key)}">✕ Hide this pin</button>` +
       `</div>`
     );
