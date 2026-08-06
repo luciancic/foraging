@@ -8,7 +8,7 @@
         "white mulberry",
         "red mulberry"
       ],
-      "category": "tree",
+      "category": "fruit",
       "season": "Fruit ripe late June–July",
       "status": "ripe-now",
       "ripeStart": "06-20",
@@ -118,7 +118,7 @@
         "feral apple",
         "pommier"
       ],
-      "category": "tree",
+      "category": "fruit",
       "season": "Fruit ripe late summer into fall (windfalls can start dropping late July)",
       "status": "ripe-now",
       "ripeStart": "07-25",
@@ -195,7 +195,7 @@
         "crab apple",
         "pommetier"
       ],
-      "category": "tree",
+      "category": "fruit",
       "season": "Fruit ripe mid-July through fall",
       "status": "ripe-now",
       "ripeStart": "07-15",
@@ -235,7 +235,7 @@
         "lime tree",
         "tilleul"
       ],
-      "category": "tree",
+      "category": "greens",
       "season": "Flowers early summer; young leaves spring",
       "status": "year-round",
       "ripeStart": null,
@@ -269,7 +269,7 @@
         "sourgrass",
         "oxalide"
       ],
-      "category": "herbs",
+      "category": "greens",
       "season": "Spring through fall",
       "status": "ripe-now",
       "ripeStart": "05-01",
@@ -337,7 +337,7 @@
         "wild red raspberry",
         "framboise sauvage"
       ],
-      "category": "berries",
+      "category": "fruit",
       "season": "Ripe July–Aug (often a lighter second flush into fall)",
       "status": "ripe-now",
       "ripeStart": "07-01",
@@ -387,7 +387,7 @@
         "aronia",
         "aronie"
       ],
-      "category": "berries",
+      "category": "fruit",
       "season": "Ripe Aug–Sep; fruit hangs on into fall",
       "status": "ripe-now",
       "ripeStart": "08-01",
@@ -439,7 +439,7 @@
         "serviceberry",
         "amélanchier"
       ],
-      "category": "berries",
+      "category": "fruit",
       "season": "Fruit ripe late June–early July",
       "status": "note-for-next-year",
       "ripeStart": "06-15",
@@ -484,7 +484,7 @@
         "cassis",
         "gadellier noir"
       ],
-      "category": "berries",
+      "category": "fruit",
       "season": "Ripe July–Aug",
       "status": "ripe-now",
       "ripeStart": "07-10",
@@ -539,7 +539,7 @@
         "sorbier",
         "cormier"
       ],
-      "category": "tree",
+      "category": "fruit",
       "season": "Berries colour up Aug–Sep; best after first frost, hold on the tree into winter",
       "status": "ripe-now",
       "ripeStart": "08-01",
@@ -591,7 +591,7 @@
         "cerisier de Virginie",
         "cerise à grappes"
       ],
-      "category": "berries",
+      "category": "fruit",
       "season": "Fruit ripens late July–Sep, colouring dark red to near-black",
       "status": "ripe-now",
       "ripeStart": "07-20",
@@ -644,7 +644,7 @@
         "églantier",
         "cynorrhodon"
       ],
-      "category": "berries",
+      "category": "fruit",
       "season": "Hips colour up Sep; best after the first frosts, hold into winter",
       "status": "coming-soon",
       "ripeStart": "09-15",
@@ -727,7 +727,7 @@
         "common elderberry",
         "sureau"
       ],
-      "category": "berries",
+      "category": "fruit",
       "season": "Flowers June; berries Aug–Sep",
       "status": "coming-soon",
       "ripeStart": "08-15",
@@ -760,7 +760,7 @@
     {
       "id": 1,
       "name": "Crabapple tree",
-      "category": "tree",
+      "category": "fruit",
       "species": "crabapple (Malus sp.)",
       "season": "ripe mid-July",
       "location": "Boulevard Gaétan-Laberge, Verdun",
@@ -777,7 +777,7 @@
     {
       "id": 2,
       "name": "Saskatoon berry bush",
-      "category": "berries",
+      "category": "fruit",
       "species": "saskatoon / serviceberry (Amelanchier)",
       "season": "ripe late June–early July",
       "location": "Verdun (near riverfront)",
@@ -794,7 +794,7 @@
     {
       "id": 3,
       "name": "Crabapple (Verdun/Beatty)",
-      "category": "tree",
+      "category": "fruit",
       "species": "crabapple (Malus sp.)",
       "season": "late summer/fall",
       "location": "Rue de Verdun & Beatty, Verdun",
@@ -811,7 +811,7 @@
     {
       "id": 4,
       "name": "Staghorn sumac",
-      "category": "tree",
+      "category": "herbs",
       "species": "staghorn sumac (Rhus typhina)",
       "season": "drupes ripe Aug–Sept (usable into fall)",
       "location": "Verdun (near riverfront)",
@@ -845,7 +845,7 @@
     {
       "id": 6,
       "name": "Crabapple (Verdun park)",
-      "category": "tree",
+      "category": "fruit",
       "species": "crabapple (Malus sp.)",
       "season": "late summer/fall",
       "location": "Verdun (park bench near footpath)",
@@ -862,7 +862,7 @@
     {
       "id": 7,
       "name": "Apple trees (bike path)",
-      "category": "tree",
+      "category": "fruit",
       "species": "apple (Malus domestica)",
       "season": "ripe now (windfalls dropping); holds into fall",
       "location": "By the bike path (a few young trees lined up)",
@@ -880,7 +880,7 @@
     {
       "id": 8,
       "name": "Rowan / Mountain-ash (LaSalle)",
-      "category": "tree",
+      "category": "fruit",
       "species": "rowan / European mountain-ash (Sorbus aucuparia)",
       "season": "berries Aug–fall; best after first frost, hold on the tree into winter",
       "location": "LaSalle (beside a paved path)",
@@ -898,7 +898,7 @@
     {
       "id": 9,
       "name": "Black chokeberry (aronia) — west",
-      "category": "berries",
+      "category": "fruit",
       "species": "black chokeberry (Aronia melanocarpa)",
       "season": "ripe Aug–Sep",
       "location": "Verdun",
@@ -916,7 +916,7 @@
     {
       "id": 10,
       "name": "Black chokeberry (aronia) — east",
-      "category": "berries",
+      "category": "fruit",
       "species": "black chokeberry (Aronia melanocarpa)",
       "season": "ripe Aug–Sep",
       "location": "Verdun",
@@ -934,7 +934,7 @@
     {
       "id": 11,
       "name": "Elderberry (Verdun)",
-      "category": "berries",
+      "category": "fruit",
       "species": "common elderberry (Sambucus canadensis)",
       "season": "berries Aug–Sep (cook)",
       "location": "Verdun",
@@ -951,7 +951,7 @@
     {
       "id": 12,
       "name": "Red raspberry brambles (Verdun)",
-      "category": "berries",
+      "category": "fruit",
       "species": "red raspberry (Rubus idaeus)",
       "season": "ripe now (Jul–Aug)",
       "location": "Verdun",
@@ -969,7 +969,7 @@
     {
       "id": 13,
       "name": "Black currant (Verdun)",
-      "category": "berries",
+      "category": "fruit",
       "species": "black currant (Ribes nigrum, likely garden escape)",
       "season": "ripe now (Jul–Aug)",
       "location": "Verdun",
@@ -987,7 +987,7 @@
     {
       "id": 14,
       "name": "Wild rose / rose hips (Verdun)",
-      "category": "berries",
+      "category": "fruit",
       "species": "wild rose (Rosa sp.)",
       "season": "hips ripen Sep, best after frost",
       "location": "Verdun",
@@ -1005,7 +1005,7 @@
     {
       "id": 15,
       "name": "Rowan / Mountain-ash (Verdun)",
-      "category": "tree",
+      "category": "fruit",
       "species": "rowan / European mountain-ash (Sorbus aucuparia)",
       "season": "berries Aug–fall; best after first frost, hold on the tree into winter",
       "location": "Verdun",
@@ -1023,7 +1023,7 @@
     {
       "id": 16,
       "name": "Red currant (community-garden fence)",
-      "category": "berries",
+      "category": "fruit",
       "species": "red currant (Ribes rubrum)",
       "season": "ripe now (Jul–Aug)",
       "location": "Verdun — SE edge of the community garden by the Piste cyclable des Berges",
@@ -1038,7 +1038,7 @@
     {
       "id": 17,
       "name": "Chokecherry (Verdun)",
-      "category": "berries",
+      "category": "fruit",
       "species": "chokecherry (Prunus virginiana)",
       "season": "fruit ripe late Jul–Sep (cook)",
       "location": "Verdun — riverside path (Piste cyclable des Berges), beyond the fence near the Centre d'hébergement / Parc Woodland",

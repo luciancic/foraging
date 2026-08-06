@@ -14,12 +14,11 @@
   --header-h: 60px;
   --pad: 20px;
 
-  /* category colours — shared by map markers + plant badges */
-  --cat-tree: #6b8e23;
-  --cat-berries: #8a2f4a;
+  /* category colours (type axis) — mirror CAT_COLORS in ForagingMap.astro */
+  --cat-fruit: #8a2f4a;
+  --cat-nuts: #8a6d3b;
   --cat-greens: #2f7d4f;
   --cat-herbs: #4a8f7b;
-  --cat-nuts: #8a6d3b;
   --cat-mushrooms: #9c6b4a;
   --cat-other: #7a7a7a;
 }
@@ -294,12 +293,13 @@ body.map-editing .map-msg {
 .scout-tier b { margin-left: auto; font-weight: 600; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
 
 /* scouting popup tier badge */
-.leaflet-popup-content .p-tier { display: inline-block; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .02em; padding: 2px 8px; border-radius: 999px; margin: 2px 0 6px; }
-.leaflet-popup-content .p-tier.tier-snack { background: #e7f3e9; color: #1f6b34; }
-.leaflet-popup-content .p-tier.tier-prep { background: #fdf0dc; color: #93611a; }
-.leaflet-popup-content .p-tier.tier-caution { background: #fbe6d8; color: #b0501c; }
-.leaflet-popup-content .p-tier.tier-avoid { background: #fbe0dc; color: #9a2b1e; }
+.leaflet-popup-content .p-cat { display: inline-flex; align-items: center; gap: 6px; font-size: .74rem; font-weight: 600; color: #566152; margin: 2px 0 6px; }
+.leaflet-popup-content .p-cat .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.leaflet-popup-content .p-caution { font-size: .78rem; font-weight: 600; color: #8a5310; background: #fdf1dd; border: 1px solid #eecfa0; border-radius: 7px; padding: 5px 8px; margin: 0 0 6px; }
 .leaflet-popup-content .p-obs { font-size: .78rem; opacity: .85; }
+/* Caution filter row + amber-ringed markers */
+.scout-tier.scout-caution { color: #8a5310; }
+.leaflet-marker-icon.scout-pin.is-caution, .leaflet-marker-icon.forage-pin.is-caution { filter: drop-shadow(0 0 2px rgba(217, 138, 43, .9)); }
 /* per-pin hide button in a scouting popup */
 .leaflet-popup-content .scout-hide { display: block; width: 100%; margin-top: 10px; padding: 7px 10px; font: inherit; font-size: .82rem; color: #9a2b1e; background: #fbe0dc; border: 1px solid #eec4bd; border-radius: 8px; cursor: pointer; }
 .leaflet-popup-content .scout-hide:hover { background: #f7d2cb; }

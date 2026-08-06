@@ -19,11 +19,12 @@ import { createReadStream, existsSync, mkdirSync } from 'node:fs';
 import { writeFile, rename } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { AwsClient } from 'aws4fetch';
-import { allSpots, spotsGeoJSON, moveSpot, addSpot } from '../src/lib/db.mjs';
+import { allPins, pinsGeoJSON, movePin, addPin, promotePin } from '../src/lib/db.mjs';
 
 const PORT = Number(process.env.FORAGING_API_PORT || 8787);
 const TOKEN = process.env.FORAGING_EDIT_TOKEN || '';
-const CATEGORIES = new Set(['tree', 'berries', 'greens', 'herbs', 'nuts', 'mushrooms', 'other']);
+// The unified type taxonomy (see db.mjs PIN_CATEGORIES).
+const CATEGORIES = new Set(['fruit', 'nuts', 'greens', 'herbs', 'mushrooms', 'other']);
 
 // ── Media (photos) served from Storj with an on-disk cache ──────────────────
 // Photos live only in Storj (bucket prefix `media/`), not in git. This streams
@@ -133,21 +134,36 @@ const server = createServer(async (req, res) => {
     if (req.method === 'GET' && MEDIA_PATH.test(path)) return serveMedia(res, path);
 
     // ── Public read ─────────────────────────────────────────────────────────
+    // The live layer is the CONFIRMED spots; leads are served as a static export.
     if (req.method === 'GET' && (path === '/api/pins' || path === '/api/pins.geojson')) {
-      return send(res, 200, spotsGeoJSON());
+      return send(res, 200, pinsGeoJSON({ verified: true }));
     }
     if (req.method === 'GET' && path === '/api/health') {
-      return send(res, 200, { ok: true, spots: allSpots().length, writable: !!TOKEN });
+      return send(res, 200, { ok: true, spots: allPins({ verified: true }).length, writable: !!TOKEN });
     }
 
     // ── Writes (token-gated) ──────────────────────────────────────────────────
+    // Promote a lead → confirmed spot in place (flip verified=1). Must precede the
+    // bare /:id move route so the longer path wins.
+    const promoteMatch = path.match(/^\/api\/pins\/(\d+)\/promote$/);
+    if (req.method === 'POST' && promoteMatch) {
+      if (!authed(req)) return send(res, 401, { error: 'unauthorized' });
+      const body = await readBody(req);
+      if (body.category != null && !CATEGORIES.has(body.category)) {
+        return send(res, 400, { error: 'category must be one of ' + [...CATEGORIES].join(', ') });
+      }
+      const spot = promotePin(Number(promoteMatch[1]), { category: body.category, plant: body.plant });
+      if (!spot) return send(res, 404, { error: 'no such lead' });
+      return send(res, 200, { ok: true, spot });
+    }
+
     const moveMatch = path.match(/^\/api\/pins\/(\d+)$/);
     if (req.method === 'PATCH' && moveMatch) {
       if (!authed(req)) return send(res, 401, { error: 'unauthorized' });
       const id = Number(moveMatch[1]);
       const body = await readBody(req);
       if (!inLon(body.lon) || !inLat(body.lat)) return send(res, 400, { error: 'lon/lat required and must be valid coordinates' });
-      const spot = moveSpot(id, body.lon, body.lat, new Date().toISOString().slice(0, 10));
+      const spot = movePin(id, body.lon, body.lat, new Date().toISOString().slice(0, 10));
       if (!spot) return send(res, 404, { error: 'no such pin' });
       return send(res, 200, { ok: true, spot });
     }
@@ -158,8 +174,8 @@ const server = createServer(async (req, res) => {
       if (!body.name || typeof body.name !== 'string') return send(res, 400, { error: 'name required' });
       if (!CATEGORIES.has(body.category)) return send(res, 400, { error: 'category must be one of ' + [...CATEGORIES].join(', ') });
       if (!inLon(body.lon) || !inLat(body.lat)) return send(res, 400, { error: 'lon/lat required and must be valid coordinates' });
-      const spot = addSpot({
-        name: body.name.trim(), category: body.category,
+      const spot = addPin({
+        name: body.name.trim(), category: body.category, caution: body.caution,
         species: body.species ?? null, season: body.season ?? null,
         location: body.location ?? null, notes: body.notes ?? null,
         added: new Date().toISOString().slice(0, 10),

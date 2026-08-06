@@ -1,18 +1,21 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import { writeFileSync, mkdirSync } from 'node:fs';
-import { spotsGeoJSON } from './src/lib/db.mjs';
+import { pinsGeoJSON } from './src/lib/db.mjs';
 
-// Emit the current pins as a static GeoJSON into the build output. The map fetches
-// live pins from /api/pins, but falls back to this file when the API is down — so
-// the static site never hard-depends on the data service being up.
-const exportSpotsFallback = {
-  name: 'export-spots-fallback',
+// Emit the current pins as static GeoJSON into the build output. The map fetches
+// live confirmed pins from /api/pins (falling back to foraging-spots.geojson when
+// the API is down), and reads the unverified leads from pins-leads.geojson — both
+// exported here from the unified DB, so the static site never hard-depends on the
+// data service and the lead layer always matches what got imported this deploy.
+const exportPins = {
+  name: 'export-pins',
   hooks: {
     'astro:build:done': ({ dir }) => {
       const outDir = new URL('data/', dir);
       mkdirSync(outDir, { recursive: true });
-      writeFileSync(new URL('foraging-spots.geojson', outDir), JSON.stringify(spotsGeoJSON(), null, 2));
+      writeFileSync(new URL('foraging-spots.geojson', outDir), JSON.stringify(pinsGeoJSON({ verified: true }), null, 2));
+      writeFileSync(new URL('pins-leads.geojson', outDir), JSON.stringify(pinsGeoJSON({ verified: false }), null, 2));
     },
   },
 };
@@ -24,7 +27,7 @@ export default defineConfig({
   site: 'https://foraging.condrea.dev',
   output: 'static',
   build: { format: 'directory' },
-  integrations: [exportSpotsFallback],
+  integrations: [exportPins],
   vite: {
     // Native module — never bundle it into the SSR build; require it at runtime.
     ssr: { external: ['better-sqlite3'] },

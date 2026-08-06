@@ -22,39 +22,25 @@ const { fullscreen = false } = Astro.props;
   import L from 'leaflet';
   import 'leaflet.markercluster';
 
+  // ONE colour axis for every pin: category (what it is / which food part). Shape
+  // encodes provenance — confirmed spots are prominent teardrops, leads are smaller
+  // source-shaped markers (circle iNat / diamond FF / triangle city). An amber ring
+  // flags a dangerous lookalike (`caution`), the one bit of the old tier system
+  // worth keeping. No second colour system.
   const CAT_COLORS: Record<string, string> = {
-    tree: '#6b8e23', berries: '#8a2f4a', greens: '#2f7d4f', herbs: '#4a8f7b',
-    nuts: '#8a6d3b', mushrooms: '#9c6b4a', other: '#7a7a7a',
+    fruit: '#8a2f4a', nuts: '#8a6d3b', greens: '#2f7d4f', herbs: '#4a8f7b',
+    mushrooms: '#9c6b4a', other: '#7a7a7a',
   };
-
-  // Scouting layer (unverified iNaturalist leads) — a separate class from the
-  // verified teardrop pins. Rendered as tier-coloured circles so the two never
-  // read as the same thing. Tier = how to approach a find.
-  const TIER_COLORS: Record<string, string> = {
-    snack: '#2f7d4f', prep: '#b8791f', caution: '#c2571f', avoid: '#9a2b1e',
+  const CAT_LABEL: Record<string, string> = {
+    fruit: 'Fruit & berries', nuts: 'Nuts', greens: 'Greens', herbs: 'Herbs & tea',
+    mushrooms: 'Mushrooms', other: 'Other',
   };
-  const TIER_LABEL: Record<string, string> = {
-    snack: 'Snackable', prep: 'Needs prep', caution: 'Caution — lookalike', avoid: 'Toxic — avoid',
-  };
-  const TIER_ORDER = ['snack', 'prep', 'caution', 'avoid'];
-
-  // Promoting a scouting lead → a confirmed spot (POST /api/pins) needs a
-  // `category` (the verified-pin vocabulary); leads only carry a `tier`, so we
-  // guess a sensible default from the name/species and let the picker override.
-  const CATEGORIES = ['tree', 'berries', 'greens', 'herbs', 'nuts', 'mushrooms', 'other'];
+  const CAT_ORDER = ['fruit', 'nuts', 'greens', 'herbs', 'mushrooms', 'other'];
+  const CATEGORIES = CAT_ORDER;
+  const CAUTION_COLOR = '#d98a2b';
   const SRC_LABEL: Record<string, string> = {
-    inat: 'iNaturalist', fallingfruit: 'Falling Fruit', montreal: 'Ville de Montréal',
+    confirmed: 'My spot', inat: 'iNaturalist', fallingfruit: 'Falling Fruit', montreal: 'Ville de Montréal',
   };
-  function guessCategory(p: any): string {
-    if (p.source === 'montreal') return 'tree';
-    const s = ((p.name || '') + ' ' + (p.species || '')).toLowerCase();
-    if (/mushroom|bolet|morel|chanterelle|puffball|oyster/.test(s)) return 'mushrooms';
-    if (/berr|grape|currant|elder|mulberry|serviceberry|raspberr|blackberr|haskap|cherry|plum|apple|pear|rose ?hip|hawthorn|rowan|sumac|juneberr/.test(s)) return 'berries';
-    if (/walnut|butternut|hazel|chestnut|acorn|oak|hickory|ginkgo|beechnut|pine ?nut/.test(s)) return 'nuts';
-    if (/mint|thyme|sage|balm|nettle|oregano|bergamot|yarrow|catnip/.test(s)) return 'herbs';
-    if (/dandelion|chicory|purslane|lamb|sorrel|plantain|garlic mustard|clover|violet|chickweed|amaranth/.test(s)) return 'greens';
-    return 'other';
-  }
 
   // Popups are built as HTML strings, so any text that originates from the DB
   // (pin fields) or third parties (iNaturalist usernames on scouting pins) must be
@@ -63,13 +49,16 @@ const { fullscreen = false } = Astro.props;
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } as Record<string, string>)[c]);
   const seg = (s: any) => encodeURIComponent(String(s ?? ''));
 
-  function pinIcon(color: string) {
+  // Confirmed spot: a prominent teardrop, category-coloured. A caution find gets an
+  // amber outline so a dangerous-lookalike still reads at a glance.
+  function pinIcon(color: string, caution = false) {
+    const stroke = caution ? ` stroke="${CAUTION_COLOR}" stroke-width="2.6"` : '';
     const svg =
       `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="40" viewBox="0 0 28 40">` +
-      `<path d="M14 0C6.3 0 0 6.2 0 13.9 0 24 14 40 14 40s14-16 14-26.1C28 6.2 21.7 0 14 0z" fill="${color}"/>` +
+      `<path d="M14 0C6.3 0 0 6.2 0 13.9 0 24 14 40 14 40s14-16 14-26.1C28 6.2 21.7 0 14 0z" fill="${color}"${stroke}/>` +
       `<circle cx="14" cy="14" r="5.4" fill="#fff"/></svg>`;
     return L.divIcon({
-      className: 'forage-pin',
+      className: 'forage-pin' + (caution ? ' is-caution' : ''),
       html: svg,
       iconSize: [28, 40],
       iconAnchor: [14, 40],
@@ -77,28 +66,29 @@ const { fullscreen = false } = Astro.props;
     });
   }
 
-  // Scouting pins encode SOURCE by shape, TIER by colour:
-  //   iNaturalist = circle, Falling Fruit = diamond, Ville de Montréal = triangle.
-  function scoutIcon(color: string) {
-    const svg =
-      `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">` +
-      `<circle cx="10" cy="10" r="7" fill="${color}" fill-opacity="0.85" stroke="#fff" stroke-width="2.5"/></svg>`;
-    return L.divIcon({ className: 'scout-pin', html: svg, iconSize: [20, 20], iconAnchor: [10, 10], popupAnchor: [0, -10] });
+  // Lead: smaller marker, SHAPE = source (circle iNat / diamond FF / triangle city),
+  // FILL = category. White ring normally; amber ring when caution.
+  function leadIcon(shape: string, color: string, caution = false) {
+    const ring = caution ? CAUTION_COLOR : '#fff';
+    const w = caution ? 3 : 2.5;
+    let body: string, anchorY = 10, cls = 'scout-pin';
+    if (shape === 'diamond') {
+      body = `<rect x="4.5" y="4.5" width="11" height="11" transform="rotate(45 10 10)" fill="${color}" fill-opacity="0.85" stroke="${ring}" stroke-width="${w}"/>`;
+      cls += ' scout-diamond';
+    } else if (shape === 'triangle') {
+      body = `<path d="M10 3.2 17 16.4H3z" fill="${color}" fill-opacity="0.85" stroke="${ring}" stroke-width="${caution ? 2.8 : 2.2}" stroke-linejoin="round"/>`;
+      cls += ' scout-triangle'; anchorY = 11;
+    } else {
+      body = `<circle cx="10" cy="10" r="7" fill="${color}" fill-opacity="0.85" stroke="${ring}" stroke-width="${w}"/>`;
+    }
+    if (caution) cls += ' is-caution';
+    return L.divIcon({
+      className: cls,
+      html: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">${body}</svg>`,
+      iconSize: [20, 20], iconAnchor: [10, anchorY], popupAnchor: [0, -10],
+    });
   }
-
-  function scoutDiamondIcon(color: string) {
-    const svg =
-      `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">` +
-      `<rect x="4.5" y="4.5" width="11" height="11" transform="rotate(45 10 10)" fill="${color}" fill-opacity="0.85" stroke="#fff" stroke-width="2.5"/></svg>`;
-    return L.divIcon({ className: 'scout-pin scout-diamond', html: svg, iconSize: [20, 20], iconAnchor: [10, 10], popupAnchor: [0, -11] });
-  }
-
-  function scoutTriangleIcon(color: string) {
-    const svg =
-      `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">` +
-      `<path d="M10 3.2 17 16.4H3z" fill="${color}" fill-opacity="0.85" stroke="#fff" stroke-width="2.2" stroke-linejoin="round"/></svg>`;
-    return L.divIcon({ className: 'scout-pin scout-triangle', html: svg, iconSize: [20, 20], iconAnchor: [10, 11], popupAnchor: [0, -10] });
-  }
+  const SOURCE_SHAPE: Record<string, string> = { inat: 'circle', fallingfruit: 'diamond', montreal: 'triangle' };
 
   const mapEl = document.getElementById('map');
   const isTouch = window.matchMedia('(pointer: coarse)').matches;
@@ -236,14 +226,12 @@ const { fullscreen = false } = Astro.props;
   // waits for a button tap so a homepage visit doesn't fire a permission prompt.
   if (isFullMap) startLocating();
 
-  const usedCats = new Set<string>();
 
   // ── Layers panel (fullscreen map) ────────────────────────────────────────
-  // One collapsible panel in the bottom-right (thumb reach) holding BOTH the
-  // verified-pin legend and the scouting-leads filter. Collapsed by default so
-  // it doesn't eat the screen; open state persists per-device. loadSpots() fills
-  // the legend section, initScouting() fills the scouting section — both write
-  // into the sections this creates, so it must exist before either runs.
+  // One collapsible panel in the bottom-right (thumb reach) holding the layer
+  // toggles (My spots + each lead source) and the type/caution filters. Collapsed
+  // by default so it doesn't eat the screen; open state persists per-device.
+  // initFullMap() writes into #panel-scout, which must exist before it runs.
   let panelLegendEl: HTMLElement | null = null;
   let panelScoutEl: HTMLElement | null = null;
 
@@ -364,9 +352,8 @@ const { fullscreen = false } = Astro.props;
   // pins AND scouting leads for that plant.
   const plantFilter = new URLSearchParams(location.search).get('plant');
 
-  // The deep-linked banner reports confirmed + lead counts, but those arrive via
-  // two independent async paths (loadSpots / initScouting); each updates its own
-  // slice then re-renders so the banner is correct whichever finishes last.
+  // The deep-linked banner reports confirmed + lead counts, computed once both
+  // loadConfirmed() and loadLeads() settle inside initFullMap().
   let fbConfirmed = 0, fbLeads = 0, fbLabel = '';
   function renderFilterBanner() {
     const el = document.getElementById('map-filter');
@@ -377,22 +364,6 @@ const { fullscreen = false } = Astro.props;
       `<span>Showing ${parts.join(' + ')} for <strong>${esc(fbLabel || plantFilter)}</strong>.</span>` +
       `<a href="/map">Show all spots →</a>`;
     el.hidden = false;
-  }
-
-  // Drop a freshly-created confirmed pin onto the map immediately after a promote,
-  // so it shows without a reload (the DB is already updated). `spot` is the flat
-  // row the API returns from POST /api/pins.
-  function addConfirmedMarker(spot: any, category: string) {
-    const cat = category || spot.category || 'other';
-    const m = L.marker([spot.lat, spot.lon], { icon: pinIcon(CAT_COLORS[cat] || CAT_COLORS.other) }).addTo(map);
-    m.bindPopup(
-      `<div class="p-pop"><h3>${esc(spot.name) || 'Spot'}</h3>` +
-        (spot.species ? `<div class="p-sci">${esc(spot.species)}</div>` : '') +
-        (spot.notes ? `<div class="p-meta">${esc(spot.notes)}</div>` : '') +
-        (spot.plant ? `<a class="p-guide" href="/plants/${seg(spot.plant)}">View plant guide →</a>` : '') +
-      `</div>`,
-      { maxWidth: 244, minWidth: 200, maxHeight: 300, autoPan: true, keepInView: true },
-    ).openPopup();
   }
 
   async function saveMove(id: number, marker: any, origin: any) {
@@ -484,9 +455,10 @@ const { fullscreen = false } = Astro.props;
     setTimeout(() => el.removeEventListener('click', h, true), 500);
   }
 
-  // Pins load live from the API; fall back to the build-time static export if the
-  // API is unreachable, so the map still renders when the service is down.
-  async function loadSpots() {
+  // Confirmed spots load live from the API; fall back to the build-time static
+  // export if the service is down, so the map still renders. Leads are a static
+  // export of the same DB (verified=0), so both share one feature shape.
+  async function loadConfirmed() {
     try {
       const r = await fetch('/api/pins', { cache: 'no-store' });
       if (r.ok) return await r.json();
@@ -494,93 +466,47 @@ const { fullscreen = false } = Astro.props;
     const r = await fetch('/data/foraging-spots.geojson?t=' + Date.now(), { cache: 'no-store' });
     return r.json();
   }
+  async function loadLeads() {
+    try {
+      const r = await fetch('/data/pins-leads.geojson?t=' + Date.now(), { cache: 'no-store' });
+      if (r.ok) return await r.json();
+    } catch {}
+    return { features: [] };
+  }
 
-  loadSpots()
-    .then((geo) => {
-      const layer = L.geoJSON(geo, {
-        filter: (feature) =>
-          !plantFilter || feature.properties?.plant === plantFilter,
-        pointToLayer: (feature, latlng) => {
-          const cat = feature.properties?.category || 'other';
-          usedCats.add(cat);
-          return L.marker(latlng, { icon: pinIcon(CAT_COLORS[cat] || CAT_COLORS.other) });
-        },
-        onEachFeature: (feature, lyr) => {
-          const p = feature.properties || {};
-          // Always wire long-press-move; it only arms while editMode is on, so a
-          // live toggle needs no re-binding.
-          if (typeof feature.id === 'number') {
-            enableLongPressMove(lyr, feature.id as number);
-          }
-          const photos: string[] = Array.isArray(p.photos) ? p.photos : [];
-          const imgs = photos
-            .map((f) => `<a href="/photos/spots/${seg(f)}" target="_blank" rel="noopener"><img src="/photos/spots/${seg(f)}" alt="${esc(p.name)}" loading="lazy" /></a>`)
-            .join('');
-          lyr.bindPopup(
-            `<div class="p-pop">` +
-              `<h3>${esc(p.name) || 'Spot'}</h3>` +
-              (p.species ? `<div class="p-sci">${esc(p.species)}</div>` : '') +
-              (p.season ? `<div class="p-meta">🗓 ${esc(p.season)}</div>` : '') +
-              (p.location ? `<div class="p-meta">📍 ${esc(p.location)}</div>` : '') +
-              (p.notes ? `<div class="p-meta">${esc(p.notes)}</div>` : '') +
-              imgs +
-              (p.plant ? `<a class="p-guide" href="/plants/${seg(p.plant)}">View plant guide →</a>` : '') +
-            `</div>`,
-            // Keep popups compact so they never overflow the viewport; the inner
-            // content scrolls if long, and Leaflet pans to keep it in view.
-            { maxWidth: 244, minWidth: 200, maxHeight: 300, autoPan: true, keepInView: true },
-          );
-        },
-      }).addTo(map);
+  const isMapPage = document.querySelector('.map-wrap')?.classList.contains('full');
 
+  // Home embed: confirmed spots only, plain teardrops + an inline legend. No panel,
+  // no leads, no clustering — it's a small preview, not the working map.
+  function initEmbed() {
+    loadConfirmed().then((geo) => {
+      const cats = new Set<string>();
+      const markers: any[] = [];
+      for (const f of geo.features || []) {
+        const p = f.properties || {};
+        if (plantFilter && p.plant !== plantFilter) continue;
+        const cat = p.category || 'other';
+        cats.add(cat);
+        const [lon, lat] = f.geometry.coordinates;
+        const m = L.marker([lat, lon], { icon: pinIcon(CAT_COLORS[cat] || CAT_COLORS.other, p.caution) }).addTo(map);
+        m.bindPopup(pinPopup(p, String(f.id), true), { maxWidth: 244, minWidth: 200, maxHeight: 300, autoPan: true, keepInView: true });
+        markers.push(m);
+      }
       try {
-        const b = layer.getBounds();
-        // Keep bounds for the geolocation "near the spots?" test; only fit them
-        // if the user hasn't already been located and centered.
+        const b = L.featureGroup(markers).getBounds();
         if (b.isValid()) { spotsBounds = b; if (!didLocate) map.fitBounds(b.pad(0.35)); }
       } catch {}
-
-      // When deep-linked to one plant, feed the confirmed count + label into the
-      // shared banner (initScouting adds the lead count via the same renderer).
-      if (plantFilter) {
-        const match = (geo.features || []).find(
-          (f: any) => f.properties?.plant === plantFilter,
-        );
-        fbConfirmed = layer.getLayers().length;
-        if (match) fbLabel = match.properties?.species || match.properties?.name || '';
-        renderFilterBanner();
-      }
-
-      // Re-measure once the container has its final (flex/fullscreen) size.
       setTimeout(() => map.invalidateSize(), 60);
-
-      const legendItems = [...usedCats]
-        .sort()
-        .map((c) => `<span><i class="dot" style="background:${CAT_COLORS[c] || CAT_COLORS.other}"></i>${esc(c)}</span>`)
-        .join('');
-      // Fullscreen: the legend lives inside the collapsible bottom-right panel.
-      // Home embed: it stays inline below the map.
-      if (isFullMap && panelLegendEl) {
-        panelLegendEl.innerHTML = `<h4 class="panel-h">Foraging spots</h4><div class="legend">${legendItems}</div>`;
-        panelLegendEl.hidden = false;
-      } else {
-        const legend = document.getElementById('legend');
-        if (legend) legend.innerHTML = legendItems;
-      }
-    })
-    .catch((err) => {
+      const legend = document.getElementById('legend');
+      if (legend) legend.innerHTML = [...cats].sort((a, b) => CAT_ORDER.indexOf(a) - CAT_ORDER.indexOf(b))
+        .map((c) => `<span><i class="dot" style="background:${CAT_COLORS[c] || CAT_COLORS.other}"></i>${esc(CAT_LABEL[c] || c)}</span>`).join('');
+    }).catch((err) => {
       if (mapEl) mapEl.innerHTML = '<p style="padding:20px">Could not load map data.</p>';
       console.error(err);
     });
+  }
 
-  // ── Scouting layer ──────────────────────────────────────────────────────
-  // Only on the fullscreen map page, never the home embed. Unverified iNat
-  // leads, off by default; visibility + per-tier filter persist in localStorage.
-  // Under a ?plant= filter we still run it, but restricted to that plant's leads
-  // and forced visible (so the guide's "on map" link surfaces leads, not just
-  // confirmed pins). Unfiltered, it's the full off-by-default layer as before.
-  const isMapPage = document.querySelector('.map-wrap')?.classList.contains('full');
-  if (isMapPage) initScouting();
+  if (isMapPage) initFullMap(); else initEmbed();
 
   function loadPref(key: string, fallback: boolean) {
     try { const v = localStorage.getItem(key); return v === null ? fallback : v === '1'; }
@@ -605,54 +531,60 @@ const { fullscreen = false } = Astro.props;
     try { localStorage.setItem('scout.hidden', JSON.stringify([...s])); } catch {}
   }
 
-  function scoutPopup(p: any, key: string) {
-    const tier = p.tier || 'snack';
-    const isFF = p.source === 'fallingfruit';
-    const isMtl = p.source === 'montreal';
-    const isINat = !isFF && !isMtl;
-    const mtlMeta = [p.where && esc(p.where), p.planted && ('planted ' + esc(p.planted))].filter(Boolean).join(' · ');
+  // One popup for every pin. `verified` confirmed spots show season/location/photos;
+  // leads show their source + a link back to it, plus the edit-mode Promote/Hide
+  // buttons (CSS gates those on body.map-editing). Category badge + a caution line
+  // are shown for both.
+  function pinPopup(p: any, key: string, verified: boolean) {
+    const cat = p.category || 'other';
+    const src = p.source || (verified ? 'confirmed' : 'inat');
+    const photos: string[] = verified && Array.isArray(p.photos) ? p.photos : [];
+    const imgs = photos
+      .map((f) => `<a href="/photos/spots/${seg(f)}" target="_blank" rel="noopener"><img src="/photos/spots/${seg(f)}" alt="${esc(p.name)}" loading="lazy" /></a>`)
+      .join('');
+    let prov = '';
+    if (!verified) {
+      if (src === 'fallingfruit') prov = '◆ Falling Fruit · community spot';
+      else if (src === 'montreal') {
+        const extra = [p.where && esc(p.where), p.planted && ('planted ' + esc(p.planted))].filter(Boolean).join(' · ');
+        prov = '▲ Ville de Montréal · city tree' + (extra ? ' · ' + extra : '');
+      } else prov = `🔍 iNaturalist${p.observed ? ' · ' + esc(p.observed) : ''}${p.observer ? ' · @' + esc(p.observer) : ''}${p.obscured ? ' · ⚠ location obscured' : ''}`;
+    }
+    const linkLabel = src === 'fallingfruit' ? 'View on Falling Fruit →' : src === 'montreal' ? 'City tree dataset →' : 'View on iNaturalist →';
     return (
       `<div class="p-pop">` +
-        `<h3>${esc(p.name) || 'Observation'}</h3>` +
+        `<h3>${esc(p.name) || (verified ? 'Spot' : 'Lead')}</h3>` +
         (p.species ? `<div class="p-sci">${esc(p.species)}</div>` : '') +
-        `<div class="p-tier tier-${esc(tier)}">${TIER_LABEL[tier] || esc(tier)}</div>` +
+        `<div class="p-cat"><i class="dot" style="background:${CAT_COLORS[cat] || CAT_COLORS.other}"></i>${esc(CAT_LABEL[cat] || cat)}</div>` +
+        (p.caution ? `<div class="p-caution">⚠ Caution — has a dangerous lookalike; be certain before you eat.</div>` : '') +
         (p.notes ? `<div class="p-meta">${esc(p.notes)}</div>` : '') +
-        (isINat && p.observed ? `<div class="p-meta p-obs">🔍 iNat obs ${esc(p.observed)}${p.observer ? ' · @' + esc(p.observer) : ''}${p.obscured ? ' · ⚠ location obscured' : ''}</div>` : '') +
-        (isFF ? `<div class="p-meta p-obs">◆ Falling Fruit · community spot</div>` : '') +
-        (isMtl ? `<div class="p-meta p-obs">▲ Ville de Montréal · city tree${mtlMeta ? ' · ' + mtlMeta : ''}</div>` : '') +
-        (isINat && /^https?:\/\//i.test(p.inat || '') ? `<a class="p-guide" href="${esc(p.inat)}" target="_blank" rel="noopener">View on iNaturalist →</a>` : '') +
-        (isFF && /^https?:\/\//i.test(p.ff || '') ? `<a class="p-guide" href="${esc(p.ff)}" target="_blank" rel="noopener">View on Falling Fruit →</a>` : '') +
-        (isMtl && /^https?:\/\//i.test(p.mtl || '') ? `<a class="p-guide" href="${esc(p.mtl)}" target="_blank" rel="noopener">City tree dataset →</a>` : '') +
+        (verified && p.season ? `<div class="p-meta">🗓 ${esc(p.season)}</div>` : '') +
+        (verified && p.location ? `<div class="p-meta">📍 ${esc(p.location)}</div>` : '') +
+        (prov ? `<div class="p-meta p-obs">${prov}</div>` : '') +
+        imgs +
+        (!verified && /^https?:\/\//i.test(p.sourceUrl || '') ? `<a class="p-guide" href="${esc(p.sourceUrl)}" target="_blank" rel="noopener">${linkLabel}</a>` : '') +
         (p.plant ? `<a class="p-guide" href="/plants/${seg(p.plant)}">View plant guide →</a>` : '') +
-        `<button type="button" class="scout-promote" data-promote="${esc(key)}">➕ Promote to confirmed spot</button>` +
-        `<button type="button" class="scout-hide" data-hide="${esc(key)}">✕ Hide this pin</button>` +
+        (!verified ? `<button type="button" class="scout-promote" data-promote="${esc(key)}">➕ Promote to confirmed spot</button>` : '') +
+        (!verified ? `<button type="button" class="scout-hide" data-hide="${esc(key)}">✕ Hide this pin</button>` : '') +
       `</div>`
     );
   }
 
-  function initScouting() {
-    // Scouting sources: shape encodes provenance (circle vs diamond), colour the
-    // tier. Each is an independent, separately-toggled layer; tier filters + Hide
-    // apply across both. `legacyOn` maps the old single `scout.on` pref onto iNat.
-    // Declared here (not module scope) so it initialises when the function runs —
-    // initScouting() is invoked earlier in the script than this point.
-    const SCOUT_SOURCES = [
-      { key: 'inat', label: 'iNaturalist', glyph: '●', tag: 'research-grade · unverified',
-        url: '/data/scouting-spots.geojson', icon: scoutIcon, legacyOn: true, attrib: '' },
-      { key: 'ff', label: 'Falling Fruit', glyph: '◆', tag: 'community · CC BY-NC-SA',
-        url: '/data/falling-fruit.geojson', icon: scoutDiamondIcon, legacyOn: false,
+  // Fullscreen working map: confirmed spots AND scouting leads flow through ONE
+  // marker-cluster group. Colour = category, shape = provenance (teardrop confirmed
+  // / circle iNat / diamond FF / triangle city), amber ring = caution. The panel
+  // toggles each layer + filters by type; a promoted lead flips to a confirmed pin.
+  function initFullMap() {
+    const SOURCES: Record<string, any> = {
+      inat: { label: 'iNaturalist', glyph: '●', tag: 'research-grade · unverified', attrib: '' },
+      fallingfruit: { label: 'Falling Fruit', glyph: '◆', tag: 'community · CC BY-NC-SA',
         attrib: 'Community spots via <a href="https://fallingfruit.org" target="_blank" rel="noopener">Falling Fruit</a> (CC BY-NC-SA)' },
-      { key: 'montreal', label: 'City trees', glyph: '▲', tag: 'city inventory · sample',
-        url: '/data/montreal-trees.geojson', icon: scoutTriangleIcon, legacyOn: false,
+      montreal: { label: 'City trees', glyph: '▲', tag: 'city inventory · sample',
         attrib: 'Public-tree inventory © <a href="https://donnees.montreal.ca/dataset/arbres" target="_blank" rel="noopener">Ville de Montréal</a> (CC BY 4.0)' },
-    ];
+    };
+    const SOURCE_ORDER = ['inat', 'fallingfruit', 'montreal'];
     const hidden = loadHidden();
-    // One marker-cluster group holds every visible scouting marker across all
-    // sources/tiers — nearby pins collapse into a counted bubble that splits apart
-    // as you zoom, so thousands of city trees stay usable instead of melting the
-    // browser. `records` tracks each marker's source+tier for the filters, counts,
-    // and Hide; `inCluster` mirrors what's currently added so a filter toggle diffs
-    // membership instead of rebuilding the whole layer.
+
     const cluster = (L as any).markerClusterGroup({
       maxClusterRadius: 55,
       showCoverageOnHover: false,
@@ -664,66 +596,84 @@ const { fullscreen = false } = Astro.props;
         return L.divIcon({ html: `<span>${n}</span>`, className: 'scout-cluster', iconSize: [size, size] });
       },
     });
-    const present: Record<string, Set<string>> = {};
-    const records: Array<{ srcKey: string; key: string; tier: string; marker: any; props: any; lat: number; lon: number }> = [];
-    const inCluster = new Set<string>();
+    cluster.addTo(map);
 
-    Promise.all(SCOUT_SOURCES.map(async (src) => {
-      let geo: any;
-      try {
-        const r = await fetch(src.url + '?t=' + Date.now(), { cache: 'no-store' });
-        if (!r.ok) return;
-        geo = await r.json();
-      } catch { return; }
-      present[src.key] = new Set();
-      (geo.features || []).forEach((f: any, i: number) => {
+    type Rec = { id: any; key: string; masterKey: string; verified: boolean; source: string;
+      category: string; caution: boolean; hideKey: string | null; marker: any; props: any; lat: number; lon: number };
+    const records: Rec[] = [];
+    const inCluster = new Set<string>();
+    const presentSrc = new Set<string>();
+    let hasConfirmed = false;
+
+    const build = (geo: any, verified: boolean) => {
+      for (const f of geo.features || []) {
         const p = f.properties || {};
-        if (plantFilter && p.plant !== plantFilter) return; // deep-linked: this plant's leads only
-        const tier = p.tier || 'snack';
-        if (!TIER_ORDER.includes(tier)) return;
-        present[src.key].add(tier);
-        const id = (f.id !== undefined && f.id !== null) ? f.id : `${src.key}${i}`;
-        const key = `${src.key}:${id}`;
+        if (plantFilter && p.plant !== plantFilter) continue;
+        const source = p.source || (verified ? 'confirmed' : 'inat');
+        const category = p.category || 'other';
+        const caution = !!p.caution;
         const [lon, lat] = f.geometry.coordinates;
-        const marker = L.marker([lat, lon], { icon: src.icon(TIER_COLORS[tier] || '#7a7a7a') })
-          // closeOnClick/autoClose off: the Promote flow expands an inline form in
-          // the popup, so a stray map click must not tear it down mid-edit. The
-          // popup's own X (and Hide/Cancel) still close it explicitly.
-          .bindPopup(scoutPopup(p, key), { maxWidth: 244, minWidth: 200, maxHeight: 300, autoPan: true, keepInView: true, closeOnClick: false, autoClose: false });
-        records.push({ srcKey: src.key, key, tier, marker, props: p, lat, lon });
-      });
-    })).then(() => {
-      // Under a plant filter, feed the lead count into the shared deep-link banner
-      // (loadSpots supplies the confirmed count + label; either may finish first).
+        const key = String(f.id);
+        const masterKey = verified ? 'confirmed' : source;
+        const hideKey = verified ? null : `${source}:${p.ext_id ?? f.id}`;
+        const icon = verified
+          ? pinIcon(CAT_COLORS[category] || CAT_COLORS.other, caution)
+          : leadIcon(SOURCE_SHAPE[source] || 'circle', CAT_COLORS[category] || CAT_COLORS.other, caution);
+        const marker = L.marker([lat, lon], { icon })
+          .bindPopup(pinPopup(p, key, verified), { maxWidth: 244, minWidth: 200, maxHeight: 300, autoPan: true, keepInView: true });
+        if (verified && typeof f.id === 'number') enableLongPressMove(marker, f.id as number);
+        records.push({ id: f.id, key, masterKey, verified, source, category, caution, hideKey, marker, props: p, lat, lon });
+        if (verified) hasConfirmed = true; else presentSrc.add(source);
+      }
+    };
+
+    Promise.all([loadConfirmed(), loadLeads()]).then(([confirmed, leads]) => {
+      // The persistent #edit-banner (applyEditState) shows the edit hint; no flash here.
+      build(confirmed, true);
+      build(leads, false);
+
+      // Deep-link banner (confirmed + lead counts for one plant).
       if (plantFilter) {
-        fbLeads = records.length;
-        if (!fbLabel && records[0]) fbLabel = records[0].props.species || records[0].props.name || '';
+        fbConfirmed = records.filter((r) => r.verified).length;
+        fbLeads = records.filter((r) => !r.verified).length;
+        const any = records.find((r) => r.props.species || r.props.name);
+        if (any) fbLabel = any.props.species || any.props.name || '';
         renderFilterBanner();
       }
+
+      // Fit to the confirmed spots (or everything under a plant filter) on first load.
+      try {
+        const forBounds = records.filter((r) => plantFilter || r.verified).map((r) => [r.lat, r.lon]);
+        if (forBounds.length) { spotsBounds = L.latLngBounds(forBounds as any); if (!didLocate) map.fitBounds(spotsBounds.pad(0.35)); }
+      } catch {}
+      setTimeout(() => map.invalidateSize(), 60);
+
       const div = panelScoutEl;
-      if (!div) return; // not the fullscreen map — nothing to draw into
-      const liveSources = SCOUT_SOURCES.filter((s) => present[s.key]?.size);
-      if (!liveSources.length) return;
+      if (!div) return;
       div.hidden = false;
-      cluster.addTo(map);
 
-      // Per-source master toggles (persisted); shared per-tier filters. Under a
-      // plant filter the leads are forced visible (the guide link means to show
-      // them) rather than honouring the off-by-default persisted prefs.
-      const state = { master: {} as Record<string, boolean>, tier: {} as Record<string, boolean> };
-      for (const s of SCOUT_SOURCES) {
-        const fallback = s.legacyOn ? loadPref('scout.on', false) : false;
-        state.master[s.key] = plantFilter ? true : loadPref('scout.on.' + s.key, fallback);
-      }
-      for (const t of TIER_ORDER) state.tier[t] = loadPref('scout.tier.' + t, true);
+      // Layer visibility (persisted). My spots default ON; leads default OFF; a
+      // ?plant deep-link forces everything on so the guide's leads surface.
+      const state = {
+        master: {} as Record<string, boolean>,
+        cat: {} as Record<string, boolean>,
+        caution: true,
+      };
+      state.master.confirmed = plantFilter ? true : loadPref('layer.confirmed', true);
+      for (const s of SOURCE_ORDER) state.master[s] = plantFilter ? true : loadPref('scout.on.' + s, false);
+      for (const c of CAT_ORDER) state.cat[c] = loadPref('filter.cat.' + c, true);
+      state.caution = loadPref('filter.caution', true);
 
-      // Diff cluster membership against the filter state (add/remove only deltas).
+      const hiddenHas = (r: Rec) => !!r.hideKey && hidden.has(r.hideKey);
+      const visible = (r: Rec) =>
+        state.master[r.masterKey] && state.cat[r.category] && (state.caution || !r.caution) && !hiddenHas(r);
+
       const apply = () => {
         const add: any[] = [], remove: any[] = [];
-        for (const rec of records) {
-          const visible = state.master[rec.srcKey] && state.tier[rec.tier] && !hidden.has(rec.key);
-          if (visible && !inCluster.has(rec.key)) { add.push(rec.marker); inCluster.add(rec.key); }
-          else if (!visible && inCluster.has(rec.key)) { remove.push(rec.marker); inCluster.delete(rec.key); }
+        for (const r of records) {
+          const show = visible(r);
+          if (show && !inCluster.has(r.key)) { add.push(r.marker); inCluster.add(r.key); }
+          else if (!show && inCluster.has(r.key)) { remove.push(r.marker); inCluster.delete(r.key); }
         }
         if (remove.length) cluster.removeLayers(remove);
         if (add.length) cluster.addLayers(add);
@@ -732,71 +682,61 @@ const { fullscreen = false } = Astro.props;
 
       let renderCtl = () => {};
       const hidePin = (key: string) => {
-        const rec = records.find((r) => r.key === key);
-        if (!rec) return;
-        hidden.add(key);
+        const r = records.find((x) => x.key === key);
+        if (!r || !r.hideKey) return;
+        hidden.add(r.hideKey);
         saveHidden(hidden);
-        if (inCluster.has(key)) { cluster.removeLayer(rec.marker); inCluster.delete(key); }
+        if (inCluster.has(r.key)) { cluster.removeLayer(r.marker); inCluster.delete(r.key); }
         map.closePopup();
         renderCtl();
       };
-      const unhideAll = () => {
-        hidden.clear();
-        saveHidden(hidden);
-        apply();
-        renderCtl();
-      };
-      // Promote a lead → a confirmed spot. The lead has everything a pin needs
-      // except `category`, so the button expands to a category picker in-place,
-      // then POSTs /api/pins with the token. On success we drop a real pin now and
-      // retire the lead locally (hidden, so a data regen won't resurrect it).
+      const unhideAll = () => { hidden.clear(); saveHidden(hidden); apply(); renderCtl(); };
+
+      // Promote a lead → a confirmed spot: an inline category picker, then
+      // POST /api/pins/:id/promote flips verified=1 in the DB (keeping provenance,
+      // so a re-scout won't resurrect it). We swap the marker to a teardrop in place.
       const startPromote = (key: string, popupEl: HTMLElement) => {
-        const rec = records.find((r) => r.key === key);
+        const r = records.find((x) => x.key === key);
         const btn = popupEl.querySelector('.scout-promote') as HTMLElement | null;
-        if (!rec || !btn) return;
-        const guess = guessCategory(rec.props);
-        const opts = CATEGORIES.map((c) => `<option value="${c}"${c === guess ? ' selected' : ''}>${c}</option>`).join('');
+        if (!r || !btn) return;
+        map.options.closePopupOnClick = false; // don't let a map click tear the form down
+        const opts = CAT_ORDER.map((c) => `<option value="${c}"${c === r.category ? ' selected' : ''}>${CAT_LABEL[c]}</option>`).join('');
         const form = document.createElement('div');
         form.className = 'promote-form';
         form.innerHTML =
-          `<label class="promote-cat-l">Category <select class="promote-cat">${opts}</select></label>` +
-          `<div class="promote-actions">` +
-            `<button type="button" class="promote-go">Confirm spot</button>` +
-            `<button type="button" class="promote-cancel">Cancel</button>` +
-          `</div>`;
+          `<label class="promote-cat-l">Type <select class="promote-cat">${opts}</select></label>` +
+          `<div class="promote-actions"><button type="button" class="promote-go">Confirm spot</button>` +
+          `<button type="button" class="promote-cancel">Cancel</button></div>`;
         btn.replaceWith(form);
         (form.querySelector('.promote-cancel') as HTMLElement).addEventListener('click', () => map.closePopup());
         (form.querySelector('.promote-go') as HTMLElement).addEventListener('click', () =>
-          doPromote(rec, (form.querySelector('.promote-cat') as HTMLSelectElement).value, form));
+          doPromote(r, (form.querySelector('.promote-cat') as HTMLSelectElement).value, form));
       };
-
-      const doPromote = async (rec: any, category: string, form: HTMLElement) => {
+      const doPromote = async (r: Rec, category: string, form: HTMLElement) => {
         const token = ensureToken();
         const go = form.querySelector('.promote-go') as HTMLButtonElement | null;
         if (!token) { flash('No token — spot not created.'); return; }
         if (go) { go.disabled = true; go.textContent = 'Saving…'; }
-        const p = rec.props;
-        const notes = [p.notes, `↗ promoted from ${SRC_LABEL[p.source] || 'scouting'} lead`].filter(Boolean).join(' · ');
         try {
-          const r = await fetch('/api/pins', {
+          const resp = await fetch('/api/pins/' + r.id + '/promote', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-            body: JSON.stringify({
-              name: p.name || p.species || 'Spot',
-              category,
-              species: p.species ?? null,
-              notes,
-              plant: p.plant ?? null,
-              lon: +Number(rec.lon).toFixed(6),
-              lat: +Number(rec.lat).toFixed(6),
-            }),
+            body: JSON.stringify({ category, plant: r.props.plant ?? null }),
           });
-          if (r.status === 401) { clearToken(); flash('Edit token rejected — try again to re-enter it.', true); if (go) { go.disabled = false; go.textContent = 'Confirm spot'; } return; }
-          if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.error || ('HTTP ' + r.status)); }
-          const { spot } = await r.json();
+          if (resp.status === 401) { clearToken(); flash('Edit token rejected — try again to re-enter it.', true); if (go) { go.disabled = false; go.textContent = 'Confirm spot'; } return; }
+          if (!resp.ok) { const e = await resp.json().catch(() => ({})); throw new Error(e.error || ('HTTP ' + resp.status)); }
+          const { spot } = await resp.json();
           map.closePopup();
-          hidePin(rec.key);                 // retire the lead (persists across regens)
-          addConfirmedMarker(spot, category); // show the new pin immediately
+          // Convert the record in place: same marker slot, now a confirmed teardrop.
+          if (inCluster.has(r.key)) { cluster.removeLayer(r.marker); inCluster.delete(r.key); }
+          r.verified = true; r.masterKey = 'confirmed'; r.category = category; r.hideKey = null;
+          r.props = { ...r.props, ...spot, verified: true, category };
+          r.marker = L.marker([r.lat, r.lon], { icon: pinIcon(CAT_COLORS[category] || CAT_COLORS.other, r.caution) })
+            .bindPopup(pinPopup(r.props, r.key, true), { maxWidth: 244, minWidth: 200, maxHeight: 300, autoPan: true, keepInView: true });
+          if (typeof r.id === 'number') enableLongPressMove(r.marker, r.id);
+          hasConfirmed = true;
+          apply();
+          renderCtl();
           flash('Promoted ✓ — now a confirmed spot.');
         } catch (err: any) {
           flash('Promote failed (' + (err?.message || err) + ').');
@@ -804,58 +744,68 @@ const { fullscreen = false } = Astro.props;
         }
       };
 
-      // Popups are HTML strings — wire their Hide / Promote buttons on open.
       map.on('popupopen', (e: any) => {
         const el = e.popup.getElement();
         if (!el) return;
-        // Keep in-popup clicks (esp. Promote → its inline form) from bubbling to
-        // the map, which would close the popup and tear the form down mid-flow.
         L.DomEvent.disableClickPropagation(el);
         const hb = el.querySelector('.scout-hide');
         if (hb) hb.addEventListener('click', () => hidePin(String(hb.dataset.hide)), { once: true });
         const pb = el.querySelector('.scout-promote');
         if (pb) pb.addEventListener('click', () => startPromote(String(pb.dataset.promote), el), { once: true });
       });
+      // Restore normal dismiss-on-map-click after any popup closes (promote turns it off).
+      map.on('popupclose', () => { map.options.closePopupOnClick = true; });
 
-      const tiersShown = TIER_ORDER.filter((t) => records.some((r) => r.tier === t));
-      const tierCount = (t: string) => records.filter((r) => r.tier === t && !hidden.has(r.key)).length;
+      const notHidden = (r: Rec) => !hiddenHas(r);
+      const layerCount = (mk: string) => records.filter((r) => r.masterKey === mk && notHidden(r)).length;
+      const catCount = (c: string) => records.filter((r) => r.category === c && notHidden(r) && (state.caution || !r.caution)).length;
+      const cautionCount = () => records.filter((r) => r.caution && notHidden(r)).length;
+      const catsShown = CAT_ORDER.filter((c) => records.some((r) => r.category === c));
+      const srcShown = SOURCE_ORDER.filter((s) => presentSrc.has(s));
 
       renderCtl = () => {
+        const layerRow = (mk: string, glyph: string, label: string, tag: string, on: boolean) =>
+          `<label class="scout-master"><input type="checkbox" data-master="${mk}"${on ? ' checked' : ''}>` +
+          `<span class="scout-src"><b>${glyph} ${label}</b><em>${tag} · ${layerCount(mk)}</em></span></label>`;
         div.innerHTML =
-          `<h4 class="panel-h">Scouting leads <em>unverified — go confirm</em></h4>` +
-          liveSources.map((s) =>
-            `<label class="scout-master"><input type="checkbox" data-src="${s.key}"${state.master[s.key] ? ' checked' : ''}>` +
-            `<span class="scout-src"><b>${s.glyph} ${s.label}</b><em>${s.tag}</em></span></label>`,
-          ).join('') +
-          `<div class="scout-tiers" id="scout-tiers">` +
-          `<div class="scout-tiers-h">Filter by type</div>` +
-          tiersShown.map((t) =>
-            `<label class="scout-tier"><input type="checkbox" data-tier="${t}"${state.tier[t] ? ' checked' : ''}>` +
-            `<i class="dot" style="background:${TIER_COLORS[t]}"></i>${TIER_LABEL[t]} <b>${tierCount(t)}</b></label>`,
-          ).join('') +
-          (hidden.size ? `<button type="button" class="scout-unhide">↺ Restore ${hidden.size} hidden pin${hidden.size === 1 ? '' : 's'}</button>` : '') +
+          `<h4 class="panel-h">Map pins <em>colour = type · ⚠ = lookalike</em></h4>` +
+          (hasConfirmed ? layerRow('confirmed', '📍', 'My spots', 'confirmed', state.master.confirmed) : '') +
+          srcShown.map((s) => layerRow(s, SOURCES[s].glyph, SOURCES[s].label, SOURCES[s].tag, state.master[s])).join('') +
+          `<div class="scout-tiers">` +
+            `<div class="scout-tiers-h">Filter by type</div>` +
+            catsShown.map((c) =>
+              `<label class="scout-tier"><input type="checkbox" data-cat="${c}"${state.cat[c] ? ' checked' : ''}>` +
+              `<i class="dot" style="background:${CAT_COLORS[c]}"></i>${CAT_LABEL[c]} <b>${catCount(c)}</b></label>`).join('') +
+            (cautionCount() ? `<label class="scout-tier scout-caution"><input type="checkbox" data-caution${state.caution ? ' checked' : ''}>` +
+              `<i class="dot" style="background:${CAUTION_COLOR}"></i>⚠ Caution — lookalikes <b>${cautionCount()}</b></label>` : '') +
+            (hidden.size ? `<button type="button" class="scout-unhide">↺ Restore ${hidden.size} hidden pin${hidden.size === 1 ? '' : 's'}</button>` : '') +
           `</div>` +
-          liveSources.filter((s) => s.attrib).map((s) => `<p class="scout-attrib">${s.attrib}</p>`).join('');
-        div.querySelectorAll('input[data-src]').forEach((el) => {
-          el.addEventListener('change', () => {
-            const k = (el as HTMLInputElement).dataset.src as string;
-            state.master[k] = (el as HTMLInputElement).checked;
-            savePref('scout.on.' + k, state.master[k]);
-            apply();
-          });
-        });
-        div.querySelectorAll('input[data-tier]').forEach((el) => {
-          el.addEventListener('change', () => {
-            const t = (el as HTMLInputElement).dataset.tier as string;
-            state.tier[t] = (el as HTMLInputElement).checked;
-            savePref('scout.tier.' + t, state.tier[t]);
-            apply();
-          });
+          srcShown.filter((s) => SOURCES[s].attrib).map((s) => `<p class="scout-attrib">${SOURCES[s].attrib}</p>`).join('');
+        div.querySelectorAll('input[data-master]').forEach((el) => el.addEventListener('change', () => {
+          const k = (el as HTMLInputElement).dataset.master as string;
+          state.master[k] = (el as HTMLInputElement).checked;
+          savePref(k === 'confirmed' ? 'layer.confirmed' : 'scout.on.' + k, state.master[k]);
+          apply();
+        }));
+        div.querySelectorAll('input[data-cat]').forEach((el) => el.addEventListener('change', () => {
+          const c = (el as HTMLInputElement).dataset.cat as string;
+          state.cat[c] = (el as HTMLInputElement).checked;
+          savePref('filter.cat.' + c, state.cat[c]);
+          apply();
+        }));
+        const cb = div.querySelector('input[data-caution]');
+        if (cb) cb.addEventListener('change', () => {
+          state.caution = (cb as HTMLInputElement).checked;
+          savePref('filter.caution', state.caution);
+          apply(); renderCtl();
         });
         const unhideEl = div.querySelector('.scout-unhide');
         if (unhideEl) unhideEl.addEventListener('click', unhideAll);
       };
       renderCtl();
+    }).catch((err) => {
+      if (mapEl) mapEl.innerHTML = '<p style="padding:20px">Could not load map data.</p>';
+      console.error(err);
     });
   }
 
