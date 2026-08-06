@@ -1,8 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import { effectiveStatus, STATUS_LABEL } from '../../lib/season';
-import { spotCount } from '../../lib/spots';
-import { scoutCount } from '../../lib/scouting.mjs';
+import { pinCounts } from '../../lib/spots';
 import { getPlants } from '../../lib/content.mjs';
 
 export async function getStaticPaths() {
@@ -13,12 +12,11 @@ const { plant } = Astro.props;
 const d = plant.data;
 const live = effectiveStatus(d);
 const statusLabel = STATUS_LABEL;
-// Derived at build time — a confirmed spot (SQLite) with `plant: <slug>` lights
-// this up automatically, no manual `onMap` flag to keep in sync. Unverified
-// scouting leads (the static GeoJSON sources) referencing this plant are counted
-// too, so the badge shows the total on the map with confirmed broken out.
-const spots = spotCount(plant.id);
-const leads = scoutCount(plant.id);
+// Derived at build time from the unified `pins` table — one `WHERE plant = slug`
+// query returns both counts. A confirmed spot (verified=1) or an unverified
+// scouting lead (verified=0) with this `plant` link lights the badge up
+// automatically; it shows the total on the map with confirmed broken out.
+const { confirmed: spots, leads } = pinCounts(plant.id);
 const onMap = spots + leads;
 ---
 <Base title={`${d.title} — Forage MTL`} page="plants" description={d.scientificName ? `${d.title} (${d.scientificName}) — ID, safety, harvest & prep.` : d.title}>
