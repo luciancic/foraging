@@ -181,6 +181,22 @@ body.fullbleed main { flex: 1 1 auto; min-height: 0; display: flex; }
   font-size: .85rem; color: var(--ink); line-height: 1.35;
 }
 
+/* persistent edit-mode indicator (green-tinted so it reads as a mode, not a
+   transient toast). While editing, transient flashes drop below it. */
+.edit-banner {
+  position: absolute; z-index: 660; left: 50%; transform: translateX(-50%);
+  top: max(12px, calc(env(safe-area-inset-top) + 6px));
+  max-width: min(90%, 400px); text-align: center;
+  background: color-mix(in srgb, var(--forest) 12%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--forest) 34%, var(--line));
+  border-radius: 10px; padding: 8px 14px;
+  box-shadow: var(--shadow); backdrop-filter: blur(4px);
+  font-size: .82rem; font-weight: 500; color: var(--forest-deep); line-height: 1.35;
+}
+body.map-editing .map-msg {
+  top: max(12px, calc(env(safe-area-inset-top) + 6px + 62px));
+}
+
 /* A pin "lifted" for editing (?edit=1, after a long-press). The inner SVG scales
    and gains a shadow so it visibly pops off the map; Leaflet owns the marker
    element's transform (positioning), so we only animate the child SVG. */

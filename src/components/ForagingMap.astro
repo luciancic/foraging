@@ -258,7 +258,7 @@ const { fullscreen = false } = Astro.props;
   // the promote button react to the current value rather than being wired once.
   let editMode = new URLSearchParams(location.search).get('edit') === '1';
   let editBtnEl: HTMLElement | null = null;
-  const EDIT_MSG = '✎ Edit mode — press & hold a pin to lift it, then drag to its real spot.';
+  const EDIT_MSG = '✎ Edit mode — press & hold a pin to move it, or open a scouting lead to promote it to a verified spot.';
   const TOKEN_KEY = 'forage.editToken';
   const getToken = () => { try { return localStorage.getItem(TOKEN_KEY) || ''; } catch { return ''; } };
   const setToken = (t: string) => { try { localStorage.setItem(TOKEN_KEY, t); } catch {} };
@@ -277,6 +277,18 @@ const { fullscreen = false } = Astro.props;
   // fill/label. Called on load and on every toggle.
   function applyEditState() {
     document.body.classList.toggle('map-editing', editMode);
+    // Persistent edit-mode banner — its OWN element, deliberately NOT the transient
+    // flash line: flash() messages (Saving…, Pin lifted, Locating…) and clearFlash()
+    // on each geolocation fix would otherwise wipe it while still editing.
+    let banner = document.getElementById('edit-banner');
+    if (editMode && !banner) {
+      banner = document.createElement('div');
+      banner.id = 'edit-banner';
+      banner.className = 'edit-banner';
+      banner.textContent = EDIT_MSG;
+      (mapEl?.parentElement || mapEl)?.appendChild(banner);
+    }
+    if (banner) banner.hidden = !editMode;
     if (editBtnEl) {
       const t = editMode ? 'Exit edit mode' : 'Edit mode — move pins, promote leads';
       editBtnEl.classList.toggle('active', editMode);
@@ -292,8 +304,8 @@ const { fullscreen = false } = Astro.props;
     const u = new URL(location.href);
     if (on) u.searchParams.set('edit', '1'); else u.searchParams.delete('edit');
     history.replaceState(null, '', u);
-    applyEditState();
-    if (on) flash(EDIT_MSG, true); else clearFlash();
+    applyEditState();          // shows/hides the persistent edit banner
+    if (!on) clearFlash();     // drop any leftover transient message on exit
   }
 
   function initPanel() {
@@ -485,7 +497,6 @@ const { fullscreen = false } = Astro.props;
 
   loadSpots()
     .then((geo) => {
-      if (editMode) flash(EDIT_MSG, true);
       const layer = L.geoJSON(geo, {
         filter: (feature) =>
           !plantFilter || feature.properties?.plant === plantFilter,
