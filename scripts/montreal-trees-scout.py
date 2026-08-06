@@ -12,16 +12,18 @@ Fruit's NC-SA). Public trees are legally forageable in Montréal.
 
 Unlike iNat/FF (community *observations*, ID uncertain), this is an authoritative
 inventory — the species IS the label. The catch is the opposite: the city plants
-edible trees by the *thousand* (549 crabapples in Verdun alone), and the map renders
-one Leaflet marker per pin with no clustering. So this generator does two things the
-others don't:
+edible trees by the *thousand* (549 crabapples in Verdun alone). The map clusters
+markers, so rendering thousands is fine — but the geojson is fetched over mobile
+data, so payload is the real limit. So this generator does two things the others
+don't:
   1. **Curates** to genuinely forageable species via the FORAGE table below (keyed
      by scientific name — full "genus species" wins over a bare genus). Ornamental
      maples, ash, elm, spruce, etc. are dropped. Toxic street trees present in the
      data (Kentucky coffeetree, horse-chestnut) are kept as `avoid` teaching pins.
-  2. **Thins** the survivors so the layer stays usable: at most one tree per species
+  2. **Thins** the survivors to keep the download light: at most one tree per species
      per ~grid cell (even spread, kills dense duplicates), then a hard per-species
-     cap. Every count dropped is logged — nothing is silently truncated.
+     cap. Every count dropped is logged — nothing is silently truncated. Raise
+     --max-per-species / lower --cell-m for a denser pull of a smaller area.
 
 Still NOT the source of truth (foraging-spots.geojson is) — these are leads to walk
 to and confirm. The city's own disclaimer: tree locations "may be imprecise or out
@@ -193,10 +195,10 @@ def main():
     ap.add_argument("--bbox", nargs=4, type=float, metavar=("SWLAT", "SWLNG", "NELAT", "NELNG"), required=True)
     ap.add_argument("--name", default="scouting area")
     ap.add_argument("--out", required=True)
-    ap.add_argument("--max-per-species", type=int, default=30,
-                    help="hard cap on pins per species after grid-thinning (default 30)")
-    ap.add_argument("--cell-m", type=float, default=180.0,
-                    help="grid cell size in metres for even thinning (default 180)")
+    ap.add_argument("--max-per-species", type=int, default=120,
+                    help="hard cap on pins per species after grid-thinning (default 120)")
+    ap.add_argument("--cell-m", type=float, default=60.0,
+                    help="grid cell size in metres for even thinning (default 60)")
     a = ap.parse_args()
 
     feats, raw_totals, dropped, skipped = build(a.bbox, a.cell_m, a.max_per_species)

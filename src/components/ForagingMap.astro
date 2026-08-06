@@ -15,9 +15,12 @@ const { fullscreen = false } = Astro.props;
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
   integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" crossorigin="" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" crossorigin="" />
 
 <script>
   import L from 'leaflet';
+  import 'leaflet.markercluster';
 
   const CAT_COLORS: Record<string, string> = {
     tree: '#6b8e23', berries: '#8a2f4a', greens: '#2f7d4f', herbs: '#4a8f7b',
@@ -533,10 +536,26 @@ const { fullscreen = false } = Astro.props;
         attrib: 'Public-tree inventory © <a href="https://donnees.montreal.ca/dataset/arbres" target="_blank" rel="noopener">Ville de Montréal</a> (CC BY 4.0)' },
     ];
     const hidden = loadHidden();
-    // groups[srcKey][tier] = LayerGroup; records track every marker for hide/show.
-    const groups: Record<string, Record<string, any>> = {};
+    // One marker-cluster group holds every visible scouting marker across all
+    // sources/tiers — nearby pins collapse into a counted bubble that splits apart
+    // as you zoom, so thousands of city trees stay usable instead of melting the
+    // browser. `records` tracks each marker's source+tier for the filters, counts,
+    // and Hide; `inCluster` mirrors what's currently added so a filter toggle diffs
+    // membership instead of rebuilding the whole layer.
+    const cluster = (L as any).markerClusterGroup({
+      maxClusterRadius: 55,
+      showCoverageOnHover: false,
+      spiderfyOnMaxZoom: true,
+      chunkedLoading: true,
+      iconCreateFunction: (c: any) => {
+        const n = c.getChildCount();
+        const size = n < 10 ? 34 : n < 100 ? 40 : 48;
+        return L.divIcon({ html: `<span>${n}</span>`, className: 'scout-cluster', iconSize: [size, size] });
+      },
+    });
     const present: Record<string, Set<string>> = {};
     const records: Array<{ srcKey: string; key: string; tier: string; marker: any }> = [];
+    const inCluster = new Set<string>();
 
     Promise.all(SCOUT_SOURCES.map(async (src) => {
       let geo: any;
@@ -545,13 +564,11 @@ const { fullscreen = false } = Astro.props;
         if (!r.ok) return;
         geo = await r.json();
       } catch { return; }
-      groups[src.key] = {};
       present[src.key] = new Set();
-      for (const t of TIER_ORDER) groups[src.key][t] = L.layerGroup();
       (geo.features || []).forEach((f: any, i: number) => {
         const p = f.properties || {};
         const tier = p.tier || 'snack';
-        if (!groups[src.key][tier]) return;
+        if (!TIER_ORDER.includes(tier)) return;
         present[src.key].add(tier);
         const id = (f.id !== undefined && f.id !== null) ? f.id : `${src.key}${i}`;
         const key = `${src.key}:${id}`;
@@ -559,7 +576,6 @@ const { fullscreen = false } = Astro.props;
         const marker = L.marker([lat, lon], { icon: src.icon(TIER_COLORS[tier] || '#7a7a7a') })
           .bindPopup(scoutPopup(p, key), { maxWidth: 244, minWidth: 200, maxHeight: 300, autoPan: true, keepInView: true });
         records.push({ srcKey: src.key, key, tier, marker });
-        if (!hidden.has(key)) groups[src.key][tier].addLayer(marker);
       });
     })).then(() => {
       const div = panelScoutEl;
@@ -567,6 +583,7 @@ const { fullscreen = false } = Astro.props;
       const liveSources = SCOUT_SOURCES.filter((s) => present[s.key]?.size);
       if (!liveSources.length) return;
       div.hidden = false;
+      cluster.addTo(map);
 
       // Per-source master toggles (persisted); shared per-tier filters.
       const state = { master: {} as Record<string, boolean>, tier: {} as Record<string, boolean> };
@@ -576,16 +593,16 @@ const { fullscreen = false } = Astro.props;
       }
       for (const t of TIER_ORDER) state.tier[t] = loadPref('scout.tier.' + t, true);
 
+      // Diff cluster membership against the filter state (add/remove only deltas).
       const apply = () => {
-        for (const s of liveSources) {
-          for (const t of TIER_ORDER) {
-            if (!present[s.key].has(t)) continue;
-            const g = groups[s.key][t];
-            const show = state.master[s.key] && state.tier[t];
-            if (show && !map.hasLayer(g)) g.addTo(map);
-            else if (!show && map.hasLayer(g)) map.removeLayer(g);
-          }
+        const add: any[] = [], remove: any[] = [];
+        for (const rec of records) {
+          const visible = state.master[rec.srcKey] && state.tier[rec.tier] && !hidden.has(rec.key);
+          if (visible && !inCluster.has(rec.key)) { add.push(rec.marker); inCluster.add(rec.key); }
+          else if (!visible && inCluster.has(rec.key)) { remove.push(rec.marker); inCluster.delete(rec.key); }
         }
+        if (remove.length) cluster.removeLayers(remove);
+        if (add.length) cluster.addLayers(add);
       };
       apply();
 
@@ -595,12 +612,11 @@ const { fullscreen = false } = Astro.props;
         if (!rec) return;
         hidden.add(key);
         saveHidden(hidden);
-        groups[rec.srcKey][rec.tier].removeLayer(rec.marker);
+        if (inCluster.has(key)) { cluster.removeLayer(rec.marker); inCluster.delete(key); }
         map.closePopup();
         renderCtl();
       };
       const unhideAll = () => {
-        for (const rec of records) if (hidden.has(rec.key)) groups[rec.srcKey][rec.tier].addLayer(rec.marker);
         hidden.clear();
         saveHidden(hidden);
         apply();

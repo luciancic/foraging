@@ -79,13 +79,17 @@ urban-edible plant field guide for Montréal. Live at **https://foraging.condrea
   --name "..." --out public/data/montreal-trees.geojson`. Pulled live from the CKAN
   datastore SQL API (resource `64e28fe6-…`, ~335k trees citywide; no bulk download).
   Unlike iNat/FF this is an **authoritative** inventory — `Essence_latin` IS the
-  arborist's species label — but the city plants edibles by the thousand and the map
-  has no marker clustering, so the generator **curates** via a genus/species `FORAGE`
-  table (ornamental maples/ash/elm dropped; toxic Kentucky coffeetree + horse-chestnut
-  kept as `avoid` teaching pins) **and spatially thins** the survivors (≤1 tree per
-  ~`--cell-m` grid cell per species, then a `--max-per-species` cap, default 30 —
-  every dropped count is logged, nothing silently truncated). Verdun ≈ 591 pins from
-  ~12k forageable. Shape = **triangle ▲**. Licence **CC BY 4.0** (attribution
+  arborist's species label — but the city plants edibles by the thousand. The map
+  **clusters** scouting markers (Leaflet.markercluster — nearby pins collapse into a
+  counted bubble that splits as you zoom), so rendering thousands is fine; the real
+  limit is the geojson payload over mobile data. So the generator **curates** via a
+  genus/species `FORAGE` table (ornamental maples/ash/elm dropped; toxic Kentucky
+  coffeetree + horse-chestnut kept as `avoid` teaching pins) **and spatially thins**
+  the survivors to keep the download light (≤1 tree per ~`--cell-m` grid cell per
+  species, then a `--max-per-species` cap, defaults 60 m / 120 — every dropped count
+  is logged, nothing silently truncated; raise the cap / shrink the cell for a denser
+  pull of a smaller area). Verdun ≈ 1,880 pins / 1.2 MB from ~12k forageable. Shape =
+  **triangle ▲**. Licence **CC BY 4.0** (attribution
   required — panel credits "Ville de Montréal"; commercial use OK, unlike FF). Each
   pin links to the dataset and carries the city's own caveat that locations "may be
   imprecise/outdated" — confirm in person before promoting to a real pin.
