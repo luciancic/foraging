@@ -66,12 +66,29 @@ urban-edible plant field guide for Montréal. Live at **https://foraging.condrea
   SWLAT SWLNG NELAT NELNG --name "..." --out public/data/falling-fruit.geojson`.
   Same tier vocabulary + curated `FORAGE` table (keyed by scientific name/genus;
   uncurated/non-plant types like "Dumpster" are skipped). On the map, **shape
-  encodes source** (iNat = circles, Falling Fruit = diamonds) and **colour the
-  tier**; each source has its own toggle in the layers panel, tier filters + Hide
-  apply across both. Data is **CC BY-NC-SA** — the panel carries a required
-  Falling Fruit attribution and each pin links to its source page; keep both if
-  you touch this. Uses Falling Fruit's public read API key (`AKDJGHSD`, from their
-  own web-app setup docs). Non-commercial use only.
+  encodes source** (iNat = circles, Falling Fruit = diamonds, Ville de Montréal =
+  triangles) and **colour the tier**; each source has its own toggle in the layers
+  panel, tier filters + Hide apply across all three. Data is **CC BY-NC-SA** — the
+  panel carries a required Falling Fruit attribution and each pin links to its
+  source page; keep both if you touch this. Uses Falling Fruit's public read API
+  key (`AKDJGHSD`, from their own web-app setup docs). Non-commercial use only.
+- **Third scouting source — Ville de Montréal public trees:**
+  `public/data/montreal-trees.geojson` is the city's public street/park tree
+  inventory ("Arbres publics", donnees.montreal.ca) filtered to forageable species —
+  regenerate with `scripts/montreal-trees-scout.py --bbox SWLAT SWLNG NELAT NELNG
+  --name "..." --out public/data/montreal-trees.geojson`. Pulled live from the CKAN
+  datastore SQL API (resource `64e28fe6-…`, ~335k trees citywide; no bulk download).
+  Unlike iNat/FF this is an **authoritative** inventory — `Essence_latin` IS the
+  arborist's species label — but the city plants edibles by the thousand and the map
+  has no marker clustering, so the generator **curates** via a genus/species `FORAGE`
+  table (ornamental maples/ash/elm dropped; toxic Kentucky coffeetree + horse-chestnut
+  kept as `avoid` teaching pins) **and spatially thins** the survivors (≤1 tree per
+  ~`--cell-m` grid cell per species, then a `--max-per-species` cap, default 30 —
+  every dropped count is logged, nothing silently truncated). Verdun ≈ 591 pins from
+  ~12k forageable. Shape = **triangle ▲**. Licence **CC BY 4.0** (attribution
+  required — panel credits "Ville de Montréal"; commercial use OK, unlike FF). Each
+  pin links to the dataset and carries the city's own caveat that locations "may be
+  imprecise/outdated" — confirm in person before promoting to a real pin.
 
 ## Deploy & backup (this VPS)
 - Served by Caddy from `/srv/foraging` (static) + a reverse-proxy for `/api/*`,

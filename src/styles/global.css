@@ -238,6 +238,7 @@ body.fullbleed main { flex: 1 1 auto; min-height: 0; display: flex; }
 .scout-tiers { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 5px; }
 .scout-tiers-h { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-soft); }
 .scout-attrib { margin: 8px 0 0; padding-top: 8px; border-top: 1px solid var(--line); font-size: .68rem; color: var(--ink-soft); line-height: 1.4; }
+.scout-attrib + .scout-attrib { margin-top: 4px; padding-top: 0; border-top: none; }
 .scout-attrib a { color: var(--accent, #2f7d4f); }
 .scout-tier { font-size: .8rem; }
 .scout-tier .dot { width: 10px; height: 10px; flex: none; }

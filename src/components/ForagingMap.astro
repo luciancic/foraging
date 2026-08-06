@@ -57,7 +57,7 @@ const { fullscreen = false } = Astro.props;
   }
 
   // Scouting pins encode SOURCE by shape, TIER by colour:
-  //   iNaturalist = circle, Falling Fruit = diamond.
+  //   iNaturalist = circle, Falling Fruit = diamond, Ville de Montréal = triangle.
   function scoutIcon(color: string) {
     const svg =
       `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">` +
@@ -70,6 +70,13 @@ const { fullscreen = false } = Astro.props;
       `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">` +
       `<rect x="4.5" y="4.5" width="11" height="11" transform="rotate(45 10 10)" fill="${color}" fill-opacity="0.85" stroke="#fff" stroke-width="2.5"/></svg>`;
     return L.divIcon({ className: 'scout-pin scout-diamond', html: svg, iconSize: [20, 20], iconAnchor: [10, 10], popupAnchor: [0, -11] });
+  }
+
+  function scoutTriangleIcon(color: string) {
+    const svg =
+      `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">` +
+      `<path d="M10 3.2 17 16.4H3z" fill="${color}" fill-opacity="0.85" stroke="#fff" stroke-width="2.2" stroke-linejoin="round"/></svg>`;
+    return L.divIcon({ className: 'scout-pin scout-triangle', html: svg, iconSize: [20, 20], iconAnchor: [10, 11], popupAnchor: [0, -10] });
   }
 
   const mapEl = document.getElementById('map');
@@ -488,16 +495,21 @@ const { fullscreen = false } = Astro.props;
   function scoutPopup(p: any, key: string) {
     const tier = p.tier || 'snack';
     const isFF = p.source === 'fallingfruit';
+    const isMtl = p.source === 'montreal';
+    const isINat = !isFF && !isMtl;
+    const mtlMeta = [p.where && esc(p.where), p.planted && ('planted ' + esc(p.planted))].filter(Boolean).join(' · ');
     return (
       `<div class="p-pop">` +
         `<h3>${esc(p.name) || 'Observation'}</h3>` +
         (p.species ? `<div class="p-sci">${esc(p.species)}</div>` : '') +
         `<div class="p-tier tier-${esc(tier)}">${TIER_LABEL[tier] || esc(tier)}</div>` +
         (p.notes ? `<div class="p-meta">${esc(p.notes)}</div>` : '') +
-        (!isFF && p.observed ? `<div class="p-meta p-obs">🔍 iNat obs ${esc(p.observed)}${p.observer ? ' · @' + esc(p.observer) : ''}${p.obscured ? ' · ⚠ location obscured' : ''}</div>` : '') +
+        (isINat && p.observed ? `<div class="p-meta p-obs">🔍 iNat obs ${esc(p.observed)}${p.observer ? ' · @' + esc(p.observer) : ''}${p.obscured ? ' · ⚠ location obscured' : ''}</div>` : '') +
         (isFF ? `<div class="p-meta p-obs">◆ Falling Fruit · community spot</div>` : '') +
-        (!isFF && /^https?:\/\//i.test(p.inat || '') ? `<a class="p-guide" href="${esc(p.inat)}" target="_blank" rel="noopener">View on iNaturalist →</a>` : '') +
+        (isMtl ? `<div class="p-meta p-obs">▲ Ville de Montréal · city tree${mtlMeta ? ' · ' + mtlMeta : ''}</div>` : '') +
+        (isINat && /^https?:\/\//i.test(p.inat || '') ? `<a class="p-guide" href="${esc(p.inat)}" target="_blank" rel="noopener">View on iNaturalist →</a>` : '') +
         (isFF && /^https?:\/\//i.test(p.ff || '') ? `<a class="p-guide" href="${esc(p.ff)}" target="_blank" rel="noopener">View on Falling Fruit →</a>` : '') +
+        (isMtl && /^https?:\/\//i.test(p.mtl || '') ? `<a class="p-guide" href="${esc(p.mtl)}" target="_blank" rel="noopener">City tree dataset →</a>` : '') +
         (p.plant ? `<a class="p-guide" href="/plants/${seg(p.plant)}">View plant guide →</a>` : '') +
         `<button type="button" class="scout-hide" data-hide="${esc(key)}">✕ Hide this pin</button>` +
       `</div>`
@@ -512,9 +524,13 @@ const { fullscreen = false } = Astro.props;
     // initScouting() is invoked earlier in the script than this point.
     const SCOUT_SOURCES = [
       { key: 'inat', label: 'iNaturalist', glyph: '●', tag: 'research-grade · unverified',
-        url: '/data/scouting-spots.geojson', icon: scoutIcon, legacyOn: true },
+        url: '/data/scouting-spots.geojson', icon: scoutIcon, legacyOn: true, attrib: '' },
       { key: 'ff', label: 'Falling Fruit', glyph: '◆', tag: 'community · CC BY-NC-SA',
-        url: '/data/falling-fruit.geojson', icon: scoutDiamondIcon, legacyOn: false },
+        url: '/data/falling-fruit.geojson', icon: scoutDiamondIcon, legacyOn: false,
+        attrib: 'Community spots via <a href="https://fallingfruit.org" target="_blank" rel="noopener">Falling Fruit</a> (CC BY-NC-SA)' },
+      { key: 'montreal', label: 'City trees', glyph: '▲', tag: 'city inventory · sample',
+        url: '/data/montreal-trees.geojson', icon: scoutTriangleIcon, legacyOn: false,
+        attrib: 'Public-tree inventory © <a href="https://donnees.montreal.ca/dataset/arbres" target="_blank" rel="noopener">Ville de Montréal</a> (CC BY 4.0)' },
     ];
     const hidden = loadHidden();
     // groups[srcKey][tier] = LayerGroup; records track every marker for hide/show.
@@ -614,7 +630,7 @@ const { fullscreen = false } = Astro.props;
           ).join('') +
           (hidden.size ? `<button type="button" class="scout-unhide">↺ Restore ${hidden.size} hidden pin${hidden.size === 1 ? '' : 's'}</button>` : '') +
           `</div>` +
-          `<p class="scout-attrib">Community spots via <a href="https://fallingfruit.org" target="_blank" rel="noopener">Falling Fruit</a> (CC BY-NC-SA)</p>`;
+          liveSources.filter((s) => s.attrib).map((s) => `<p class="scout-attrib">${s.attrib}</p>`).join('');
         div.querySelectorAll('input[data-src]').forEach((el) => {
           el.addEventListener('change', () => {
             const k = (el as HTMLInputElement).dataset.src as string;
