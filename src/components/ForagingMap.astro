@@ -246,7 +246,7 @@ const { fullscreen = false } = Astro.props;
   // the promote button react to the current value rather than being wired once.
   let editMode = new URLSearchParams(location.search).get('edit') === '1';
   let editBtnEl: HTMLElement | null = null;
-  const EDIT_MSG = '✎ Edit mode — press & hold a pin to move it, or open a scouting lead to promote it to a verified spot.';
+  const EDIT_MSG = '✎ Edit mode — press & hold a pin to move it, or open a pin to promote (leads) or delete it.';
   const TOKEN_KEY = 'forage.editToken';
   const getToken = () => { try { return localStorage.getItem(TOKEN_KEY) || ''; } catch { return ''; } };
   const setToken = (t: string) => { try { localStorage.setItem(TOKEN_KEY, t); } catch {} };
@@ -516,25 +516,10 @@ const { fullscreen = false } = Astro.props;
     try { localStorage.setItem(key, on ? '1' : '0'); } catch {}
   }
 
-  // Locally-hidden scouting pins (e.g. one that turned out to sit in someone's
-  // private garden). Stored as a set of `${source}:${id}` keys in localStorage so
-  // a hide is stable across reloads AND data regenerations, and never collides
-  // between sources. Per-device by nature. Legacy entries were bare iNat obs ids
-  // (numbers) — migrate those to `inat:<n>` on load.
-  function loadHidden(): Set<string> {
-    try {
-      const arr = JSON.parse(localStorage.getItem('scout.hidden') || '[]');
-      return new Set(arr.map((v: any) => (typeof v === 'number' ? 'inat:' + v : String(v))));
-    } catch { return new Set(); }
-  }
-  function saveHidden(s: Set<string>) {
-    try { localStorage.setItem('scout.hidden', JSON.stringify([...s])); } catch {}
-  }
-
   // One popup for every pin. `verified` confirmed spots show season/location/photos;
-  // leads show their source + a link back to it, plus the edit-mode Promote/Hide
-  // buttons (CSS gates those on body.map-editing). Category badge + a caution line
-  // are shown for both.
+  // leads show their source + a link back to it. Both carry an edit-mode Delete
+  // button, and leads a Promote button (CSS gates those on body.map-editing).
+  // Category badge + a caution line are shown for both.
   function pinPopup(p: any, key: string, verified: boolean) {
     const cat = p.category || 'other';
     const src = p.source || (verified ? 'confirmed' : 'inat');
@@ -565,7 +550,7 @@ const { fullscreen = false } = Astro.props;
         (!verified && /^https?:\/\//i.test(p.sourceUrl || '') ? `<a class="p-guide" href="${esc(p.sourceUrl)}" target="_blank" rel="noopener">${linkLabel}</a>` : '') +
         (p.plant ? `<a class="p-guide" href="/plants/${seg(p.plant)}">View plant guide →</a>` : '') +
         (!verified ? `<button type="button" class="scout-promote" data-promote="${esc(key)}">➕ Promote to confirmed spot</button>` : '') +
-        (!verified ? `<button type="button" class="scout-hide" data-hide="${esc(key)}">✕ Hide this pin</button>` : '') +
+        `<button type="button" class="scout-delete" data-delete="${esc(key)}">🗑 Delete this pin</button>` +
       `</div>`
     );
   }
@@ -583,7 +568,6 @@ const { fullscreen = false } = Astro.props;
         attrib: 'Public-tree inventory © <a href="https://donnees.montreal.ca/dataset/arbres" target="_blank" rel="noopener">Ville de Montréal</a> (CC BY 4.0)' },
     };
     const SOURCE_ORDER = ['inat', 'fallingfruit', 'montreal'];
-    const hidden = loadHidden();
 
     const cluster = (L as any).markerClusterGroup({
       maxClusterRadius: 55,
@@ -599,7 +583,7 @@ const { fullscreen = false } = Astro.props;
     cluster.addTo(map);
 
     type Rec = { id: any; key: string; masterKey: string; verified: boolean; source: string;
-      category: string; caution: boolean; hideKey: string | null; marker: any; props: any; lat: number; lon: number };
+      category: string; caution: boolean; marker: any; props: any; lat: number; lon: number };
     const records: Rec[] = [];
     const inCluster = new Set<string>();
     const presentSrc = new Set<string>();
@@ -615,14 +599,13 @@ const { fullscreen = false } = Astro.props;
         const [lon, lat] = f.geometry.coordinates;
         const key = String(f.id);
         const masterKey = verified ? 'confirmed' : source;
-        const hideKey = verified ? null : `${source}:${p.ext_id ?? f.id}`;
         const icon = verified
           ? pinIcon(CAT_COLORS[category] || CAT_COLORS.other, caution)
           : leadIcon(SOURCE_SHAPE[source] || 'circle', CAT_COLORS[category] || CAT_COLORS.other, caution);
         const marker = L.marker([lat, lon], { icon })
           .bindPopup(pinPopup(p, key, verified), { maxWidth: 244, minWidth: 200, maxHeight: 300, autoPan: true, keepInView: true });
         if (verified && typeof f.id === 'number') enableLongPressMove(marker, f.id as number);
-        records.push({ id: f.id, key, masterKey, verified, source, category, caution, hideKey, marker, props: p, lat, lon });
+        records.push({ id: f.id, key, masterKey, verified, source, category, caution, marker, props: p, lat, lon });
         if (verified) hasConfirmed = true; else presentSrc.add(source);
       }
     };
@@ -664,9 +647,8 @@ const { fullscreen = false } = Astro.props;
       for (const c of CAT_ORDER) state.cat[c] = loadPref('filter.cat.' + c, true);
       state.caution = loadPref('filter.caution', true);
 
-      const hiddenHas = (r: Rec) => !!r.hideKey && hidden.has(r.hideKey);
       const visible = (r: Rec) =>
-        state.master[r.masterKey] && state.cat[r.category] && (state.caution || !r.caution) && !hiddenHas(r);
+        state.master[r.masterKey] && state.cat[r.category] && (state.caution || !r.caution);
 
       const apply = () => {
         const add: any[] = [], remove: any[] = [];
@@ -681,16 +663,35 @@ const { fullscreen = false } = Astro.props;
       apply();
 
       let renderCtl = () => {};
-      const hidePin = (key: string) => {
-        const r = records.find((x) => x.key === key);
-        if (!r || !r.hideKey) return;
-        hidden.add(r.hideKey);
-        saveHidden(hidden);
-        if (inCluster.has(r.key)) { cluster.removeLayer(r.marker); inCluster.delete(r.key); }
-        map.closePopup();
-        renderCtl();
+
+      // Delete a pin (edit mode). Confirmed spots are removed outright; leads are
+      // tombstoned server-side so a re-scout won't resurrect them. Either way the
+      // marker + record are dropped in place, no reload.
+      const deletePinAt = async (key: string, btn: HTMLButtonElement) => {
+        const i = records.findIndex((x) => x.key === key);
+        if (i < 0) return;
+        const r = records[i];
+        if (!window.confirm(`Delete "${r.props.name || (r.verified ? 'this spot' : 'this lead')}"? This can't be undone.`)) return;
+        const token = ensureToken();
+        if (!token) { flash('No token — pin not deleted.'); return; }
+        btn.disabled = true; btn.textContent = 'Deleting…';
+        try {
+          const resp = await fetch('/api/pins/' + r.id, {
+            method: 'DELETE',
+            headers: { Authorization: 'Bearer ' + token },
+          });
+          if (resp.status === 401) { clearToken(); flash('Edit token rejected — try again to re-enter it.', true); btn.disabled = false; btn.textContent = '🗑 Delete this pin'; return; }
+          if (!resp.ok) { const e = await resp.json().catch(() => ({})); throw new Error(e.error || ('HTTP ' + resp.status)); }
+          map.closePopup();
+          if (inCluster.has(r.key)) { cluster.removeLayer(r.marker); inCluster.delete(r.key); }
+          records.splice(i, 1);
+          renderCtl();
+          flash('Deleted ✓');
+        } catch (err: any) {
+          flash('Delete failed (' + (err?.message || err) + ').');
+          btn.disabled = false; btn.textContent = '🗑 Delete this pin';
+        }
       };
-      const unhideAll = () => { hidden.clear(); saveHidden(hidden); apply(); renderCtl(); };
 
       // Promote a lead → a confirmed spot in ONE click: a lead already carries a
       // curated category, so there's nothing to pick. Tapping ➕ POSTs straight to
@@ -715,7 +716,7 @@ const { fullscreen = false } = Astro.props;
           map.closePopup();
           // Convert the record in place: same marker slot, now a confirmed teardrop.
           if (inCluster.has(r.key)) { cluster.removeLayer(r.marker); inCluster.delete(r.key); }
-          r.verified = true; r.masterKey = 'confirmed'; r.hideKey = null;
+          r.verified = true; r.masterKey = 'confirmed';
           r.props = { ...r.props, ...spot, verified: true };
           r.marker = L.marker([r.lat, r.lon], { icon: pinIcon(CAT_COLORS[r.category] || CAT_COLORS.other, r.caution) })
             .bindPopup(pinPopup(r.props, r.key, true), { maxWidth: 244, minWidth: 200, maxHeight: 300, autoPan: true, keepInView: true });
@@ -734,16 +735,15 @@ const { fullscreen = false } = Astro.props;
         const el = e.popup.getElement();
         if (!el) return;
         L.DomEvent.disableClickPropagation(el);
-        const hb = el.querySelector('.scout-hide');
-        if (hb) hb.addEventListener('click', () => hidePin(String(hb.dataset.hide)), { once: true });
+        const db = el.querySelector('.scout-delete') as HTMLButtonElement | null;
+        if (db) db.addEventListener('click', () => deletePinAt(String(db.dataset.delete), db), { once: true });
         const pb = el.querySelector('.scout-promote') as HTMLButtonElement | null;
         if (pb) pb.addEventListener('click', () => promoteLead(String(pb.dataset.promote), pb), { once: true });
       });
 
-      const notHidden = (r: Rec) => !hiddenHas(r);
-      const layerCount = (mk: string) => records.filter((r) => r.masterKey === mk && notHidden(r)).length;
-      const catCount = (c: string) => records.filter((r) => r.category === c && notHidden(r) && (state.caution || !r.caution)).length;
-      const cautionCount = () => records.filter((r) => r.caution && notHidden(r)).length;
+      const layerCount = (mk: string) => records.filter((r) => r.masterKey === mk).length;
+      const catCount = (c: string) => records.filter((r) => r.category === c && (state.caution || !r.caution)).length;
+      const cautionCount = () => records.filter((r) => r.caution).length;
       const catsShown = CAT_ORDER.filter((c) => records.some((r) => r.category === c));
       const srcShown = SOURCE_ORDER.filter((s) => presentSrc.has(s));
 
@@ -762,7 +762,6 @@ const { fullscreen = false } = Astro.props;
               `<i class="dot" style="background:${CAT_COLORS[c]}"></i>${CAT_LABEL[c]} <b>${catCount(c)}</b></label>`).join('') +
             (cautionCount() ? `<label class="scout-tier scout-caution"><input type="checkbox" data-caution${state.caution ? ' checked' : ''}>` +
               `<i class="dot" style="background:${CAUTION_COLOR}"></i>⚠ Caution — lookalikes <b>${cautionCount()}</b></label>` : '') +
-            (hidden.size ? `<button type="button" class="scout-unhide">↺ Restore ${hidden.size} hidden pin${hidden.size === 1 ? '' : 's'}</button>` : '') +
           `</div>` +
           srcShown.filter((s) => SOURCES[s].attrib).map((s) => `<p class="scout-attrib">${SOURCES[s].attrib}</p>`).join('');
         div.querySelectorAll('input[data-master]').forEach((el) => el.addEventListener('change', () => {
@@ -783,8 +782,6 @@ const { fullscreen = false } = Astro.props;
           savePref('filter.caution', state.caution);
           apply(); renderCtl();
         });
-        const unhideEl = div.querySelector('.scout-unhide');
-        if (unhideEl) unhideEl.addEventListener('click', unhideAll);
       };
       renderCtl();
     }).catch((err) => {

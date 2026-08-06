@@ -66,11 +66,14 @@ urban-edible plant field guide for Montréal. Live at **https://foraging.condrea
   by `category` and shaped by provenance (confirmed = teardrop, iNat = circle, FF =
   diamond, city = triangle); an amber ring flags `caution`. Each source has its own
   panel toggle (leads off by default, fullscreen map only); a shared "Filter by type"
-  + a caution toggle apply across everything; per-pin Hide (leads) persists per-device
-  keyed on `source:ext_id`. Confirming a lead in person = **promote it**: `/map?edit=1`,
-  click the lead, **➕ Promote to confirmed spot**, pick a type → `POST /api/pins/:id/
-  promote` flips `verified=1` in place (keeps `source`/`ext_id` provenance, so a
-  re-scout dedups it). Plant guides count leads too: the "on map" badge shows the total
+  + a caution toggle apply across everything. **Delete a pin** in edit mode
+  (`/map?edit=1`, open a pin → **🗑 Delete this pin** → `DELETE /api/pins/:id`): a
+  confirmed spot is removed outright; a lead is **tombstoned** (`deleted_leads` table,
+  keyed on `source`+`ext_id`) so `importLeads` won't resurrect it on the next deploy —
+  same mechanism that makes a promotion stick. Confirming a lead in person = **promote
+  it**: `/map?edit=1`, click the lead, one-click **➕ Promote to confirmed spot** →
+  `POST /api/pins/:id/promote` flips `verified=1` in place (keeps `source`/`ext_id`
+  provenance, so a re-scout dedups it). Plant guides count leads too: the "on map" badge shows the total
   with confirmed in parens (`31 on map (1 confirmed)`) from one `WHERE plant = slug`
   query over the `pins` table (`src/lib/spots.ts` → `pinCounts`); `/map?plant=<slug>`
   deep-links that plant's leads + confirmed pins.

@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS pins (
   id       INTEGER PRIMARY KEY,
   source   TEXT NOT NULL DEFAULT 'confirmed',   -- confirmed | inat | fallingfruit | montreal
   verified INTEGER NOT NULL DEFAULT 0,          -- 1 = confirmed spot, 0 = scouting lead
-  ext_id   TEXT,                                -- external id (leads): dedup + client hide key
+  ext_id   TEXT,                                -- external id (leads): dedup + delete tombstone key
   name     TEXT NOT NULL,
   category TEXT,                                -- fruit | nuts | greens | herbs | mushrooms | other
   caution  INTEGER NOT NULL DEFAULT 0,          -- 1 = has a dangerous lookalike / handle-with-care
@@ -104,6 +104,15 @@ CREATE TABLE IF NOT EXISTS pins (
 CREATE INDEX IF NOT EXISTS pins_plant ON pins(plant);
 CREATE INDEX IF NOT EXISTS pins_verified ON pins(verified);
 CREATE INDEX IF NOT EXISTS pins_source_ext ON pins(source, ext_id);
+
+-- Tombstones for leads deleted in the field. Leads are wholesale re-imported from
+-- the scout geojson every deploy, so a plain DELETE would resurrect them; recording
+-- (source, ext_id) here lets importLeads skip them permanently (like a promotion).
+CREATE TABLE IF NOT EXISTS deleted_leads (
+  source TEXT NOT NULL,
+  ext_id TEXT NOT NULL,
+  PRIMARY KEY (source, ext_id)
+);
 `;
 
 let _db;
@@ -235,6 +244,23 @@ export function promotePin(id, patch = {}) {
   return decode(getDb().prepare(`SELECT * FROM pins WHERE id = ?`).get(id), PIN_JSON);
 }
 
+/** Delete a pin. Confirmed spots are removed outright. A lead is also tombstoned
+ *  (source, ext_id) so the next deploy's re-import won't resurrect it — mirroring
+ *  how a promotion sticks. Returns true if a row was removed. */
+export function deletePin(id) {
+  const db = getDb();
+  const p = db.prepare(`SELECT * FROM pins WHERE id = ?`).get(id);
+  if (!p) return false;
+  db.transaction(() => {
+    if (p.verified === 0 && p.ext_id != null) {
+      db.prepare(`INSERT OR IGNORE INTO deleted_leads (source, ext_id) VALUES (?, ?)`)
+        .run(p.source, String(p.ext_id));
+    }
+    db.prepare(`DELETE FROM pins WHERE id = ?`).run(id);
+  })();
+  return true;
+}
+
 // ── Lead import (deploy-time regen) ─────────────────────────────────────────
 // Replace ALL unverified leads with a fresh batch parsed from the scout geojson.
 // Scoped to verified=0 so confirmed spots are never touched; skips any lead whose
@@ -244,6 +270,10 @@ export function importLeads(features) {
   const promoted = new Set(
     db.prepare(`SELECT source || char(0) || ext_id k FROM pins WHERE verified = 1 AND ext_id IS NOT NULL`)
       .all().map((r) => r.k),
+  );
+  // Leads deleted in the field stay dead across re-imports (tombstoned, like promotions).
+  const deleted = new Set(
+    db.prepare(`SELECT source || char(0) || ext_id k FROM deleted_leads`).all().map((r) => r.k),
   );
   const validPlant = new Set(db.prepare(`SELECT slug FROM plants`).all().map((r) => r.slug));
   const ins = db.prepare(
@@ -257,7 +287,7 @@ export function importLeads(features) {
       const p = f.properties || {};
       const source = p.source || 'inat';
       const ext_id = f.id != null ? String(f.id) : null;
-      if (ext_id && promoted.has(source + '\0' + ext_id)) { skipped++; continue; }
+      if (ext_id && (promoted.has(source + '\0' + ext_id) || deleted.has(source + '\0' + ext_id))) { skipped++; continue; }
       // A plant link must reference a real guide, else drop it (no dangling FKs).
       let plant = p.plant || null;
       if (plant && !validPlant.has(plant)) { plant = null; unlinked++; }

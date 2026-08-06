@@ -19,7 +19,7 @@ import { createReadStream, existsSync, mkdirSync } from 'node:fs';
 import { writeFile, rename } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { AwsClient } from 'aws4fetch';
-import { allPins, pinsGeoJSON, movePin, addPin, promotePin } from '../src/lib/db.mjs';
+import { allPins, pinsGeoJSON, movePin, addPin, promotePin, deletePin } from '../src/lib/db.mjs';
 
 const PORT = Number(process.env.FORAGING_API_PORT || 8787);
 const TOKEN = process.env.FORAGING_EDIT_TOKEN || '';
@@ -83,7 +83,7 @@ function setCors(req, res) {
     res.setHeader('Access-Control-Allow-Origin', o);
     res.setHeader('Vary', 'Origin');
   }
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 }
 
@@ -157,15 +157,24 @@ const server = createServer(async (req, res) => {
       return send(res, 200, { ok: true, spot });
     }
 
-    const moveMatch = path.match(/^\/api\/pins\/(\d+)$/);
-    if (req.method === 'PATCH' && moveMatch) {
+    const idMatch = path.match(/^\/api\/pins\/(\d+)$/);
+    if (req.method === 'PATCH' && idMatch) {
       if (!authed(req)) return send(res, 401, { error: 'unauthorized' });
-      const id = Number(moveMatch[1]);
+      const id = Number(idMatch[1]);
       const body = await readBody(req);
       if (!inLon(body.lon) || !inLat(body.lat)) return send(res, 400, { error: 'lon/lat required and must be valid coordinates' });
       const spot = movePin(id, body.lon, body.lat, new Date().toISOString().slice(0, 10));
       if (!spot) return send(res, 404, { error: 'no such pin' });
       return send(res, 200, { ok: true, spot });
+    }
+
+    // Delete a pin. Confirmed spots are removed outright; a lead is tombstoned so
+    // the next deploy's re-import won't resurrect it (see deletePin).
+    if (req.method === 'DELETE' && idMatch) {
+      if (!authed(req)) return send(res, 401, { error: 'unauthorized' });
+      const ok = deletePin(Number(idMatch[1]));
+      if (!ok) return send(res, 404, { error: 'no such pin' });
+      return send(res, 200, { ok: true });
     }
 
     if (req.method === 'POST' && path === '/api/pins') {

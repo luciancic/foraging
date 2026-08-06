@@ -300,9 +300,11 @@ body.map-editing .map-msg {
 /* Caution filter row + amber-ringed markers */
 .scout-tier.scout-caution { color: #8a5310; }
 .leaflet-marker-icon.scout-pin.is-caution, .leaflet-marker-icon.forage-pin.is-caution { filter: drop-shadow(0 0 2px rgba(217, 138, 43, .9)); }
-/* per-pin hide button in a scouting popup */
-.leaflet-popup-content .scout-hide { display: block; width: 100%; margin-top: 10px; padding: 7px 10px; font: inherit; font-size: .82rem; color: #9a2b1e; background: #fbe0dc; border: 1px solid #eec4bd; border-radius: 8px; cursor: pointer; }
-.leaflet-popup-content .scout-hide:hover { background: #f7d2cb; }
+/* per-pin delete button in a popup — an edit action, gated on edit mode like promote */
+.leaflet-popup-content .scout-delete { display: block; width: 100%; margin-top: 10px; padding: 7px 10px; font: inherit; font-size: .82rem; color: #9a2b1e; background: #fbe0dc; border: 1px solid #eec4bd; border-radius: 8px; cursor: pointer; }
+body:not(.map-editing) .leaflet-popup-content .scout-delete { display: none; }
+.leaflet-popup-content .scout-delete:hover { background: #f7d2cb; }
+.leaflet-popup-content .scout-delete:disabled { opacity: .6; cursor: default; }
 /* one-click promote-a-lead button in a scouting popup */
 .leaflet-popup-content .scout-promote { display: block; width: 100%; margin-top: 10px; padding: 7px 10px; font: inherit; font-size: .82rem; font-weight: 600; color: #1f6b34; background: #e7f3e9; border: 1px solid #bfe0c7; border-radius: 8px; cursor: pointer; }
 /* Promote is an edit action — only surfaced while edit mode is active (the popup
@@ -310,9 +312,6 @@ body.map-editing .map-msg {
 body:not(.map-editing) .leaflet-popup-content .scout-promote { display: none; }
 .leaflet-popup-content .scout-promote:hover { background: #d8ecdd; }
 .leaflet-popup-content .scout-promote:disabled { opacity: .6; cursor: default; }
-/* restore-hidden action inside the scouting control */
-.scout-unhide { margin-top: 8px; padding: 5px 8px; width: 100%; font: inherit; font-size: .78rem; color: var(--ink-soft); background: transparent; border: 1px dashed var(--line); border-radius: 8px; cursor: pointer; }
-.scout-unhide:hover { color: var(--ink); border-color: var(--ink-soft); }
 
 /* section spacing helper */
 /* top margin gives the lead heading room under the sticky header; it collapses
