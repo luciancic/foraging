@@ -58,8 +58,15 @@ urban-edible plant field guide for Montréal. Live at **https://foraging.condrea
   the script's curated `FORAGE` table (tier = snack/prep/caution/avoid + a how-to
   note + optional guide slug). The map shows it under a filter toggle (off by
   default, fullscreen map page only). Confirming a lead in person = promote it
-  into a real pin via `POST /api/pins`. Extend `FORAGE` when ranging into
-  new species; iNat gives *where*, the table gives *edible/how*.
+  into a real pin — either `POST /api/pins`, or from the map itself: open
+  `/map?edit=1`, click a scouting pin, hit **➕ Promote to confirmed spot**, pick
+  a category, and it POSTs `/api/pins` (carrying the lead's name/species/notes +
+  `plant` slug), drops the confirmed pin, and hides the lead locally. Extend
+  `FORAGE` when ranging into new species; iNat gives *where*, the table gives
+  *edible/how*. Plant guides count leads too: the "on map" badge shows the total
+  with confirmed in parens (`31 on map (1 confirmed)`) and its `/map?plant=<slug>`
+  deep-link surfaces that plant's leads alongside confirmed pins
+  (`src/lib/scouting.mjs` reads the three scouting GeoJSON at build time).
 - **Second scouting source — Falling Fruit:** `public/data/falling-fruit.geojson`
   is a parallel scouting class from the community edible-plant map
   [fallingfruit.org] — regenerate with `scripts/fallingfruit-scout.py --bbox
