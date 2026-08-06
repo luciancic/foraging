@@ -303,21 +303,13 @@ body.map-editing .map-msg {
 /* per-pin hide button in a scouting popup */
 .leaflet-popup-content .scout-hide { display: block; width: 100%; margin-top: 10px; padding: 7px 10px; font: inherit; font-size: .82rem; color: #9a2b1e; background: #fbe0dc; border: 1px solid #eec4bd; border-radius: 8px; cursor: pointer; }
 .leaflet-popup-content .scout-hide:hover { background: #f7d2cb; }
-/* promote-a-lead button + its inline category picker in a scouting popup */
+/* one-click promote-a-lead button in a scouting popup */
 .leaflet-popup-content .scout-promote { display: block; width: 100%; margin-top: 10px; padding: 7px 10px; font: inherit; font-size: .82rem; font-weight: 600; color: #1f6b34; background: #e7f3e9; border: 1px solid #bfe0c7; border-radius: 8px; cursor: pointer; }
 /* Promote is an edit action — only surfaced while edit mode is active (the popup
    is HTML, so the body class gates it reactively without rebinding). */
 body:not(.map-editing) .leaflet-popup-content .scout-promote { display: none; }
 .leaflet-popup-content .scout-promote:hover { background: #d8ecdd; }
-.leaflet-popup-content .promote-form { margin-top: 10px; padding: 9px; background: #f3faf4; border: 1px solid #bfe0c7; border-radius: 8px; }
-.leaflet-popup-content .promote-cat-l { display: flex; align-items: center; gap: 6px; font-size: .8rem; font-weight: 600; color: #1f6b34; }
-.leaflet-popup-content .promote-cat { flex: 1; font: inherit; font-size: .82rem; padding: 4px 6px; border: 1px solid #bfe0c7; border-radius: 6px; background: #fff; }
-.leaflet-popup-content .promote-actions { display: flex; gap: 6px; margin-top: 8px; }
-.leaflet-popup-content .promote-go { flex: 1; padding: 6px 10px; font: inherit; font-size: .82rem; font-weight: 600; color: #fff; background: #2f7d4f; border: 1px solid #276b43; border-radius: 7px; cursor: pointer; }
-.leaflet-popup-content .promote-go:hover { background: #276b43; }
-.leaflet-popup-content .promote-go:disabled { opacity: .6; cursor: default; }
-.leaflet-popup-content .promote-cancel { padding: 6px 10px; font: inherit; font-size: .82rem; color: var(--ink-soft); background: transparent; border: 1px solid var(--line); border-radius: 7px; cursor: pointer; }
-.leaflet-popup-content .promote-cancel:hover { color: var(--ink); border-color: var(--ink-soft); }
+.leaflet-popup-content .scout-promote:disabled { opacity: .6; cursor: default; }
 /* restore-hidden action inside the scouting control */
 .scout-unhide { margin-top: 8px; padding: 5px 8px; width: 100%; font: inherit; font-size: .78rem; color: var(--ink-soft); background: transparent; border: 1px dashed var(--line); border-radius: 8px; cursor: pointer; }
 .scout-unhide:hover { color: var(--ink); border-color: var(--ink-soft); }

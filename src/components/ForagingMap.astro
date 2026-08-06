@@ -692,46 +692,32 @@ const { fullscreen = false } = Astro.props;
       };
       const unhideAll = () => { hidden.clear(); saveHidden(hidden); apply(); renderCtl(); };
 
-      // Promote a lead → a confirmed spot: an inline category picker, then
-      // POST /api/pins/:id/promote flips verified=1 in the DB (keeping provenance,
-      // so a re-scout won't resurrect it). We swap the marker to a teardrop in place.
-      const startPromote = (key: string, popupEl: HTMLElement) => {
+      // Promote a lead → a confirmed spot in ONE click: a lead already carries a
+      // curated category, so there's nothing to pick. Tapping ➕ POSTs straight to
+      // /api/pins/:id/promote (flips verified=1, keeps provenance so a re-scout
+      // won't resurrect it) and we swap the marker to a teardrop in place.
+      const promoteLead = async (key: string, btn: HTMLButtonElement) => {
         const r = records.find((x) => x.key === key);
-        const btn = popupEl.querySelector('.scout-promote') as HTMLElement | null;
-        if (!r || !btn) return;
-        map.options.closePopupOnClick = false; // don't let a map click tear the form down
-        const opts = CAT_ORDER.map((c) => `<option value="${c}"${c === r.category ? ' selected' : ''}>${CAT_LABEL[c]}</option>`).join('');
-        const form = document.createElement('div');
-        form.className = 'promote-form';
-        form.innerHTML =
-          `<label class="promote-cat-l">Type <select class="promote-cat">${opts}</select></label>` +
-          `<div class="promote-actions"><button type="button" class="promote-go">Confirm spot</button>` +
-          `<button type="button" class="promote-cancel">Cancel</button></div>`;
-        btn.replaceWith(form);
-        (form.querySelector('.promote-cancel') as HTMLElement).addEventListener('click', () => map.closePopup());
-        (form.querySelector('.promote-go') as HTMLElement).addEventListener('click', () =>
-          doPromote(r, (form.querySelector('.promote-cat') as HTMLSelectElement).value, form));
-      };
-      const doPromote = async (r: Rec, category: string, form: HTMLElement) => {
+        if (!r) return;
         const token = ensureToken();
-        const go = form.querySelector('.promote-go') as HTMLButtonElement | null;
         if (!token) { flash('No token — spot not created.'); return; }
-        if (go) { go.disabled = true; go.textContent = 'Saving…'; }
+        btn.disabled = true; btn.textContent = 'Promoting…';
+        const reset = () => { btn.disabled = false; btn.textContent = '➕ Promote to confirmed spot'; };
         try {
           const resp = await fetch('/api/pins/' + r.id + '/promote', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-            body: JSON.stringify({ category, plant: r.props.plant ?? null }),
+            body: JSON.stringify({ category: r.category, plant: r.props.plant ?? null }),
           });
-          if (resp.status === 401) { clearToken(); flash('Edit token rejected — try again to re-enter it.', true); if (go) { go.disabled = false; go.textContent = 'Confirm spot'; } return; }
+          if (resp.status === 401) { clearToken(); flash('Edit token rejected — try again to re-enter it.', true); reset(); return; }
           if (!resp.ok) { const e = await resp.json().catch(() => ({})); throw new Error(e.error || ('HTTP ' + resp.status)); }
           const { spot } = await resp.json();
           map.closePopup();
           // Convert the record in place: same marker slot, now a confirmed teardrop.
           if (inCluster.has(r.key)) { cluster.removeLayer(r.marker); inCluster.delete(r.key); }
-          r.verified = true; r.masterKey = 'confirmed'; r.category = category; r.hideKey = null;
-          r.props = { ...r.props, ...spot, verified: true, category };
-          r.marker = L.marker([r.lat, r.lon], { icon: pinIcon(CAT_COLORS[category] || CAT_COLORS.other, r.caution) })
+          r.verified = true; r.masterKey = 'confirmed'; r.hideKey = null;
+          r.props = { ...r.props, ...spot, verified: true };
+          r.marker = L.marker([r.lat, r.lon], { icon: pinIcon(CAT_COLORS[r.category] || CAT_COLORS.other, r.caution) })
             .bindPopup(pinPopup(r.props, r.key, true), { maxWidth: 244, minWidth: 200, maxHeight: 300, autoPan: true, keepInView: true });
           if (typeof r.id === 'number') enableLongPressMove(r.marker, r.id);
           hasConfirmed = true;
@@ -740,7 +726,7 @@ const { fullscreen = false } = Astro.props;
           flash('Promoted ✓ — now a confirmed spot.');
         } catch (err: any) {
           flash('Promote failed (' + (err?.message || err) + ').');
-          if (go) { go.disabled = false; go.textContent = 'Confirm spot'; }
+          reset();
         }
       };
 
@@ -750,11 +736,9 @@ const { fullscreen = false } = Astro.props;
         L.DomEvent.disableClickPropagation(el);
         const hb = el.querySelector('.scout-hide');
         if (hb) hb.addEventListener('click', () => hidePin(String(hb.dataset.hide)), { once: true });
-        const pb = el.querySelector('.scout-promote');
-        if (pb) pb.addEventListener('click', () => startPromote(String(pb.dataset.promote), el), { once: true });
+        const pb = el.querySelector('.scout-promote') as HTMLButtonElement | null;
+        if (pb) pb.addEventListener('click', () => promoteLead(String(pb.dataset.promote), pb), { once: true });
       });
-      // Restore normal dismiss-on-map-click after any popup closes (promote turns it off).
-      map.on('popupclose', () => { map.options.closePopupOnClick = true; });
 
       const notHidden = (r: Rec) => !hiddenHas(r);
       const layerCount = (mk: string) => records.filter((r) => r.masterKey === mk && notHidden(r)).length;
