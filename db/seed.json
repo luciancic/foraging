@@ -530,6 +530,52 @@
       "body": "Cassis — the intensely aromatic black berry behind the liqueur and the jam. Escaped garden plants turn up in hedges and along fences; the crush-and-smell test makes it one of the easier berries to confirm.\n\n## Harvest\n- Pick when berries are fully **black, glossy and soft**, mid-to-late summer. Ripe ones come off easily; strip whole strings and sort later.\n- The flavour is much more assertive than a store raspberry — sharp, musky, \"grown-up.\" A little goes a long way.\n\n## Prep\n- **Raw:** edible but tart and resinous — most people prefer them cooked or sweetened.\n- **Jam / cassis syrup:** the classic. High in pectin, so they set well.\n- **Cordial / infusions:** steep in sugar syrup (or spirit, for a homemade crème de cassis).\n- **Leaves:** a few aromatic young leaves make a fragrant tea.\n\n## Notes\n- Very high in vitamin C.\n- _(Verdun hedge logged Aug 4, next to the raspberry brambles.)_"
     },
     {
+      "slug": "plum",
+      "title": "Plum",
+      "scientificName": "Prunus domestica (and wild Prunus)",
+      "commonNames": [
+        "plum",
+        "prune",
+        "prunier"
+      ],
+      "category": "fruit",
+      "season": "Fruit ripe Aug–Sep",
+      "status": "ripe-now",
+      "ripeStart": "08-01",
+      "ripeEnd": "09-30",
+      "heroImage": "/photos/spots/plum-fruit-1.jpg",
+      "gallery": [
+        {
+          "src": "/photos/spots/plum-fruit-1.jpg",
+          "credit": "my photo",
+          "caption": "Purple plum with waxy bloom on a street tree, early August."
+        }
+      ],
+      "idCues": [
+        "Round fruit 2–5 cm with a dusty, powdery <em>bloom</em> you can rub off, a single flattened stone, and one shallow seam running down the side. Colour ranges purple, blue-black, red, or yellow.",
+        "Oval, finely-toothed leaves; new growth and twigs often reddish. Bark dark with horizontal lenticels.",
+        "Spring: clusters of white 5-petal blossoms, before or with the leaves.",
+        "Tells it apart from cherry / chokecherry: plums are larger, hang mostly singly, and have a flattened seamed stone — cherries dangle in clusters on long stalks with round pits."
+      ],
+      "safety": [
+        "Flesh is edible raw and cooked. Like all <em>Prunus</em>, the stone/seed, leaves, and twigs contain cyanogenic compounds — don't crush and eat the pits.",
+        "Wild and ornamental plums range from sweet to mouth-puckering; astringency fades when the fruit is dead-ripe (soft, easily pulled) and disappears with cooking. Try one before picking a bagful."
+      ],
+      "guides": [
+        {
+          "label": "iNaturalist — Prunus domestica",
+          "url": "https://www.inaturalist.org/taxa/63735"
+        },
+        {
+          "label": "iNaturalist — Prunus (wild plums & allies)",
+          "url": "https://www.inaturalist.org/taxa/47351"
+        }
+      ],
+      "order": 64,
+      "updated": "2026-08-07",
+      "body": "Cultivated and feral plums turn up as street and yard trees all over Montréal — an escaped orchard plum or an ornamental cherry-plum will fruit heavily and mostly go unpicked. One's on the map now (a loaded purple-plum street tree), with green immature fruit still ripening alongside the first ripe ones in early August.\n\n## Harvest\n- Pick when the fruit is fully coloured, gives to a gentle squeeze, and pulls off easily. Under-ripe plums are hard and astringent — leave them a week.\n- Ripening runs roughly August into September depending on the tree; a single tree drops over a couple of weeks, so check back.\n- Watch for wasps on windfalls and split skins after rain.\n\n## Prep\n- Best fresh off the tree when dead-ripe. Otherwise: jam, compote, plum butter, or roasted with the stones out.\n- Tart/astringent cultivars are cook-only — they make excellent jam and sauce, and a good hedgerow gin/vodka.\n- Halve and twist to pop the stone; a clingstone type may need cutting around.\n\n## Notes\n_(Note which trees are sweet-enough-raw vs. cook-only, and their ripening dates.)_"
+    },
+    {
       "slug": "rowan",
       "title": "Rowan / Mountain-Ash",
       "scientificName": "Sorbus aucuparia",
@@ -772,7 +818,7 @@
       "photos": [
         "crabapple-tree-1.jpg"
       ],
-      "updated": null
+      "updated": "2026-08-05"
     },
     {
       "id": 2,
@@ -784,12 +830,12 @@
       "notes": "Photographed Jul 4; red pomes with star-crown tip.",
       "added": "2026-07-24",
       "plant": "serviceberry",
-      "lon": -73.560608,
-      "lat": 45.462978,
+      "lon": -73.560513,
+      "lat": 45.463028,
       "photos": [
         "saskatoon-berry-bush-1.jpg"
       ],
-      "updated": null
+      "updated": "2026-08-05"
     },
     {
       "id": 3,
@@ -801,12 +847,12 @@
       "notes": "Loaded crabapple at the street crossing, by the bike-path sign.",
       "added": "2026-07-24",
       "plant": "crabapple",
-      "lon": -73.572358,
-      "lat": 45.450833,
+      "lon": -73.572285,
+      "lat": 45.450831,
       "photos": [
         "crabapple-verdun-beatty-1.jpg"
       ],
-      "updated": null
+      "updated": "2026-08-06"
     },
     {
       "id": 4,
@@ -941,12 +987,12 @@
       "notes": "Photographed Aug 4; green unripe berry umbels. Come back when clusters are deep purple-black and drooping — then cook. Never eat raw.",
       "added": "2026-08-04",
       "plant": "elderberry",
-      "lon": -73.569467,
-      "lat": 45.454144,
+      "lon": -73.569472,
+      "lat": 45.454155,
       "photos": [
         "elderberry-verdun-1.jpg"
       ],
-      "updated": null
+      "updated": "2026-08-05"
     },
     {
       "id": 12,
@@ -958,13 +1004,13 @@
       "notes": "Photographed Aug 4; ripe red berries. Brambles run along the path — a second stretch ~75 m south too. Eat on the spot.",
       "added": "2026-08-04",
       "plant": "raspberry",
-      "lon": -73.568314,
-      "lat": 45.454411,
+      "lon": -73.568297,
+      "lat": 45.454394,
       "photos": [
         "raspberry-verdun-1.jpg",
         "raspberry-verdun-2.jpg"
       ],
-      "updated": null
+      "updated": "2026-08-05"
     },
     {
       "id": 13,
@@ -976,13 +1022,13 @@
       "notes": "Photographed Aug 4; glossy black berries in short strings on aromatic maple-lobed leaves, thornless. Right beside the raspberries. Tart — great cooked.",
       "added": "2026-08-04",
       "plant": "black-currant",
-      "lon": -73.568344,
-      "lat": 45.45435,
+      "lon": -73.568262,
+      "lat": 45.454396,
       "photos": [
         "black-currant-1.jpg",
         "black-currant-2.jpg"
       ],
-      "updated": null
+      "updated": "2026-08-06"
     },
     {
       "id": 14,
@@ -994,13 +1040,13 @@
       "notes": "Photographed Aug 4; green immature hips. Return in fall once they turn red-orange and soften — cook & strain for syrup (remove the irritant seed hairs).",
       "added": "2026-08-04",
       "plant": "rose-hips",
-      "lon": -73.568428,
-      "lat": 45.453244,
+      "lon": -73.568434,
+      "lat": 45.45323,
       "photos": [
         "rose-hips-1.jpg",
         "rose-hips-2.jpg"
       ],
-      "updated": null
+      "updated": "2026-08-05"
     },
     {
       "id": 15,
@@ -1012,13 +1058,13 @@
       "notes": "Photographed Aug 4; second rowan (separate from the LaSalle tree), loaded with flat-topped clusters of orange pomes, pinnate serrated leaflets. Cook-don't-graze: raw is bitter/irritating, cooked (ideally after a frost) makes a tart rowan jelly. High pectin.",
       "added": "2026-08-04",
       "plant": "rowan",
-      "lon": -73.568236,
-      "lat": 45.450358,
+      "lon": -73.567927,
+      "lat": 45.450307,
       "photos": [
         "rowan-verdun-1.jpg",
         "rowan-verdun-2.jpg"
       ],
-      "updated": null
+      "updated": "2026-08-05"
     },
     {
       "id": 16,
@@ -1052,6 +1098,169 @@
         "chokecherry-2.jpg"
       ],
       "updated": null
+    },
+    {
+      "id": 18,
+      "name": "Wild grapes (Verdun / 4e Ave)",
+      "category": "fruit",
+      "species": "wild grape (Vitis sp.)",
+      "season": "ripe Sept–Oct",
+      "location": "Verdun — 4e Avenue",
+      "notes": "Vine over a backyard trellis/pergola, spilling toward the lane. Green unripe clusters in early Aug — check back Sept–Oct for ripe purple grapes. Leaves + tendrils also usable (dolmades).",
+      "added": "2026-08-06",
+      "plant": null,
+      "lon": -73.57126,
+      "lat": 45.45658,
+      "photos": [
+        "grape-verdun-4e-ave-1.jpeg",
+        "grape-verdun-4e-ave-2.jpeg"
+      ],
+      "updated": "2026-08-06"
+    },
+    {
+      "id": 19,
+      "name": "Black chokeberry (aronia) — Desmarchais",
+      "category": "fruit",
+      "species": "black chokeberry (Aronia melanocarpa)",
+      "season": "ripe Aug–Sept",
+      "location": "Verdun — Avenue Desmarchais",
+      "notes": "Third aronia find, ~90 m NE of the east bush. Loaded with ripe dark-purple berries in early Aug. Very astringent raw — best cooked/juiced. Obovate glossy leaves in corymbs.",
+      "added": "2026-08-06",
+      "plant": "aronia",
+      "lon": -73.568265,
+      "lat": 45.454833,
+      "photos": [
+        "aronia-verdun-desmarchais-1.jpeg",
+        "aronia-verdun-desmarchais-2.jpeg"
+      ],
+      "updated": "2026-08-06"
+    },
+    {
+      "id": 20,
+      "name": "Lamb's quarters (Verdun / 6e Ave)",
+      "category": "greens",
+      "species": "lamb's quarters (Chenopodium album)",
+      "season": "leaves spring–fall",
+      "location": "Verdun — 6e Avenue",
+      "notes": "Roadside weedy strip. Mealy/glaucous goosefoot leaves — cook like spinach. Same patch as the blackberry pin.",
+      "added": "2026-08-06",
+      "plant": "lambs-quarters",
+      "lon": -73.570751,
+      "lat": 45.455113,
+      "photos": [
+        "lambs-quarters-verdun-6e-ave-1.jpeg",
+        "lambs-quarters-verdun-6e-ave-2.jpeg"
+      ],
+      "updated": "2026-08-06"
+    },
+    {
+      "id": 21,
+      "name": "Blackberry brambles (Verdun / 6e Ave)",
+      "category": "fruit",
+      "species": "blackberry (Rubus sp.)",
+      "season": "ripe Aug–Sept",
+      "location": "Verdun — 6e Avenue",
+      "notes": "Thorny brambles in the same roadside patch as the lamb's quarters. Berries still in the red unripe stage in early Aug — they ripen red→black, so come back late Aug for black ones. (ID note: solid berries turning dark = blackberry, not a ripe red raspberry.)",
+      "added": "2026-08-06",
+      "plant": null,
+      "lon": -73.570842,
+      "lat": 45.455124,
+      "photos": [
+        "blackberry-verdun-6e-ave-1.jpeg",
+        "blackberry-verdun-6e-ave-2.jpeg",
+        "blackberry-verdun-6e-ave-3.jpeg"
+      ],
+      "updated": "2026-08-06"
+    },
+    {
+      "id": 1759,
+      "name": "Plum tree",
+      "category": "fruit",
+      "species": "Prunus sp. (plum)",
+      "season": "Aug–Sep",
+      "location": "Street tree",
+      "notes": "Cultivated/wild plum. Purple fruit with waxy bloom ripening early Aug; green immature fruit still on tree. Fruit ~2.5 cm.",
+      "added": "2026-08-06",
+      "plant": null,
+      "lon": -73.576356,
+      "lat": 45.455944,
+      "photos": [],
+      "updated": "2026-08-06"
+    },
+    {
+      "id": 1760,
+      "name": "Crabapple",
+      "category": "fruit",
+      "species": "Malus sp. (crabapple)",
+      "season": "Sep–Oct",
+      "location": "",
+      "notes": "Small deep-red pomes (~1 cm) on long red pedicels, persistent calyx. Not ripe yet in early Aug — firm. Good for jelly once soft.",
+      "added": "2026-08-06",
+      "plant": "crabapple",
+      "lon": -73.571275,
+      "lat": 45.454344,
+      "photos": [],
+      "updated": "2026-08-06"
+    },
+    {
+      "id": 1761,
+      "name": "Raspberry patch",
+      "category": "fruit",
+      "species": "Rubus idaeus (red raspberry)",
+      "season": "Jul–Aug",
+      "location": "Along fence/edge",
+      "notes": "Wild red raspberry. A few ripe red berries, many still green/unripe. Thorny canes, white-backed compound leaves.",
+      "added": "2026-08-06",
+      "plant": "raspberry",
+      "lon": -73.571206,
+      "lat": 45.454342,
+      "photos": [],
+      "updated": "2026-08-06"
+    },
+    {
+      "id": 1762,
+      "name": "Elderberry",
+      "category": "fruit",
+      "species": "Sambucus canadensis (American elder)",
+      "season": "Aug–Sep",
+      "location": "By brick wall / lattice",
+      "notes": "Large shrub, flat-topped cymes of green berries on red-purple stems in early Aug — not ripe. Only eat fully-ripe dark berries, cooked; raw/unripe berries + stems are toxic.",
+      "added": "2026-08-06",
+      "plant": "elderberry",
+      "lon": -73.568353,
+      "lat": 45.454311,
+      "photos": [],
+      "updated": "2026-08-06"
+    },
+    {
+      "id": 1833,
+      "name": "Apple / crabapple",
+      "category": "fruit",
+      "species": "Malus",
+      "season": null,
+      "location": null,
+      "notes": "Wild & feral apples/crabapples — taste one; cook the sour crabapples into jelly.",
+      "added": "2026-08-06",
+      "plant": "apple",
+      "lon": -73.572631,
+      "lat": 45.451355,
+      "photos": [],
+      "updated": "2026-08-06"
+    },
+    {
+      "id": 2638,
+      "name": "Mulberry",
+      "category": "fruit",
+      "species": "Morus alba",
+      "season": null,
+      "location": null,
+      "notes": "Ripe near-black berries eat raw; unripe/white ones can upset the stomach.",
+      "added": "2026-08-06",
+      "plant": "mulberry",
+      "lon": -73.578075,
+      "lat": 45.454665,
+      "photos": [],
+      "updated": "2026-08-06"
     }
   ]
 }
