@@ -35,20 +35,5 @@ const { title, description = 'A personal foraging map and plant field guide for 
       </div>
     </footer>
     )}
-    {fullBleed && (
-      <script is:inline>
-        // Pin the full-bleed app height to the real visible viewport. iOS Safari
-        // can resolve 100dvh a touch short, leaving a gap below the map.
-        (function () {
-          var set = function () {
-            document.documentElement.style.setProperty('--app-h', window.innerHeight + 'px');
-          };
-          set();
-          window.addEventListener('resize', set);
-          window.addEventListener('orientationchange', set);
-          if (window.visualViewport) window.visualViewport.addEventListener('resize', set);
-        })();
-      </script>
-    )}
   </body>
 </html>

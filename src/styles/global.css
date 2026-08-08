@@ -45,9 +45,7 @@ img { max-width: 100%; height: auto; display: block; }
 }
 
 /* full-bleed pages (the map): header fixed, main fills the rest, no footer */
-/* height falls back to 100dvh, but JS pins it to window.innerHeight (--app-h)
-   because iOS Safari can compute dvh a hair short and leave a gap at the bottom */
-body.fullbleed { height: 100dvh; height: var(--app-h, 100dvh); display: flex; flex-direction: column; overflow: hidden; }
+body.fullbleed { height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
 body.fullbleed .site-header { position: static; flex: 0 0 auto; }
 body.fullbleed main { flex: 1 1 auto; min-height: 0; display: flex; }
 .map-page { flex: 1 1 auto; min-height: 0; display: flex; }
@@ -156,6 +154,9 @@ body.fullbleed main { flex: 1 1 auto; min-height: 0; display: flex; }
 
 /* filter banner shown when the map is deep-linked to a single plant (?plant=) */
 .map-filter { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; margin: 14px 0 0; font-size: .9rem; color: var(--ink-soft); }
+/* [hidden] alone loses to the display:flex above, leaving the 14px top margin
+   as a flex item and a gap under the fullscreen map — honour hidden explicitly */
+.map-filter[hidden] { display: none; }
 .map-filter a { color: var(--accent, #2f7d4f); }
 
 .legend { display: flex; flex-wrap: wrap; gap: 14px; margin: 14px 0 0; font-size: .85rem; color: var(--ink-soft); }
