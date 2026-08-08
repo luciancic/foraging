@@ -17,7 +17,7 @@
 //                             Storj S3 creds for serving photos (media/*). If unset,
 //                             image routes return 503 (pins still work).
 import { createServer } from 'node:http';
-import { timingSafeEqual } from 'node:crypto';
+import { timingSafeEqual, randomUUID } from 'node:crypto';
 import { createReadStream, existsSync, mkdirSync } from 'node:fs';
 import { writeFile, rename } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
@@ -135,6 +135,23 @@ function readBody(req) {
   });
 }
 
+// Collect a raw request body (image bytes) up to `cap`, rejecting if larger.
+function readRawBody(req, cap) {
+  return new Promise((resolve, reject) => {
+    const chunks = []; let len = 0;
+    req.on('data', (c) => {
+      len += c.length;
+      if (len > cap) { req.destroy(); reject(new Error('body too large')); return; }
+      chunks.push(c);
+    });
+    req.on('end', () => resolve(Buffer.concat(chunks)));
+    req.on('error', reject);
+  });
+}
+// Accepted upload types → stored extension (must yield a SAFE_FILE basename).
+const UPLOAD_EXT = { 'image/jpeg': 'jpg', 'image/jpg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
+const MAX_UPLOAD = 12 * 1024 * 1024;   // 12 MB — a full-res phone photo
+
 const isFiniteNum = (v) => typeof v === 'number' && Number.isFinite(v);
 const inLat = (v) => isFiniteNum(v) && v >= -90 && v <= 90;
 const inLon = (v) => isFiniteNum(v) && v >= -180 && v <= 180;
@@ -159,6 +176,40 @@ const server = createServer(async (req, res) => {
     }
     if (req.method === 'GET' && path === '/api/health') {
       return send(res, 200, { ok: true, spots: allPins({ verified: true }).length, writable: !!TOKEN });
+    }
+
+    // ── Photo upload (name-gated) ─────────────────────────────────────────────
+    // Store one image in Storj under media/photos/spots/ and return its generated
+    // filename to reference in a pin's photos[]. Raw image bytes as the body (no
+    // multipart); actor name via ?name= (or the admin token). Warms the local cache
+    // so the new photo displays immediately. EXIF/geolocation is read client-side.
+    if (req.method === 'POST' && path === '/api/photos') {
+      const admin = isAdmin(req);
+      const name = (url.searchParams.get('name') || '').trim();
+      if (!admin && !name) return send(res, 401, { error: 'name required' });
+      if (!storj) return send(res, 503, { error: 'media not configured' });
+      const ct = (req.headers['content-type'] || '').split(';')[0].trim().toLowerCase();
+      const ext = UPLOAD_EXT[ct];
+      if (!ext) return send(res, 415, { error: 'image must be jpeg, png, or webp' });
+      let buf;
+      try { buf = await readRawBody(req, MAX_UPLOAD); }
+      catch { return send(res, 413, { error: 'image too large (max 12MB)' }); }
+      if (!buf.length) return send(res, 400, { error: 'empty body' });
+      const file = `spot-${randomUUID()}.${ext}`;
+      const rel = `photos/spots/${file}`;
+      let r;
+      try {
+        r = await storj.fetch(`${STORJ_ENDPOINT}/${STORJ_BUCKET}/media/${rel}`, {
+          method: 'PUT', body: buf, headers: { 'Content-Type': ct },
+        });
+      } catch (e) { console.error('photo upload error:', e); return send(res, 502, { error: 'upstream error' }); }
+      if (!r.ok) { console.error('photo upload failed:', r.status); return send(res, 502, { error: 'upstream error' }); }
+      try {                                          // warm the read-through cache
+        const cacheFile = join(MEDIA_CACHE, rel);
+        mkdirSync(dirname(cacheFile), { recursive: true });
+        await writeFile(cacheFile, buf);
+      } catch (e) { console.error('photo cache warm failed:', e); }
+      return send(res, 201, { ok: true, file });
     }
 
     // ── Audit reads (admin-only) ──────────────────────────────────────────────
