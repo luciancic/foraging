@@ -392,6 +392,10 @@ const { fullscreen = false } = Astro.props;
   // a pan and never grabs the pin — which was the old draggable-marker footgun.
   function enableLongPressMove(marker: any, id: number) {
     const ARM_MS = 450, SLOP = 10;
+    // On touch the finger covers the pin, so while dragging we float the pin this
+    // many px ABOVE the touch point — it stays visible and drops where it's shown.
+    // Mouse has nothing obscuring the cursor, so no offset there.
+    const TOUCH_LIFT_PX = 56;
     let timer: any = null, armed = false, start: any = null, originLL: any = null;
 
     const arm = () => {
@@ -413,7 +417,9 @@ const { fullscreen = false } = Astro.props;
         return;
       }
       e.preventDefault();
-      marker.setLatLng(map.mouseEventToLatLng(e));
+      const pt = map.mouseEventToContainerPoint(e);
+      if (e.pointerType === 'touch') pt.y -= TOUCH_LIFT_PX; // lift the pin above the thumb
+      marker.setLatLng(map.containerPointToLatLng(pt));
     };
     const onUp = (e: any) => {
       clearTimeout(timer);
