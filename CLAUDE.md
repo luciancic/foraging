@@ -13,18 +13,30 @@ urban-edible plant field guide for Montréal. Live at **https://foraging.condrea
 - **One `pins` table holds every map pin** — confirmed spots AND unverified scouting
   leads — split by `verified` (1 = confirmed, 0 = lead) + `source`. `verified=1` pins
   are the precious hand-curated data (dumped to seed.json, live-edited); `verified=0`
-  leads are machine-generated and **wholesale-replaced from the geojson every deploy**
-  (`importLeads`), which never touches a confirmed row and dedups already-promoted
-  leads (by `source`+`ext_id`). One colour axis: `category` (fruit/nuts/greens/herbs/
-  mushrooms/other) + a `caution` boolean (dangerous lookalike). `plant` is a validated
-  soft link (checked in app code, not a hard FK — a live FK would deadlock the plant
-  re-sync). Promote a lead = flip `verified` in place (keeps provenance).
+  leads are a **one-time populated dataset** (iNat / Falling Fruit / Ville de Montréal)
+  that just lives in the DB — there is **no deploy-time re-import**; recover them after
+  a wipe by restoring the DB backup. One colour axis: `category` (fruit/nuts/greens/
+  herbs/mushrooms/other) + a `caution` boolean (dangerous lookalike). `plant` is a
+  validated soft link (checked in app code, not a hard FK — a live FK would deadlock
+  the plant re-sync). Promote a lead = flip `verified` in place (keeps provenance).
+  `pins.id` is `AUTOINCREMENT` so a deleted id is never reused (keeps the audit log clean).
+- **Every human pin change is logged** in an append-only `pin_events` table (`create`/
+  `edit`/`move`/`delete`/`promote`, plus a `genesis` baseline per existing pin) with
+  the actor, timestamp, and full before/after snapshots — so changes are attributable
+  and reversible. Contributors are lightweight rows in `users` (a self-asserted name +
+  a client-generated id from localStorage). Attribution is **not authenticated**: the
+  name is claimed, the edit token is the only server-verified secret (marks an admin).
+  History lives in the DB (backed up to Storj), never in `seed.json`. See the
+  **Contributors & audit log** section below.
 - **Plants** render at **build time** from the DB (`src/lib/content.mjs` — body
   Markdown → HTML via markdown-it). Content follows git: every deploy re-syncs the
   `plants` table from `db/seed.json`.
 - **Confirmed pins** are served **live** by `server/api.mjs` (`GET /api/pins` = the
-  verified pins, token-gated `POST`/`PATCH`/`POST …/:id/promote` to add/move/promote)
-  so field edits show without a rebuild. `ForagingMap.astro` fetches `/api/pins`
+  verified pins; `POST`/`PATCH`/`DELETE`/`POST …/:id/promote` to add/edit/move/delete/
+  promote). Writes are **name-gated, not all token-gated**: a named contributor can add
+  a spot or edit a pin's text with just a name in the body; the edit token additionally
+  unlocks the **admin-only** actions (move, delete, promote, `GET …/history`, `GET
+  /api/activity`). Field edits show without a rebuild. `ForagingMap.astro` fetches `/api/pins`
   (fallback `dist/data/foraging-spots.geojson`) for confirmed + the static
   `dist/data/pins-leads.geojson` (verified=0 export) for leads; both share one feature
   shape and one clustered layer. In prod Caddy reverse-proxies `/api/*` → `localhost:8787`.
@@ -45,16 +57,21 @@ urban-edible plant field guide for Montréal. Live at **https://foraging.condrea
   frontmatter (`title, scientificName, commonNames, category, season, status,
   ripeStart, ripeEnd, heroImage, gallery, idCues, safety, guides, order, updated`)
   plus a free-form Markdown `body`.
-- **Add a map spot:** `POST /api/pins` with the edit token (Point via `lon`/`lat` +
-  `name, category, species, season, location, notes, plant, caution, photos[]`;
-  categories: `fruit nuts greens herbs mushrooms other`). This writes a confirmed
-  (`verified=1`) pin to the live DB — confirmed pins are NOT re-seeded on deploy, so
-  don't hand-edit them in `seed.json` and expect
-  propagation. `plant` = a plant slug interlinks the pin with its guide both ways;
-  "on map" on a plant page is derived from these links at build time (`src/lib/spots.ts`).
+- **Add a map spot:** `POST /api/pins` with an actor (`{actor:{id,name}}`, or the edit
+  token to post as admin) and a Point via `lon`/`lat` + `name, category, species,
+  season, location, notes, plant, caution, photos[]`; categories: `fruit nuts greens
+  herbs mushrooms other`. This writes a confirmed (`verified=1`) pin to the live DB
+  immediately and records a `create` event — confirmed pins are NOT re-seeded on
+  deploy, so don't hand-edit them in `seed.json` and expect propagation. `plant` = a
+  plant slug interlinks the pin with its guide both ways; "on map" on a plant page is
+  derived from these links at build time (`src/lib/spots.ts`).
+- **Edit a pin's info:** `PATCH /api/pins/:id` with an actor + any of `name, category,
+  caution, species, season, location, notes, plant, photos` — open to named
+  contributors, records an `edit` event.
 - **Move a pin (fix bad photo-geolocation):** open `/map?edit=1`, drag the pin, drop
-  it — it PATCHes `/api/pins/:id` and persists live. Needs the edit token (stored
-  per-device in `localStorage`; the value is in `~/.config/foraging/foraging.env`).
+  it — it PATCHes `/api/pins/:id` with `lon`/`lat` and persists live (records a `move`
+  event). **Admin-only** (a drag is destructive to curated placement): needs the edit
+  token, stored per-device in `localStorage`; the value is in `~/.config/foraging/foraging.env`.
 - **Snapshot live edits back to git:** `npm run db:export` (DB → `db/seed.json`),
   then commit. This is a deliberate step — the nightly Storj backup captures the
   live `data/foraging.db` directly (so field edits are safe) but does NOT touch the
@@ -67,75 +84,69 @@ urban-edible plant field guide for Montréal. Live at **https://foraging.condrea
   diamond, city = triangle); an amber ring flags `caution`. Each source has its own
   panel toggle (leads off by default, fullscreen map only); a shared "Filter by type"
   + a caution toggle apply across everything. **Delete a pin** in edit mode
-  (`/map?edit=1`, open a pin → **🗑 Delete this pin** → `DELETE /api/pins/:id`): a
-  confirmed spot is removed outright; a lead is **tombstoned** (`deleted_leads` table,
-  keyed on `source`+`ext_id`) so `importLeads` won't resurrect it on the next deploy —
-  same mechanism that makes a promotion stick. Confirming a lead in person = **promote
-  it**: `/map?edit=1`, click the lead, one-click **➕ Promote to confirmed spot** →
-  `POST /api/pins/:id/promote` flips `verified=1` in place (keeps `source`/`ext_id`
-  provenance, so a re-scout dedups it). Plant guides count leads too: the "on map" badge shows the total
-  with confirmed in parens (`31 on map (1 confirmed)`) from one `WHERE plant = slug`
-  query over the `pins` table (`src/lib/spots.ts` → `pinCounts`); `/map?plant=<slug>`
+  (`/map?edit=1`, open a pin → **🗑 Delete this pin** → `DELETE /api/pins/:id`) —
+  **admin-only**; the pin is removed outright (confirmed or lead) and a `delete` event
+  keeps its final snapshot. With deploy-time lead re-import gone there's nothing to
+  resurrect a deleted lead, so there are no tombstones. Confirming a lead in person =
+  **promote it** (admin-only): `/map?edit=1`, click the lead, one-click **➕ Promote to
+  confirmed spot** → `POST /api/pins/:id/promote` flips `verified=1` in place (keeps
+  `source`/`ext_id` provenance). Plant guides count leads too: the "on map" badge shows
+  the total with confirmed in parens (`31 on map (1 confirmed)`) from one `WHERE plant =
+  slug` query over the `pins` table (`src/lib/spots.ts` → `pinCounts`); `/map?plant=<slug>`
   deep-links that plant's leads + confirmed pins.
-- **Scout a mission area (iNaturalist leads):** regenerate `public/data/scouting-spots.geojson`
-  with `scripts/inat-scout.py --bbox SWLAT SWLNG NELAT NELNG --name "..." --out
-  public/data/scouting-spots.geojson`. It pulls iNat research-grade observations in the
-  box and keeps only taxa in the script's curated `FORAGE` table, emitting a `category`
-  + `caution` (dangerous-lookalike) + a how-to note + optional guide slug; toxic taxa
-  are dropped entirely. Extend `FORAGE`/`CATEGORY` when ranging into new species; iNat
-  gives *where*, the table gives *edible/how*. `db-init` imports the geojson into the
-  `pins` table each deploy (the map reads the unified `pins-leads.geojson` export, not
-  the raw per-source files).
-- **Second scouting source — Falling Fruit:** `public/data/falling-fruit.geojson`
-  is a parallel scouting class from the community edible-plant map
-  [fallingfruit.org] — regenerate with `scripts/fallingfruit-scout.py --bbox
-  SWLAT SWLNG NELAT NELNG --name "..." --out public/data/falling-fruit.geojson`.
-  Same curated `FORAGE`/`CATEGORY` tables (keyed by scientific name/genus;
-  uncurated/non-plant types like "Dumpster" are skipped) emitting `category` +
-  `caution`. On the map, **shape encodes provenance** (confirmed teardrop / iNat
-  circle / FF diamond / city triangle) and **colour is the category**; per-source
-  toggles + a shared type filter apply across all layers. Data is **CC BY-NC-SA** — the
-  panel carries a required Falling Fruit attribution and each pin links to its
-  source page; keep both if you touch this. Uses Falling Fruit's public read API
-  key (`AKDJGHSD`, from their own web-app setup docs). Non-commercial use only.
-- **Third scouting source — Ville de Montréal public trees:**
-  `public/data/montreal-trees.geojson` is the city's public street/park tree
-  inventory ("Arbres publics", donnees.montreal.ca) filtered to forageable species —
-  regenerate with `scripts/montreal-trees-scout.py --bbox SWLAT SWLNG NELAT NELNG
-  --name "..." --out public/data/montreal-trees.geojson`. Pulled live from the CKAN
-  datastore SQL API (resource `64e28fe6-…`, ~335k trees citywide; no bulk download).
-  Unlike iNat/FF this is an **authoritative** inventory — `Essence_latin` IS the
-  arborist's species label — but the city plants edibles by the thousand. The map
-  **clusters** scouting markers (Leaflet.markercluster — nearby pins collapse into a
-  counted bubble that splits as you zoom), so rendering thousands is fine; the real
-  limit is the geojson payload over mobile data. So the generator **curates** via a
-  genus/species `FORAGE`/`CATEGORY` tables (ornamental maples/ash/elm dropped; toxic
-  Kentucky coffeetree + horse-chestnut dropped too) **and spatially thins**
-  the survivors to keep the download light (≤1 tree per ~`--cell-m` grid cell per
-  species, then a `--max-per-species` cap, defaults 60 m / 120 — every dropped count
-  is logged, nothing silently truncated; raise the cap / shrink the cell for a denser
-  pull of a smaller area). Verdun ≈ 1,880 pins / 1.2 MB from ~12k forageable. Shape =
-  **triangle ▲**. Licence **CC BY 4.0** (attribution
-  required — panel credits "Ville de Montréal"; commercial use OK, unlike FF). Each
-  pin links to the dataset and carries the city's own caveat that locations "may be
-  imprecise/outdated" — confirm in person before promoting to a real pin.
+- **Scouting leads are a fixed, already-populated dataset.** The original per-source
+  scout scripts (iNat / Falling Fruit / Ville de Montréal) and their raw geojson have
+  been removed — leads now just live in the DB as `verified=0` rows and are re-exported
+  to `dist/data/pins-leads.geojson` on each build. On the map, **shape encodes
+  provenance** (confirmed teardrop / iNat circle / FF diamond / city triangle) and
+  **colour is the category**; per-source toggles + a shared type filter apply across
+  all layers. Attribution obligations still stand for the data already in the DB:
+  **Falling Fruit** is CC BY-NC-SA (panel attribution + per-pin source link, non-commercial)
+  and **Ville de Montréal** is CC BY 4.0 (panel credits "Ville de Montréal"); the city's
+  caveat that locations "may be imprecise/outdated" is why leads must be confirmed in
+  person before promoting. To re-populate leads (rare), restore from the DB backup or
+  recover a scout script from git history.
+
+## Contributors & audit log
+- **Who can do what.** Anyone reading is anonymous. A **named contributor** (just a
+  name, no secret) can add a spot (lands confirmed immediately) and edit a pin's text.
+  The **admin** (holds `FORAGING_EDIT_TOKEN`) can additionally move, delete, promote,
+  and read history. This is a deliberate, scoped loosening: the site is public, so
+  name-only writes mean anyone who finds `/map?edit=1` can add/edit — acceptable for
+  the current small trusted group, moderated reactively via the log.
+- **Attribution is self-asserted.** A contributor's name + a client-generated `id` (kept
+  in `localStorage`, upserted into `users`) ride along on every write as `{actor:{id,name}}`.
+  Only the token is verified server-side; the name is claimed, not authenticated. Upgrade
+  path if you ever need provable identity: per-person tokens mapped to a user server-side
+  (the event schema doesn't change).
+- **The log.** `pin_events` records `create/edit/move/delete/promote` (+ a `genesis`
+  baseline per pre-existing confirmed pin) with actor, timestamp, and full before/after
+  pin snapshots. Reversible by re-applying an old snapshot. Reads are admin-only:
+  `GET /api/pins/:id/history` (one pin, oldest→newest) and `GET /api/activity?limit=N`
+  (recent across all pins). `db:init` runs `backfillGenesis()` every deploy — idempotent,
+  only touches pins with zero events, so a git-only reseed self-heals and a backup
+  restore is left untouched. In `src/lib/db.mjs`: `pinHistory`, `recentEvents`,
+  `backfillGenesis`, and the `actor`-aware mutators (`addPin`/`updatePin`/`promotePin`/
+  `deletePin`).
 
 ## Deploy & backup (this VPS)
 - Served by Caddy from `/srv/foraging` (static) + a reverse-proxy for `/api/*`,
   `/photos/*`, `/images/*` → `localhost:8787` (the `foraging-api` systemd user service
   running `server/api.mjs`, which needs the Storj creds from `~/myclaw/.env` to serve
   photos).
-- `scripts/deploy.sh` = `db:init` (sync plants; keep live spots) + build + publish +
-  restart the API. `scripts/install.sh` = first-time / post-wipe: Caddy block, edit
+- `scripts/deploy.sh` = `db:init` (sync plants; keep live spots + leads; backfill any
+  missing `genesis` events) + build + publish + restart the API. `scripts/install.sh`
+  = first-time / post-wipe: Caddy block, edit
   token (`~/.config/foraging/foraging.env`, generated + printed once), nightly rebuild
   timer, the API service, DB seed, then deploy.
 - `scripts/backup-storj.sh` → personal Storj `foraging` bucket (reuses the Storj creds
   in `~/myclaw/.env`); backs up `data/foraging.db` + `db/seed.json` (NOT photos — those
   already live in the bucket under `media/`). Git holds the code + `db/seed.json`
   snapshot; the **live DB is only in the backup**, not git.
-- VPS is wipeable: `install.sh` rebuilds the DB from the committed `db/seed.json` (or
-  restore `data/foraging.db` from the Storj backup to recover field edits since the
-  last `db:export`).
+- VPS is wipeable: `install.sh` rebuilds plants + confirmed spots from the committed
+  `db/seed.json`. Restore `data/foraging.db` from the Storj backup to recover anything
+  only in the live DB — field edits since the last `db:export`, the scouting **leads**,
+  and the `pin_events`/`users` audit history (none of which are in git).
 
 ## Conventions
 - Verify UI changes in a real browser before claiming they work (Playwright lives in

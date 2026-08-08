@@ -9,16 +9,24 @@
 // Two lifecycles share the table, kept apart by `verified`:
 //   • verified=1 — confirmed spots. Hand-curated, live-edited, the precious data.
 //     These (and only these) are dumped to seed.json and restored on a fresh build.
-//   • verified=0 — scouting leads (iNaturalist / Falling Fruit / Ville de Montréal).
-//     Machine-generated, wholesale-replaced from the geojson on every deploy
-//     (`importLeads`). A re-scout NEVER touches verified rows, and a promoted lead
-//     (flipped to verified=1) survives the next regen.
+//   • verified=0 — scouting leads (iNaturalist / Falling Fruit / Ville de Montréal),
+//     a ONE-TIME populated dataset. They live in the DB (captured by the Storj DB
+//     backup) and are re-exported to pins-leads.geojson on each build; there is NO
+//     deploy-time re-import. Promoting a lead just flips it to verified=1 in place.
+//     Recover leads after a wipe by restoring data/foraging.db from the backup.
+//
+// Every human curation act on a pin (create / edit / move / delete / promote) is
+// recorded in the append-only `pin_events` log with its actor, so who-changed-what
+// is attributable and the state is reconstructable / reversible. Attribution is
+// SELF-ASSERTED: a contributor's name rides along on each write; the edit token
+// marks an ADMIN actor server-side but is not required to add or edit.
 //
 // Written as .mjs so both the Astro build (plant pages, counts) and the plain-Node
 // scripts/API import the exact same accessors.
 import Database from 'better-sqlite3';
 import { dirname, join } from 'node:path';
 import { mkdirSync } from 'node:fs';
+import { randomUUID } from 'node:crypto';
 
 // Anchor on the working directory, NOT import.meta.url — Astro's bundler relocates
 // this module into dist/ at build time, so a URL-relative path would resolve wrong
@@ -78,7 +86,9 @@ CREATE TABLE IF NOT EXISTS plants (
 );
 
 CREATE TABLE IF NOT EXISTS pins (
-  id       INTEGER PRIMARY KEY,
+  id       INTEGER PRIMARY KEY AUTOINCREMENT,   -- AUTOINCREMENT: never reuse a deleted
+                                                --   id, so pin_events history can't bleed
+                                                --   from a removed pin into a new one.
   source   TEXT NOT NULL DEFAULT 'confirmed',   -- confirmed | inat | fallingfruit | montreal
   verified INTEGER NOT NULL DEFAULT 0,          -- 1 = confirmed spot, 0 = scouting lead
   ext_id   TEXT,                                -- external id (leads): dedup + delete tombstone key
@@ -90,7 +100,7 @@ CREATE TABLE IF NOT EXISTS pins (
   location TEXT,
   notes    TEXT,
   plant    TEXT,                                -- explicit plant link; validated in app
-                                                --   code (importLeads/promote), not a hard
+                                                --   code (promote/updatePin), not a hard
                                                 --   FK — plants are wholesale re-synced each
                                                 --   deploy, which a live FK would deadlock.
   lon      REAL NOT NULL,
@@ -105,14 +115,33 @@ CREATE INDEX IF NOT EXISTS pins_plant ON pins(plant);
 CREATE INDEX IF NOT EXISTS pins_verified ON pins(verified);
 CREATE INDEX IF NOT EXISTS pins_source_ext ON pins(source, ext_id);
 
--- Tombstones for leads deleted in the field. Leads are wholesale re-imported from
--- the scout geojson every deploy, so a plain DELETE would resurrect them; recording
--- (source, ext_id) here lets importLeads skip them permanently (like a promotion).
-CREATE TABLE IF NOT EXISTS deleted_leads (
-  source TEXT NOT NULL,
-  ext_id TEXT NOT NULL,
-  PRIMARY KEY (source, ext_id)
+-- Contributors. Lightweight identity for a small, trusted group: a name typed on
+-- entering edit mode, plus a client-generated id kept in localStorage so a device's
+-- edits stay linked across renames. NOT authenticated — the name is self-asserted.
+CREATE TABLE IF NOT EXISTS users (
+  id         TEXT PRIMARY KEY,   -- client-generated uuid (from localStorage)
+  name       TEXT NOT NULL,      -- self-asserted display name
+  first_seen TEXT NOT NULL,
+  last_seen  TEXT NOT NULL
 );
+
+-- Append-only audit log: one row per human curation act on a pin. before/after hold
+-- full pin snapshots (JSON) so history renders and reverts without a diff library.
+-- pin_id is deliberately NOT a hard FK — the log outlives the pins it records (a
+-- 'delete' event keeps the removed pin in its "before" snapshot).
+CREATE TABLE IF NOT EXISTS pin_events (
+  id         INTEGER PRIMARY KEY,
+  pin_id     INTEGER NOT NULL,
+  type       TEXT NOT NULL,             -- genesis | create | edit | move | delete | promote
+  user_id    TEXT,                      -- → users.id (null for admin/system/genesis)
+  actor_name TEXT NOT NULL,             -- name SNAPSHOT at event time (survives renames)
+  at         TEXT NOT NULL,             -- ISO timestamp
+  before     TEXT,                      -- pin JSON before (null for create/genesis)
+  after      TEXT,                      -- pin JSON after  (null for delete)
+  source     TEXT NOT NULL DEFAULT 'field'  -- field | seed
+);
+CREATE INDEX IF NOT EXISTS pin_events_pin ON pin_events(pin_id);
+CREATE INDEX IF NOT EXISTS pin_events_at ON pin_events(id);
 `;
 
 let _db;
@@ -126,6 +155,9 @@ export function getDb() {
   _db.pragma('busy_timeout = 5000');
   _db.exec(SCHEMA);
   migrateSpotsToPins(_db);
+  migratePinsAutoincrement(_db);
+  // Deploy-time lead re-import (and its tombstones) is gone; drop the dead table.
+  _db.exec(`DROP TABLE IF EXISTS deleted_leads;`);
   return _db;
 }
 
@@ -154,6 +186,39 @@ function migrateSpotsToPins(db) {
     db.exec(`DROP TABLE spots;`);
   })();
   console.log(`Migrated ${rows.length} spots → pins (verified confirmed).`);
+}
+
+// Rebuild an existing pins table (created before AUTOINCREMENT) so deleted ids are
+// never reused — required for a clean per-pin audit trail. No-op on a fresh DB (the
+// SCHEMA already declares AUTOINCREMENT) or once already migrated. Ids are preserved;
+// re-inserting them advances sqlite_sequence so future auto-ids stay above the max.
+function migratePinsAutoincrement(db) {
+  const ddl = db.prepare(`SELECT sql FROM sqlite_master WHERE type='table' AND name='pins'`).get();
+  if (!ddl || /AUTOINCREMENT/i.test(ddl.sql)) return;
+  db.pragma('foreign_keys = OFF');
+  db.transaction(() => {
+    db.exec(`CREATE TABLE pins_new (
+      id       INTEGER PRIMARY KEY AUTOINCREMENT,
+      source   TEXT NOT NULL DEFAULT 'confirmed',
+      verified INTEGER NOT NULL DEFAULT 0,
+      ext_id   TEXT, name TEXT NOT NULL, category TEXT,
+      caution  INTEGER NOT NULL DEFAULT 0, species TEXT, season TEXT,
+      location TEXT, notes TEXT, plant TEXT,
+      lon REAL NOT NULL, lat REAL NOT NULL,
+      photos TEXT NOT NULL DEFAULT '[]', source_url TEXT,
+      meta TEXT NOT NULL DEFAULT '{}', added TEXT, updated TEXT
+    );`);
+    db.exec(`INSERT INTO pins_new
+      (id,source,verified,ext_id,name,category,caution,species,season,location,notes,plant,lon,lat,photos,source_url,meta,added,updated)
+      SELECT id,source,verified,ext_id,name,category,caution,species,season,location,notes,plant,lon,lat,photos,source_url,meta,added,updated FROM pins;`);
+    db.exec(`DROP TABLE pins;`);
+    db.exec(`ALTER TABLE pins_new RENAME TO pins;`);
+    db.exec(`CREATE INDEX IF NOT EXISTS pins_plant ON pins(plant);`);
+    db.exec(`CREATE INDEX IF NOT EXISTS pins_verified ON pins(verified);`);
+    db.exec(`CREATE INDEX IF NOT EXISTS pins_source_ext ON pins(source, ext_id);`);
+  })();
+  db.pragma('foreign_keys = ON');
+  console.log('Migrated pins → AUTOINCREMENT ids (no reuse).');
 }
 
 function decode(row, jsonCols) {
@@ -208,101 +273,154 @@ export function pinsGeoJSON(opts = {}) {
   return { type: 'FeatureCollection', name: 'foraging-pins', features: allPins(opts).map(toFeature) };
 }
 
-/** Move a pin. Returns the updated pin, or null if the id doesn't exist. */
-export function movePin(id, lon, lat, when) {
-  const info = getDb().prepare(`UPDATE pins SET lon = ?, lat = ?, updated = ? WHERE id = ?`)
-    .run(lon, lat, when ?? null, id);
-  if (info.changes === 0) return null;
-  return decode(getDb().prepare(`SELECT * FROM pins WHERE id = ?`).get(id), PIN_JSON);
+// ── Events & users (append-only audit) ──────────────────────────────────────
+// recordEvent runs INSIDE each mutator's transaction, so a pin change and its log
+// entry commit atomically. `actor` is { id?, name } — id present ⇒ a named
+// contributor (upserted into `users`); id absent ⇒ admin/system (name only).
+const nowISO = () => new Date().toISOString();
+const today = () => nowISO().slice(0, 10);
+
+function upsertUserTx(db, actor) {
+  if (!actor?.id || !actor?.name) return;
+  db.prepare(
+    `INSERT INTO users (id, name, first_seen, last_seen) VALUES (?, ?, ?, ?)
+     ON CONFLICT(id) DO UPDATE SET name = excluded.name, last_seen = excluded.last_seen`,
+  ).run(actor.id, actor.name, nowISO(), nowISO());
+}
+
+function recordEvent(db, { pin_id, type, actor, before, after, source = 'field', at }) {
+  db.prepare(
+    `INSERT INTO pin_events (pin_id, type, user_id, actor_name, at, before, after, source)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+  ).run(
+    pin_id, type, actor?.id ?? null, actor?.name ?? 'system', at ?? nowISO(),
+    before ? JSON.stringify(before) : null,
+    after ? JSON.stringify(after) : null,
+    source,
+  );
+}
+
+const getPin = (db, id) => decode(db.prepare(`SELECT * FROM pins WHERE id = ?`).get(id), PIN_JSON);
+
+// Fields a pin edit may touch (coordinates handled separately as a 'move').
+const EDITABLE = ['name', 'category', 'caution', 'species', 'season', 'location', 'notes', 'plant'];
+
+/** Edit and/or move a pin. `patch` carries any subset of EDITABLE, `photos`, and/or
+ *  `lon`+`lat`. Records a 'move' event when coordinates change, else 'edit'. Returns
+ *  the updated pin, or null if the id doesn't exist. */
+export function updatePin(id, patch = {}, actor) {
+  const db = getDb();
+  return db.transaction(() => {
+    const before = getPin(db, id);
+    if (!before) return null;
+    const cols = [], vals = [];
+    for (const k of EDITABLE) {
+      if (patch[k] === undefined) continue;
+      cols.push(`${k} = ?`);
+      vals.push(k === 'caution' ? (patch[k] ? 1 : 0) : patch[k]);
+    }
+    if ('photos' in patch) { cols.push(`photos = ?`); vals.push(JSON.stringify(patch.photos ?? [])); }
+    const moving = patch.lon !== undefined && patch.lat !== undefined;
+    if (moving) { cols.push(`lon = ?`, `lat = ?`); vals.push(patch.lon, patch.lat); }
+    if (!cols.length) return before;                       // nothing to change
+    cols.push(`updated = ?`); vals.push(today());
+    db.prepare(`UPDATE pins SET ${cols.join(', ')} WHERE id = ?`).run(...vals, id);
+    const after = getPin(db, id);
+    upsertUserTx(db, actor);
+    recordEvent(db, { pin_id: id, type: moving ? 'move' : 'edit', actor, before, after });
+    return after;
+  })();
 }
 
 /** Insert a confirmed spot; returns it with its assigned id. */
-export function addPin(s) {
-  const info = getDb().prepare(
-    `INSERT INTO pins (source, verified, name, category, caution, species, season, location, notes, plant, lon, lat, photos, added, updated)
-     VALUES ('confirmed', 1, @name, @category, @caution, @species, @season, @location, @notes, @plant, @lon, @lat, @photos, @added, @updated)`,
-  ).run({
-    name: s.name, category: s.category, caution: s.caution ? 1 : 0,
-    species: s.species ?? null, season: s.season ?? null, location: s.location ?? null,
-    notes: s.notes ?? null, plant: s.plant ?? null, lon: s.lon, lat: s.lat,
-    photos: JSON.stringify(s.photos ?? []), added: s.added ?? null, updated: s.updated ?? null,
-  });
-  return decode(getDb().prepare(`SELECT * FROM pins WHERE id = ?`).get(info.lastInsertRowid), PIN_JSON);
+export function addPin(s, actor) {
+  const db = getDb();
+  return db.transaction(() => {
+    const info = db.prepare(
+      `INSERT INTO pins (source, verified, name, category, caution, species, season, location, notes, plant, lon, lat, photos, added, updated)
+       VALUES ('confirmed', 1, @name, @category, @caution, @species, @season, @location, @notes, @plant, @lon, @lat, @photos, @added, @updated)`,
+    ).run({
+      name: s.name, category: s.category, caution: s.caution ? 1 : 0,
+      species: s.species ?? null, season: s.season ?? null, location: s.location ?? null,
+      notes: s.notes ?? null, plant: s.plant ?? null, lon: s.lon, lat: s.lat,
+      photos: JSON.stringify(s.photos ?? []), added: s.added ?? null, updated: s.updated ?? null,
+    });
+    const pin = getPin(db, info.lastInsertRowid);
+    upsertUserTx(db, actor);
+    recordEvent(db, { pin_id: pin.id, type: 'create', actor, before: null, after: pin });
+    return pin;
+  })();
 }
 
 /** Promote a lead to a confirmed spot in place (verified=1). Keeps the origin
- *  `source` + `ext_id` as provenance — `verified` is what marks it confirmed — so
- *  a later re-scout dedups against it and won't resurrect a duplicate lead.
+ *  `source` + `ext_id` as provenance — `verified` is what marks it confirmed.
  *  Optionally override category/plant. Returns the pin, or null if it isn't a lead. */
-export function promotePin(id, patch = {}) {
-  const p = getDb().prepare(`SELECT * FROM pins WHERE id = ? AND verified = 0`).get(id);
-  if (!p) return null;
-  const when = new Date().toISOString().slice(0, 10);
-  getDb().prepare(
-    `UPDATE pins SET verified = 1, category = ?, plant = ?, updated = ?, added = COALESCE(added, ?) WHERE id = ?`,
-  ).run(patch.category ?? p.category, patch.plant ?? p.plant, when, when, id);
-  return decode(getDb().prepare(`SELECT * FROM pins WHERE id = ?`).get(id), PIN_JSON);
+export function promotePin(id, patch = {}, actor) {
+  const db = getDb();
+  return db.transaction(() => {
+    const before = decode(db.prepare(`SELECT * FROM pins WHERE id = ? AND verified = 0`).get(id), PIN_JSON);
+    if (!before) return null;
+    const when = today();
+    db.prepare(
+      `UPDATE pins SET verified = 1, category = ?, plant = ?, updated = ?, added = COALESCE(added, ?) WHERE id = ?`,
+    ).run(patch.category ?? before.category, patch.plant ?? before.plant, when, when, id);
+    const after = getPin(db, id);
+    upsertUserTx(db, actor);
+    recordEvent(db, { pin_id: id, type: 'promote', actor, before, after });
+    return after;
+  })();
 }
 
-/** Delete a pin. Confirmed spots are removed outright. A lead is also tombstoned
- *  (source, ext_id) so the next deploy's re-import won't resurrect it — mirroring
- *  how a promotion sticks. Returns true if a row was removed. */
-export function deletePin(id) {
+/** Delete a pin (confirmed or lead), removed outright. With the deploy-time lead
+ *  re-import gone there is nothing to resurrect a deleted lead, so no tombstone is
+ *  needed. Records a 'delete' event (the removed pin lives on in `before`). Returns
+ *  true if a row was removed. */
+export function deletePin(id, actor) {
   const db = getDb();
-  const p = db.prepare(`SELECT * FROM pins WHERE id = ?`).get(id);
-  if (!p) return false;
-  db.transaction(() => {
-    if (p.verified === 0 && p.ext_id != null) {
-      db.prepare(`INSERT OR IGNORE INTO deleted_leads (source, ext_id) VALUES (?, ?)`)
-        .run(p.source, String(p.ext_id));
-    }
+  return db.transaction(() => {
+    const before = getPin(db, id);
+    if (!before) return false;
     db.prepare(`DELETE FROM pins WHERE id = ?`).run(id);
+    upsertUserTx(db, actor);
+    recordEvent(db, { pin_id: id, type: 'delete', actor, before, after: null });
+    return true;
   })();
-  return true;
 }
 
-// ── Lead import (deploy-time regen) ─────────────────────────────────────────
-// Replace ALL unverified leads with a fresh batch parsed from the scout geojson.
-// Scoped to verified=0 so confirmed spots are never touched; skips any lead whose
-// (source, ext_id) was already promoted to a confirmed pin, so a promotion sticks.
-export function importLeads(features) {
+// ── History (audit read) ────────────────────────────────────────────────────
+function decodeEvent(e) {
+  if (!e) return e;
+  return { ...e, before: e.before ? JSON.parse(e.before) : null, after: e.after ? JSON.parse(e.after) : null };
+}
+/** Full event history for one pin, oldest → newest. */
+export function pinHistory(id) {
+  return getDb().prepare(`SELECT * FROM pin_events WHERE pin_id = ? ORDER BY id ASC`).all(id).map(decodeEvent);
+}
+/** Recent events across all pins, newest → oldest (activity feed). */
+export function recentEvents(limit = 100) {
+  return getDb().prepare(`SELECT * FROM pin_events ORDER BY id DESC LIMIT ?`).all(limit).map(decodeEvent);
+}
+/** Idempotent: give every confirmed pin with no events a synthetic 'genesis' event
+ *  capturing its current state — the baseline the log grows from, timestamped at the
+ *  pin's own `added` date. Safe to run every deploy; only touches pins with zero
+ *  events, so a git-only reseed self-heals and a backup restore (real history intact)
+ *  is left alone. Returns the count added. */
+export function backfillGenesis() {
   const db = getDb();
-  const promoted = new Set(
-    db.prepare(`SELECT source || char(0) || ext_id k FROM pins WHERE verified = 1 AND ext_id IS NOT NULL`)
-      .all().map((r) => r.k),
-  );
-  // Leads deleted in the field stay dead across re-imports (tombstoned, like promotions).
-  const deleted = new Set(
-    db.prepare(`SELECT source || char(0) || ext_id k FROM deleted_leads`).all().map((r) => r.k),
-  );
-  const validPlant = new Set(db.prepare(`SELECT slug FROM plants`).all().map((r) => r.slug));
-  const ins = db.prepare(
-    `INSERT INTO pins (source, verified, ext_id, name, category, caution, species, season, location, notes, plant, lon, lat, source_url, meta, added)
-     VALUES (@source, 0, @ext_id, @name, @category, @caution, @species, @season, @location, @notes, @plant, @lon, @lat, @source_url, @meta, @added)`,
-  );
-  let inserted = 0, skipped = 0, unlinked = 0;
+  const rows = db.prepare(
+    `SELECT * FROM pins WHERE verified = 1 AND id NOT IN (SELECT DISTINCT pin_id FROM pin_events)`,
+  ).all();
   db.transaction(() => {
-    db.exec(`DELETE FROM pins WHERE verified = 0;`);
-    for (const f of features) {
-      const p = f.properties || {};
-      const source = p.source || 'inat';
-      const ext_id = f.id != null ? String(f.id) : null;
-      if (ext_id && (promoted.has(source + '\0' + ext_id) || deleted.has(source + '\0' + ext_id))) { skipped++; continue; }
-      // A plant link must reference a real guide, else drop it (no dangling FKs).
-      let plant = p.plant || null;
-      if (plant && !validPlant.has(plant)) { plant = null; unlinked++; }
-      const [lon, lat] = f.geometry.coordinates;
-      ins.run({
-        source, ext_id, name: p.name ?? 'Lead', category: p.category ?? 'other',
-        caution: p.caution ? 1 : 0, species: p.species ?? null, season: p.season ?? null,
-        location: p.location ?? null, notes: p.notes ?? null, plant,
-        lon, lat, source_url: p.sourceUrl ?? p.ff ?? p.inat ?? p.mtl ?? null,
-        meta: JSON.stringify(p.meta ?? {}), added: p.added ?? null,
+    for (const r of rows) {
+      const pin = decode(r, PIN_JSON);
+      recordEvent(db, {
+        pin_id: pin.id, type: 'genesis', actor: { name: 'Lucian' },
+        before: null, after: pin, source: 'seed',
+        at: pin.added ? `${pin.added}T00:00:00.000Z` : nowISO(),
       });
-      inserted++;
     }
   })();
-  return { inserted, skipped, unlinked };
+  return rows.length;
 }
 
 // ── Seed (init / export) ────────────────────────────────────────────────────

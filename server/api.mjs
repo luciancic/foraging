@@ -7,7 +7,10 @@
 // service (scripts/systemd/foraging-api.service).
 //
 //   Env:
-//     FORAGING_EDIT_TOKEN     required for writes; if unset, writes are refused (read-only).
+//     FORAGING_EDIT_TOKEN     the ADMIN secret. Named contributors add/edit pins with
+//                             just a name (no token); the token unlocks admin-only
+//                             actions (move, delete, promote, history). If unset,
+//                             admin actions are refused and the token can't be checked.
 //     FORAGING_API_PORT       default 8787
 //     FORAGING_DB             optional DB path override (see src/lib/db.mjs)
 //     STORJ_ACCESS_KEY_ID / STORJ_SECRET_ACCESS_KEY / STORJ_ENDPOINT / STORJ_BACKUP_BUCKET
@@ -19,7 +22,7 @@ import { createReadStream, existsSync, mkdirSync } from 'node:fs';
 import { writeFile, rename } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { AwsClient } from 'aws4fetch';
-import { allPins, pinsGeoJSON, movePin, addPin, promotePin, deletePin } from '../src/lib/db.mjs';
+import { allPins, pinsGeoJSON, updatePin, addPin, promotePin, deletePin, pinHistory, recentEvents } from '../src/lib/db.mjs';
 
 const PORT = Number(process.env.FORAGING_API_PORT || 8787);
 const TOKEN = process.env.FORAGING_EDIT_TOKEN || '';
@@ -92,13 +95,29 @@ function send(res, status, body) {
   res.end(JSON.stringify(body));
 }
 
-function authed(req) {
+// True iff the request carries the valid admin (edit) token.
+function isAdmin(req) {
   if (!TOKEN) return false;
   const m = (req.headers['authorization'] || '').match(/^Bearer\s+(.+)$/i);
   if (!m) return false;
   // Constant-time compare (avoids a token-length/timing side-channel).
   const a = Buffer.from(m[1]), b = Buffer.from(TOKEN);
   return a.length === b.length && timingSafeEqual(a, b);
+}
+
+// Resolve who is acting. A named contributor sends { actor: { id, name } }; an admin
+// (valid token) may omit it and defaults to "Lucian". Returns { admin, actor } where
+// actor is null when neither a name nor a valid token is present (⇒ reject the write).
+// The name/id are self-asserted — the token is the only thing verified server-side.
+function actorFrom(req, body) {
+  const admin = isAdmin(req);
+  const b = body && body.actor;
+  if (b && typeof b.name === 'string' && b.name.trim()) {
+    const id = typeof b.id === 'string' && b.id.trim() ? b.id.trim().slice(0, 64) : undefined;
+    return { admin, actor: { id, name: b.name.trim().slice(0, 80) } };
+  }
+  if (admin) return { admin, actor: { name: 'Lucian' } };
+  return { admin, actor: null };
 }
 
 function readBody(req) {
@@ -142,44 +161,83 @@ const server = createServer(async (req, res) => {
       return send(res, 200, { ok: true, spots: allPins({ verified: true }).length, writable: !!TOKEN });
     }
 
-    // ── Writes (token-gated) ──────────────────────────────────────────────────
-    // Promote a lead → confirmed spot in place (flip verified=1). Must precede the
-    // bare /:id move route so the longer path wins.
+    // ── Audit reads (admin-only) ──────────────────────────────────────────────
+    // Full history of one pin, oldest → newest. Backend / agentic flow for now.
+    const historyMatch = path.match(/^\/api\/pins\/(\d+)\/history$/);
+    if (req.method === 'GET' && historyMatch) {
+      if (!isAdmin(req)) return send(res, 401, { error: 'unauthorized' });
+      return send(res, 200, { history: pinHistory(Number(historyMatch[1])) });
+    }
+    // Recent activity across all pins, newest → oldest.
+    if (req.method === 'GET' && path === '/api/activity') {
+      if (!isAdmin(req)) return send(res, 401, { error: 'unauthorized' });
+      const limit = Math.min(Math.max(Number(url.searchParams.get('limit')) || 100, 1), 500);
+      return send(res, 200, { events: recentEvents(limit) });
+    }
+
+    // ── Writes ────────────────────────────────────────────────────────────────
+    // Named contributors add/edit with just a name; admin-only actions (move, delete,
+    // promote) additionally require the edit token. Every write records an audit event.
+
+    // Promote a lead → confirmed spot in place (flip verified=1). ADMIN-ONLY. Must
+    // precede the bare /:id route so the longer path wins.
     const promoteMatch = path.match(/^\/api\/pins\/(\d+)\/promote$/);
     if (req.method === 'POST' && promoteMatch) {
-      if (!authed(req)) return send(res, 401, { error: 'unauthorized' });
       const body = await readBody(req);
+      const { admin, actor } = actorFrom(req, body);
+      if (!admin) return send(res, 401, { error: 'unauthorized' });
       if (body.category != null && !CATEGORIES.has(body.category)) {
         return send(res, 400, { error: 'category must be one of ' + [...CATEGORIES].join(', ') });
       }
-      const spot = promotePin(Number(promoteMatch[1]), { category: body.category, plant: body.plant });
+      const spot = promotePin(Number(promoteMatch[1]), { category: body.category, plant: body.plant }, actor);
       if (!spot) return send(res, 404, { error: 'no such lead' });
       return send(res, 200, { ok: true, spot });
     }
 
     const idMatch = path.match(/^\/api\/pins\/(\d+)$/);
+    // Edit a pin's fields and/or move it. Editing text is open to named contributors;
+    // moving (lon/lat) is admin-only — a drag is destructive to curated placement.
     if (req.method === 'PATCH' && idMatch) {
-      if (!authed(req)) return send(res, 401, { error: 'unauthorized' });
       const id = Number(idMatch[1]);
       const body = await readBody(req);
-      if (!inLon(body.lon) || !inLat(body.lat)) return send(res, 400, { error: 'lon/lat required and must be valid coordinates' });
-      const spot = movePin(id, body.lon, body.lat, new Date().toISOString().slice(0, 10));
+      const { admin, actor } = actorFrom(req, body);
+      if (!actor) return send(res, 401, { error: 'name required' });
+      const moving = body.lon !== undefined || body.lat !== undefined;
+      if (moving) {
+        if (!admin) return send(res, 403, { error: 'moving a pin is admin-only' });
+        if (!inLon(body.lon) || !inLat(body.lat)) return send(res, 400, { error: 'lon/lat must be valid coordinates' });
+      }
+      if (body.category != null && !CATEGORIES.has(body.category)) {
+        return send(res, 400, { error: 'category must be one of ' + [...CATEGORIES].join(', ') });
+      }
+      const patch = {};
+      for (const k of ['category', 'caution', 'species', 'season', 'location', 'notes', 'plant']) {
+        if (body[k] !== undefined) patch[k] = body[k];
+      }
+      if (typeof body.name === 'string' && body.name.trim()) patch.name = body.name.trim();
+      if (Array.isArray(body.photos)) patch.photos = cleanPhotos(body.photos);
+      if (moving) { patch.lon = body.lon; patch.lat = body.lat; }
+      const spot = updatePin(id, patch, actor);
       if (!spot) return send(res, 404, { error: 'no such pin' });
       return send(res, 200, { ok: true, spot });
     }
 
-    // Delete a pin. Confirmed spots are removed outright; a lead is tombstoned so
-    // the next deploy's re-import won't resurrect it (see deletePin).
+    // Delete a pin (confirmed or lead), removed outright. ADMIN-ONLY.
     if (req.method === 'DELETE' && idMatch) {
-      if (!authed(req)) return send(res, 401, { error: 'unauthorized' });
-      const ok = deletePin(Number(idMatch[1]));
+      const body = await readBody(req);
+      const { admin, actor } = actorFrom(req, body);
+      if (!admin) return send(res, 401, { error: 'unauthorized' });
+      const ok = deletePin(Number(idMatch[1]), actor);
       if (!ok) return send(res, 404, { error: 'no such pin' });
       return send(res, 200, { ok: true });
     }
 
+    // Add a spot. Open to named contributors (a name is required); lands as a
+    // confirmed pin immediately. Admins may omit the actor (defaults to "Lucian").
     if (req.method === 'POST' && path === '/api/pins') {
-      if (!authed(req)) return send(res, 401, { error: 'unauthorized' });
       const body = await readBody(req);
+      const { actor } = actorFrom(req, body);
+      if (!actor) return send(res, 401, { error: 'name required' });
       if (!body.name || typeof body.name !== 'string') return send(res, 400, { error: 'name required' });
       if (!CATEGORIES.has(body.category)) return send(res, 400, { error: 'category must be one of ' + [...CATEGORIES].join(', ') });
       if (!inLon(body.lon) || !inLat(body.lat)) return send(res, 400, { error: 'lon/lat required and must be valid coordinates' });
@@ -191,7 +249,7 @@ const server = createServer(async (req, res) => {
         plant: body.plant ?? null, lon: body.lon, lat: body.lat,
         photos: cleanPhotos(body.photos),
         updated: new Date().toISOString().slice(0, 10),
-      });
+      }, actor);
       return send(res, 201, { ok: true, spot });
     }
 
