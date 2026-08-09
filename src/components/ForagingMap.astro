@@ -4,13 +4,23 @@
 // /data/foraging-spots.geojson if the API is unreachable.
 // `fullscreen` makes the map fill the viewport below the header (map page);
 // otherwise it's a boxed embed (home page).
+import { getPlants } from '../lib/content.mjs';
 interface Props { fullscreen?: boolean; }
 const { fullscreen = false } = Astro.props;
+
+// The contribute flow lets a visitor pick WHICH plant a new pin is — the pin then
+// inherits the plant's name/category/species from its guide, so there are no free
+// text/category fields to fill. Ship the guide catalog (slug → title/category/
+// species) to the client as a small JSON island the add-sheet reads at runtime.
+const plantCatalog = getPlants()
+  .map((p) => ({ slug: p.id, title: p.data.title, category: p.data.category, species: p.data.scientificName || '' }))
+  .sort((a, b) => a.title.localeCompare(b.title));
 ---
 <div class={`map-wrap${fullscreen ? ' full' : ''}`}>
   <div class="map-shell"><div id="map"></div></div>
   <div class="map-filter" id="map-filter" hidden></div>
   <div class="legend" id="legend"></div>
+  <script type="application/json" id="plant-catalog" set:html={JSON.stringify(plantCatalog)}></script>
 </div>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -260,6 +270,37 @@ const { fullscreen = false } = Astro.props;
     return t;
   }
 
+  // ── Contributor identity (name-only, self-asserted) ───────────────────────
+  // A named contributor can add a spot with just a name — no token. We keep an
+  // { id, name } beside the admin token: `id` is a client-generated handle the
+  // server upserts into `users`, `name` is what shows in the pin history. Asked
+  // once (first contribution) and reused; the name is claimed, never verified.
+  const USER_KEY = 'forage.user';
+  type Actor = { id: string; name: string };
+  function getUser(): Actor | null {
+    try { const u = JSON.parse(localStorage.getItem(USER_KEY) || 'null'); return u && u.name ? u : null; } catch { return null; }
+  }
+  function saveUser(u: Actor) { try { localStorage.setItem(USER_KEY, JSON.stringify(u)); } catch {} }
+  function newId(): string {
+    try { return (crypto as any).randomUUID(); } catch {}
+    return 'u-' + Math.abs(Math.floor((performance.now() % 1e9) * 1000)).toString(36) + Math.floor(performance.now()).toString(36);
+  }
+  // Ensure we have a name to attribute the write to; prompt once, then remember.
+  function ensureUser(): Actor | null {
+    const existing = getUser();
+    if (existing) return existing;
+    const entered = window.prompt('Add spots as — your first name or handle (shown in the pin history):');
+    const name = (entered || '').trim();
+    if (!name) return null;
+    const u: Actor = { id: newId(), name: name.slice(0, 80) };
+    saveUser(u);
+    return u;
+  }
+
+  // Assigned by initFullMap so the add-sheet can drop a freshly-created confirmed
+  // pin straight into the live cluster (no reload). No-op until the map is built.
+  let onSpotAdded: (spot: any) => void = () => {};
+
   // Reflect the current editMode onto the DOM: a body class drives promote-button
   // visibility (popups are HTML, so CSS gates them reactively) and the pencil's
   // fill/label. Called on load and on every toggle.
@@ -311,6 +352,12 @@ const { fullscreen = false } = Astro.props;
         L.DomEvent.disableScrollPropagation(wrap);
         wrap.innerHTML =
           `<div class="map-panel-bar">` +
+            // ➕ Add a spot — shown to everyone (name-gated, not token-gated). The
+            // primary contributor CTA, so it leads the bar with a filled accent.
+            `<button type="button" class="map-panel-add" title="Add a foraging spot" aria-label="Add a foraging spot">` +
+              `<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">` +
+                `<path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>` +
+            `</button>` +
             (canEdit
               ? `<button type="button" class="map-panel-edit${editMode ? ' active' : ''}" aria-pressed="${editMode}" title="${editTitle}" aria-label="${editTitle}">` +
                   `<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">` +
@@ -339,6 +386,8 @@ const { fullscreen = false } = Astro.props;
         });
         editBtnEl = wrap.querySelector('.map-panel-edit') as HTMLElement | null;
         if (editBtnEl) editBtnEl.addEventListener('click', () => setEditMode(!editMode));
+        const addBtn = wrap.querySelector('.map-panel-add') as HTMLElement | null;
+        if (addBtn) addBtn.addEventListener('click', () => startAddMode());
         return wrap;
       },
     });
@@ -790,12 +839,281 @@ const { fullscreen = false } = Astro.props;
         });
       };
       renderCtl();
+
+      // A contributor's freshly-saved spot drops straight into the live cluster
+      // (no reload) as a confirmed teardrop, with the same popup + admin move/
+      // delete wiring as any other confirmed pin. Force "My spots" on so it shows.
+      onSpotAdded = (spot: any) => {
+        const category = spot.category || 'other';
+        const caution = !!spot.caution;
+        const key = String(spot.id);
+        const marker = L.marker([spot.lat, spot.lon], { icon: pinIcon(CAT_COLORS[category] || CAT_COLORS.other, caution) })
+          .bindPopup(pinPopup(spot, key, true), { maxWidth: 244, minWidth: 200, maxHeight: 300, autoPan: true, keepInView: true });
+        if (typeof spot.id === 'number') enableLongPressMove(marker, spot.id);
+        records.push({ id: spot.id, key, masterKey: 'confirmed', verified: true, source: 'confirmed',
+          category, caution, marker, props: spot, lat: spot.lat, lon: spot.lon });
+        hasConfirmed = true;
+        if (!state.master.confirmed) { state.master.confirmed = true; savePref('layer.confirmed', true); }
+        if (!state.cat[category]) { state.cat[category] = true; savePref('filter.cat.' + category, true); }
+        apply(); renderCtl();
+        // Zoom/decluster so the fresh pin is individually visible, THEN pop it —
+        // openPopup on a still-clustered marker is a no-op.
+        map.setView([spot.lat, spot.lon], Math.max(map.getZoom(), 16), { animate: true });
+        try { cluster.zoomToShowLayer(marker, () => marker.openPopup()); }
+        catch { marker.openPopup(); }
+      };
     }).catch((err) => {
       if (mapEl) mapEl.innerHTML = '<p style="padding:20px">Could not load map data.</p>';
       console.error(err);
     });
   }
 
-  window.addEventListener('resize', () => map.invalidateSize());
+  // ── Contribute: add a spot ────────────────────────────────────────────────
+  // The ➕ opens a bottom sheet over a still-live map. A fixed crosshair marks
+  // where the pin will land; the visitor PANS the map under it to position (the
+  // one place-a-pin affordance normal users get — the admin drag-move stays
+  // admin-only). Placement precedence: a geotagged photo > "use my location" >
+  // wherever they leave the crosshair. Picking the plant inherits its name/
+  // category/species; an escape hatch covers finds with no guide yet.
+  const PLANT_CATALOG: { slug: string; title: string; category: string; species: string }[] = (() => {
+    try { return JSON.parse(document.getElementById('plant-catalog')?.textContent || '[]'); } catch { return []; }
+  })();
+
+  let addMode = false;
+  let addSheet: HTMLElement | null = null;
+  let addCross: HTMLElement | null = null;
+  let addPhotoFile: File | null = null;
+  let addBusy = false;
+
+  const byId = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T | null;
+
+  // The lat/lng under the crosshair's centre, in the map's current view.
+  function crosshairLatLng() {
+    const mr = mapEl!.getBoundingClientRect();
+    const cr = addCross!.getBoundingClientRect();
+    return map.containerPointToLatLng([cr.left + cr.width / 2 - mr.left, cr.top + cr.height / 2 - mr.top]);
+  }
+  // Keep the crosshair centred in the map area ABOVE the sheet (thumb covers the
+  // sheet, eyes on the pin). Recomputed on open and on resize.
+  function positionCross() {
+    if (!addCross || !addSheet) return;
+    addCross.style.top = Math.max(64, addSheet.offsetTop / 2) + 'px';
+  }
+  const setLocText = (t: string) => { const el = byId('add-loc-txt'); if (el) el.textContent = t; };
+
+  function endAddMode() {
+    addMode = false; addBusy = false; addPhotoFile = null;
+    document.body.classList.remove('map-adding');
+    addSheet?.remove(); addSheet = null;
+    addCross?.remove(); addCross = null;
+    clearFlash();
+  }
+
+  function addValid(): boolean {
+    const plant = byId<HTMLSelectElement>('add-plant')?.value;
+    if (!plant) return false;
+    if (plant === '__other') return !!byId<HTMLInputElement>('add-name')?.value.trim();
+    return true;
+  }
+  function refreshSave() { const b = byId<HTMLButtonElement>('add-save'); if (b) b.disabled = !addValid() || addBusy; }
+
+  async function handlePhoto(input: HTMLInputElement) {
+    const f = input.files && input.files[0];
+    addPhotoFile = f || null;
+    const prev = byId('add-photo-prev');
+    if (!f) { if (prev) { prev.hidden = true; prev.innerHTML = ''; } return; }
+    if (prev) { prev.hidden = false; prev.innerHTML = `<img src="${URL.createObjectURL(f)}" alt="">`; }
+    try {
+      const gps = await readExifGps(f);
+      if (gps) {
+        map.setView([gps.lat, gps.lon], Math.max(map.getZoom(), 17), { animate: true });
+        setLocText('Placed from the photo’s location — pan to fine-tune.');
+        flash('📷 Placed from the photo’s location.');
+      }
+    } catch {}
+  }
+
+  async function doSave(btn: HTMLButtonElement) {
+    if (addBusy || !addValid()) return;
+    const user = getUser();
+    if (!user) { flash('A name is needed to save your spot.'); return; }
+    addBusy = true; btn.disabled = true;
+    try {
+      const ll = crosshairLatLng();
+      const sel = byId<HTMLSelectElement>('add-plant')!.value;
+      let name: string, category: string, species: string | null = null, plant: string | null = null;
+      if (sel === '__other') {
+        name = byId<HTMLInputElement>('add-name')!.value.trim();
+        category = byId<HTMLSelectElement>('add-cat')!.value;
+      } else {
+        const meta = PLANT_CATALOG.find((p) => p.slug === sel)!;
+        name = meta.title; category = meta.category; species = meta.species || null; plant = meta.slug;
+      }
+      const notes = byId<HTMLTextAreaElement>('add-notes')!.value.trim() || null;
+      const caution = !!byId<HTMLInputElement>('add-caution')!.checked;
+
+      let photos: string[] = [];
+      if (addPhotoFile) {
+        btn.textContent = 'Uploading photo…';
+        const up = await fetch('/api/photos?name=' + encodeURIComponent(user.name), {
+          method: 'POST', headers: { 'Content-Type': addPhotoFile.type }, body: addPhotoFile,
+        });
+        if (up.status === 415) throw new Error('that image format isn’t supported — try a JPEG or PNG');
+        if (!up.ok) { const e = await up.json().catch(() => ({})); throw new Error(e.error || ('photo upload failed (HTTP ' + up.status + ')')); }
+        const { file } = await up.json();
+        if (file) photos = [file];
+      }
+
+      btn.textContent = 'Saving…';
+      const r = await fetch('/api/pins', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name, category, species, notes, caution, plant, photos,
+          lon: +ll.lng.toFixed(6), lat: +ll.lat.toFixed(6), actor: user,
+        }),
+      });
+      if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.error || ('HTTP ' + r.status)); }
+      const { spot } = await r.json();
+      endAddMode();
+      onSpotAdded(spot);
+      flash('Added ✓ — thanks for the spot!');
+    } catch (err: any) {
+      flash('Couldn’t save (' + (err?.message || err) + ').');
+      addBusy = false; btn.disabled = false; btn.textContent = 'Save spot';
+    }
+  }
+
+  function buildAddUI() {
+    const shell = (mapEl!.parentElement || mapEl) as HTMLElement;
+
+    addCross = document.createElement('div');
+    addCross.className = 'add-cross'; addCross.setAttribute('aria-hidden', 'true');
+    addCross.innerHTML =
+      `<svg viewBox="0 0 44 44" width="44" height="44">` +
+        `<circle cx="22" cy="22" r="13" fill="none" stroke="#fff" stroke-width="3"/>` +
+        `<circle cx="22" cy="22" r="13" fill="none" stroke="#21492b" stroke-width="1.6"/>` +
+        `<circle cx="22" cy="22" r="2.6" fill="#21492b"/>` +
+        `<path d="M22 3v7M22 34v7M3 22h7M34 22h7" stroke="#21492b" stroke-width="2" stroke-linecap="round"/></svg>`;
+    shell.appendChild(addCross);
+
+    const opts = PLANT_CATALOG.map((p) => `<option value="${esc(p.slug)}">${esc(p.title)}</option>`).join('');
+    const catOpts = CAT_ORDER.map((c) => `<option value="${c}">${esc(CAT_LABEL[c] || c)}</option>`).join('');
+    addSheet = document.createElement('div');
+    addSheet.className = 'add-sheet';
+    addSheet.innerHTML =
+      `<div class="add-head"><strong>Add a foraging spot</strong>` +
+        `<button type="button" class="add-x" aria-label="Cancel">✕</button></div>` +
+      `<div class="add-loc"><span class="add-loc-txt" id="add-loc-txt">Pan the map so the crosshair sits on the spot.</span>` +
+        `<button type="button" class="add-useloc">📍 Use my location</button></div>` +
+      `<label class="add-row"><span>What did you find?</span>` +
+        `<select class="add-plant" id="add-plant">` +
+          `<option value="" selected disabled>Choose a plant…</option>${opts}` +
+          `<option value="__other">Something else / not in the guide…</option>` +
+        `</select></label>` +
+      `<div class="add-other" id="add-other" hidden>` +
+        `<label class="add-row"><span>Name it</span><input type="text" id="add-name" maxlength="80" placeholder="e.g. Wild grapes"></label>` +
+        `<label class="add-row"><span>Type</span><select id="add-cat">${catOpts}</select></label></div>` +
+      `<label class="add-row"><span>Photo <em>(optional)</em></span>` +
+        `<input type="file" accept="image/jpeg,image/png,image/webp" id="add-photo"></label>` +
+      `<div class="add-photo-prev" id="add-photo-prev" hidden></div>` +
+      `<label class="add-row"><span>Notes <em>(optional)</em></span>` +
+        `<textarea id="add-notes" rows="2" maxlength="500" placeholder="Where exactly, how much, ripeness…"></textarea></label>` +
+      `<label class="add-caution"><input type="checkbox" id="add-caution"><span>⚠ Has a dangerous lookalike</span></label>` +
+      `<div class="add-actions"><button type="button" class="add-cancel">Cancel</button>` +
+        `<button type="button" class="add-save" id="add-save" disabled>Save spot</button></div>`;
+    shell.appendChild(addSheet);
+    // The sheet owns its own gestures — don't let scrolling it pan/zoom the map.
+    L.DomEvent.disableClickPropagation(addSheet);
+    L.DomEvent.disableScrollPropagation(addSheet);
+
+    addSheet.querySelector('.add-x')!.addEventListener('click', endAddMode);
+    addSheet.querySelector('.add-cancel')!.addEventListener('click', endAddMode);
+    addSheet.querySelector('.add-useloc')!.addEventListener('click', () => { setLocText('Locating…'); locateNow(); });
+    const plantSel = byId<HTMLSelectElement>('add-plant')!;
+    plantSel.addEventListener('change', () => {
+      byId('add-other')!.hidden = plantSel.value !== '__other';
+      refreshSave();
+    });
+    byId('add-name')?.addEventListener('input', refreshSave);
+    byId<HTMLInputElement>('add-photo')!.addEventListener('change', (e) => handlePhoto(e.target as HTMLInputElement));
+    byId<HTMLButtonElement>('add-save')!.addEventListener('click', (e) => doSave(e.currentTarget as HTMLButtonElement));
+
+    positionCross();
+  }
+
+  function startAddMode() {
+    if (addMode) return;
+    const user = ensureUser();
+    if (!user) { flash('Add cancelled — a name is needed to attribute your spot.'); return; }
+    if (editMode) setEditMode(false); // adding and admin-editing are separate modes
+    addMode = true;
+    document.body.classList.add('map-adding');
+    buildAddUI();
+    // Default the crosshair to the user's location so field contributors barely
+    // move it; if we have no fix yet, ask for one (recenters when it lands).
+    if (userMarker) map.setView(userMarker.getLatLng(), Math.max(map.getZoom(), 16), { animate: true });
+    else locateNow();
+  }
+
+  // Minimal client-side EXIF GPS reader (JPEG only) — best-effort, any failure
+  // just means "no auto-place". Scans the APP1/Exif segment, walks IFD0 → GPS IFD,
+  // and converts the deg/min/sec rationals (with N/S/E/W refs) to a decimal fix.
+  async function readExifGps(file: File): Promise<{ lat: number; lon: number } | null> {
+    try {
+      if (!/jpe?g/i.test(file.type) && !/\.jpe?g$/i.test(file.name)) return null;
+      const view = new DataView(await file.slice(0, 512 * 1024).arrayBuffer());
+      const end = view.byteLength;
+      if (view.getUint16(0) !== 0xffd8) return null; // not a JPEG
+      let off = 2, tiff = -1;
+      while (off < end - 4) {
+        if (view.getUint8(off) !== 0xff) { off++; continue; }
+        const marker = view.getUint8(off + 1);
+        if (marker === 0xe1 && view.getUint32(off + 4) === 0x45786966) { tiff = off + 10; break; } // "Exif"
+        if (marker === 0xd8 || marker === 0xd9 || (marker >= 0xd0 && marker <= 0xd7)) { off += 2; continue; }
+        off += 2 + view.getUint16(off + 2);
+      }
+      if (tiff < 0 || tiff + 8 > end) return null;
+      const le = view.getUint16(tiff) === 0x4949; // 'II' = little-endian
+      const u16 = (a: number) => view.getUint16(a, le);
+      const u32 = (a: number) => view.getUint32(a, le);
+      const ifd0 = tiff + u32(tiff + 4);
+      if (ifd0 + 2 > end) return null;
+      let gpsRel = 0;
+      const n0 = u16(ifd0);
+      for (let i = 0; i < n0; i++) {
+        const e = ifd0 + 2 + i * 12;
+        if (e + 12 > end) break;
+        if (u16(e) === 0x8825) { gpsRel = u32(e + 8); break; } // GPS IFD pointer
+      }
+      if (!gpsRel) return null;
+      const gps = tiff + gpsRel;
+      if (gps + 2 > end) return null;
+      const ent: Record<number, number> = {};
+      const gn = u16(gps);
+      for (let i = 0; i < gn; i++) {
+        const e = gps + 2 + i * 12;
+        if (e + 12 > end) break;
+        ent[u16(e)] = e;
+      }
+      const rat = (a: number) => { const d = u32(a + 4); return d ? u32(a) / d : 0; };
+      const coord = (tag: number) => {
+        const e = ent[tag]; if (e == null || u32(e + 4) < 3) return null;
+        const b = tiff + u32(e + 8);
+        if (b + 24 > end) return null;
+        return rat(b) + rat(b + 8) / 60 + rat(b + 16) / 3600;
+      };
+      const ref = (tag: number) => { const e = ent[tag]; return e == null ? '' : String.fromCharCode(view.getUint8(e + 8)); };
+      let lat = coord(2), lon = coord(4);
+      if (lat == null || lon == null) return null;
+      if (ref(1) === 'S') lat = -lat;
+      if (ref(3) === 'W') lon = -lon;
+      if (!isFinite(lat) || !isFinite(lon)) return null;
+      if (Math.abs(lat) < 1e-6 && Math.abs(lon) < 1e-6) return null; // 0,0 = junk
+      if (Math.abs(lat) > 90 || Math.abs(lon) > 180) return null;
+      return { lat, lon };
+    } catch { return null; }
+  }
+
+  window.addEventListener('resize', () => { map.invalidateSize(); if (addMode) positionCross(); });
   void isTouch;
 </script>

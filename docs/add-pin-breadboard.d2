@@ -1,0 +1,108 @@
+# Breadboard — Contributor "add a spot" flow (foraging Phase 2)
+# Decision axis: WHEN do you place the pin vs. describe it — and how do photo-EXIF,
+# device-GPS, and manual drop compose into ONE placement.
+# Language: place (orange) · affordance (white) · data (gray cylinder)
+#   · conditional (purple diamond) · note (yellow) · dashed = new/proposed.
+# Render: ~/.claude/skills/breadboarding/render.sh add-pin-breadboard.d2
+
+vars: { d2-config: { layout-engine: dagre } }
+
+classes: {
+  place:       { style: { fill: "#ffedd5"; stroke: "#f97316"; font-color: "#9a3412"; bold: true } }
+  affordance:  { style: { fill: "#ffffff"; stroke: "#94a3b8"; font-color: "#334155"; font-size: 13 } }
+  data:        { shape: cylinder; style: { fill: "#eef2f6"; stroke: "#64748b"; font-color: "#334155"; font-size: 13 } }
+  conditional: { shape: diamond;  style: { fill: "#f3e8ff"; stroke: "#9333ea"; font-color: "#6b21a8"; font-size: 13 } }
+  note:        { style: { fill: "#fef9c3"; stroke: "#eab308"; font-color: "#713f12"; font-size: 12; border-radius: 10; stroke-dash: 2 } }
+}
+
+grid-columns: 3
+grid-gap: 90
+
+# ─────────────────────────────────────────────────────────────
+current: "① CURRENT — no contributor add path" {
+  style: { stroke: "#cbd5e1"; fill: "#ffffff" }
+
+  map: "Fullscreen map  (/map)" {
+    class: place; grid-columns: 1
+    locate: "Locate-me button" { class: affordance }
+    panel: "Layers pill" { class: affordance }
+    pencil: "Pencil (admin only,\ntoken-gated)" { class: affordance }
+  }
+  edit: "Edit mode (?edit=1, ADMIN)" {
+    class: place; grid-columns: 1
+    drag: "Long-press-drag a pin" { class: affordance }
+    del: "Delete / Promote in popup" { class: affordance }
+  }
+  map.pencil -> edit: "needs edit token" { style.stroke: "#ef4444" }
+
+  pain: "A named contributor has NO way\nto add a spot from the site.\nOnly the token-holder can touch pins." { class: note }
+}
+
+# ─────────────────────────────────────────────────────────────
+verA: "② VERSION A — Place-first wizard" {
+  style: { stroke: "#cbd5e1"; fill: "#ffffff" }
+
+  map: "Fullscreen map" {
+    class: place; grid-columns: 1
+    plus: "➕ Add button  (NEW,\nalways visible, not gated)" { class: affordance; style.stroke-dash: 4 }
+  }
+
+  place1: "Step 1 · Place the pin  (NEW)" {
+    class: place; grid-columns: 1
+    style.stroke-dash: 4
+    ghost: "Ghost pin, drag to move" { class: affordance }
+    useloc: "📍 Use my location" { class: affordance }
+    next: "Next →" { class: affordance }
+  }
+  map.plus -> place1: "opens, pin at GPS or center"
+
+  place2: "Step 2 · Describe it  (NEW)" {
+    class: place; grid-columns: 1
+    style.stroke-dash: 4
+    plant: "Pick the plant\n(name + category inherited)" { class: affordance }
+    text: "Notes (optional)" { class: affordance }
+    photo: "Add photo" { class: affordance }
+    save: "Save spot" { class: affordance }
+  }
+  place1.next -> place2
+
+  api: "POST /api/photos → file\nPOST /api/pins {…, lon, lat, actor}" { class: data }
+  place2.save -> api: "lands confirmed"
+
+  note: "Two clear steps, each simple.\nCost: EXIF-from-photo is awkward —\nphoto is picked in step 2, AFTER\nyou've already placed in step 1." { class: note }
+}
+
+# ─────────────────────────────────────────────────────────────
+verB: "③ VERSION B — One bottom-sheet, live map (RECOMMENDED)" {
+  style: { stroke: "#cbd5e1"; fill: "#ffffff" }
+
+  map: "Fullscreen map" {
+    class: place; grid-columns: 1
+    plus: "➕ Add button  (NEW)" { class: affordance; style.stroke-dash: 4 }
+  }
+
+  sheet: "Add-a-spot sheet  (NEW, covers lower ½;\nmap + draggable pin stay live on top)" {
+    class: place; grid-columns: 1
+    style.stroke-dash: 4
+    loc: "📍 Location strip: 'Using your\nlocation — drag pin to nudge'" { class: affordance }
+    photo: "Add photo (camera / library)" { class: affordance }
+    plant: "Pick the plant  →  name + category\n+ caution INHERITED from its guide" { class: affordance }
+    text: "Notes (optional)" { class: affordance }
+    save: "Save (enabled once pin + plant chosen)" { class: affordance }
+  }
+  map.plus -> sheet: "opens, name asked once (1st time)"
+
+  place: "Pin placement (one resolver)" { class: conditional }
+  exif: "Photo has GPS?" { class: conditional }
+  sheet.photo -> exif: "on pick, read EXIF client-side"
+  exif -> place: "yes → move pin to photo GPS\n(toast: 'placed from photo')" { style.stroke: "#9333ea" }
+  gps: "Device GPS fix?" { class: conditional }
+  map.plus -> gps
+  gps -> place: "yes → pin at your location"
+  place -> sheet.loc: "else → pin at map center, drag it"
+
+  api: "POST /api/photos → file\nPOST /api/pins {plant, lon, lat, actor}\n(name + category derived from plant)" { class: data }
+  sheet.save -> api: "lands confirmed"
+
+  note: "Pick the PLANT, not fields:\nname + category + caution inherited\nfrom its guide (data-model change,\nother agent). Precedence photo-EXIF >\ndevice-GPS > drop, always nudgeable.\nLocation soft, never required." { class: note }
+}
