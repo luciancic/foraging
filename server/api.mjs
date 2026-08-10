@@ -149,8 +149,12 @@ function readRawBody(req, cap) {
   });
 }
 // Accepted upload types → stored extension (must yield a SAFE_FILE basename).
-const UPLOAD_EXT = { 'image/jpeg': 'jpg', 'image/jpg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
-const MAX_UPLOAD = 12 * 1024 * 1024;   // 12 MB — a full-res phone photo
+// HEIC/HEIF (the iPhone default) is accepted and transcoded to JPEG on receipt so
+// a contributor never has to convert in the field, and it renders everywhere.
+const UPLOAD_EXT = { 'image/jpeg': 'jpg', 'image/jpg': 'jpg', 'image/png': 'png', 'image/webp': 'webp',
+  'image/heic': 'heic', 'image/heif': 'heic', 'image/heic-sequence': 'heic', 'image/heif-sequence': 'heic' };
+const HEIC_CT = new Set(['image/heic', 'image/heif', 'image/heic-sequence', 'image/heif-sequence']);
+const MAX_UPLOAD = 20 * 1024 * 1024;   // 20 MB — a full-res HEIC/phone photo
 
 const isFiniteNum = (v) => typeof v === 'number' && Number.isFinite(v);
 const inLat = (v) => isFiniteNum(v) && v >= -90 && v <= 90;
@@ -189,18 +193,27 @@ const server = createServer(async (req, res) => {
       if (!admin && !name) return send(res, 401, { error: 'name required' });
       if (!storj) return send(res, 503, { error: 'media not configured' });
       const ct = (req.headers['content-type'] || '').split(';')[0].trim().toLowerCase();
-      const ext = UPLOAD_EXT[ct];
-      if (!ext) return send(res, 415, { error: 'image must be jpeg, png, or webp' });
+      let ext = UPLOAD_EXT[ct];
+      if (!ext) return send(res, 415, { error: 'image must be a jpeg, png, webp, or heic' });
       let buf;
       try { buf = await readRawBody(req, MAX_UPLOAD); }
-      catch { return send(res, 413, { error: 'image too large (max 12MB)' }); }
+      catch { return send(res, 413, { error: 'image too large (max 20MB)' }); }
       if (!buf.length) return send(res, 400, { error: 'empty body' });
+      // Transcode HEIC/HEIF → JPEG (auto-orient) so it displays in every browser.
+      let outCt = ct;
+      if (HEIC_CT.has(ct)) {
+        try {
+          const sharp = (await import('sharp')).default;
+          buf = await sharp(buf).rotate().jpeg({ quality: 82 }).toBuffer();
+          ext = 'jpg'; outCt = 'image/jpeg';
+        } catch (e) { console.error('heic transcode failed:', e); return send(res, 422, { error: 'could not process that photo' }); }
+      }
       const file = `spot-${randomUUID()}.${ext}`;
       const rel = `photos/spots/${file}`;
       let r;
       try {
         r = await storj.fetch(`${STORJ_ENDPOINT}/${STORJ_BUCKET}/media/${rel}`, {
-          method: 'PUT', body: buf, headers: { 'Content-Type': ct },
+          method: 'PUT', body: buf, headers: { 'Content-Type': outCt },
         });
       } catch (e) { console.error('photo upload error:', e); return send(res, 502, { error: 'upstream error' }); }
       if (!r.ok) { console.error('photo upload failed:', r.status); return send(res, 502, { error: 'upstream error' }); }
@@ -293,7 +306,8 @@ const server = createServer(async (req, res) => {
       if (!CATEGORIES.has(body.category)) return send(res, 400, { error: 'category must be one of ' + [...CATEGORIES].join(', ') });
       if (!inLon(body.lon) || !inLat(body.lat)) return send(res, 400, { error: 'lon/lat required and must be valid coordinates' });
       const spot = addPin({
-        name: body.name.trim(), category: body.category, caution: body.caution,
+        // caution is not a pin input — addPin derives it from the plant guide.
+        name: body.name.trim(), category: body.category,
         species: body.species ?? null, season: body.season ?? null,
         location: body.location ?? null, notes: body.notes ?? null,
         added: new Date().toISOString().slice(0, 10),

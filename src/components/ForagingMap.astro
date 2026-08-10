@@ -1041,21 +1041,43 @@ const plantCatalog = getPlants()
     clearFlash();
   }
 
+  // Resolve the typed combobox value to a guide plant (exact title match, case-
+  // insensitive), or null when it's a not-in-the-guide find (escape hatch).
+  function resolvePlant() {
+    const raw = (byId<HTMLInputElement>('add-plant')?.value || '').trim().toLowerCase();
+    if (!raw) return null;
+    return PLANT_CATALOG.find((p) => p.title.toLowerCase() === raw) || null;
+  }
   function addValid(): boolean {
-    const plant = byId<HTMLSelectElement>('add-plant')?.value;
-    if (!plant) return false;
-    if (plant === '__other') return !!byId<HTMLInputElement>('add-name')?.value.trim();
-    return true;
+    // Any non-empty entry saves: a matched plant inherits its guide; unmatched text
+    // is a custom find whose type defaults from the (always-populated) type select.
+    return !!(byId<HTMLInputElement>('add-plant')?.value || '').trim();
   }
   function refreshSave() { const b = byId<HTMLButtonElement>('add-save'); if (b) b.disabled = !addValid() || addBusy; }
+
+  // File.type is empty for some iOS HEIC picks — infer a content-type from the
+  // extension so the upload carries one (the server converts HEIC → JPEG).
+  function photoTypeFromName(nm: string): string {
+    const ext = (nm.split('.').pop() || '').toLowerCase();
+    return ({ jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp',
+      heic: 'image/heic', heif: 'image/heif' } as Record<string, string>)[ext] || 'application/octet-stream';
+  }
 
   async function handlePhoto(input: HTMLInputElement) {
     const f = input.files && input.files[0];
     addPhotoFile = f || null;
     const prev = byId('add-photo-prev');
     if (!f) { if (prev) { prev.hidden = true; prev.innerHTML = ''; } return; }
-    if (prev) { prev.hidden = false; prev.innerHTML = `<img src="${URL.createObjectURL(f)}" alt="">`; }
+    // HEIC won't render in an <img> on most browsers, so only preview types the
+    // browser can draw; either way the server stores a JPEG.
+    if (prev) {
+      const previewable = /image\/(jpeg|png|webp|gif)/i.test(f.type);
+      prev.hidden = false;
+      prev.innerHTML = previewable ? `<img src="${URL.createObjectURL(f)}" alt="">`
+        : `<div class="add-photo-note">📷 ${esc(f.name)} — ready to upload</div>`;
+    }
     try {
+      // EXIF auto-place is JPEG-only; HEIC/other fall back to device GPS + manual.
       const gps = await readExifGps(f);
       if (gps) {
         map.setView([gps.lat, gps.lon], Math.max(map.getZoom(), 17), { animate: true });
@@ -1072,25 +1094,27 @@ const plantCatalog = getPlants()
     addBusy = true; btn.disabled = true;
     try {
       const ll = crosshairLatLng();
-      const sel = byId<HTMLSelectElement>('add-plant')!.value;
+      const meta = resolvePlant();
       let name: string, category: string, species: string | null = null, plant: string | null = null;
-      if (sel === '__other') {
-        name = byId<HTMLInputElement>('add-name')!.value.trim();
-        category = byId<HTMLSelectElement>('add-cat')!.value;
-      } else {
-        const meta = PLANT_CATALOG.find((p) => p.slug === sel)!;
+      if (meta) {
+        // Known plant → inherit name/category/species from the guide.
         name = meta.title; category = meta.category; species = meta.species || null; plant = meta.slug;
+      } else {
+        // Not-in-the-guide find → the typed text is the name, type from the picker.
+        name = byId<HTMLInputElement>('add-plant')!.value.trim();
+        category = byId<HTMLSelectElement>('add-cat')!.value;
       }
       const notes = byId<HTMLTextAreaElement>('add-notes')!.value.trim() || null;
-      const caution = !!byId<HTMLInputElement>('add-caution')!.checked;
 
       let photos: string[] = [];
       if (addPhotoFile) {
         btn.textContent = 'Uploading photo…';
+        // iOS HEIC sometimes reports an empty File.type — infer from the name so the
+        // server gets a real content-type (it converts HEIC → JPEG on receipt).
+        const ct = addPhotoFile.type || photoTypeFromName(addPhotoFile.name);
         const up = await fetch('/api/photos?name=' + encodeURIComponent(user.name), {
-          method: 'POST', headers: { 'Content-Type': addPhotoFile.type }, body: addPhotoFile,
+          method: 'POST', headers: { 'Content-Type': ct }, body: addPhotoFile,
         });
-        if (up.status === 415) throw new Error('that image format isn’t supported — try a JPEG or PNG');
         if (!up.ok) { const e = await up.json().catch(() => ({})); throw new Error(e.error || ('photo upload failed (HTTP ' + up.status + ')')); }
         const { file } = await up.json();
         if (file) photos = [file];
@@ -1100,7 +1124,7 @@ const plantCatalog = getPlants()
       const r = await fetch('/api/pins', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name, category, species, notes, caution, plant, photos,
+          name, category, species, notes, plant, photos,
           lon: +ll.lng.toFixed(6), lat: +ll.lat.toFixed(6), actor: user,
         }),
       });
@@ -1128,7 +1152,10 @@ const plantCatalog = getPlants()
         `<path d="M22 3v7M22 34v7M3 22h7M34 22h7" stroke="#21492b" stroke-width="2" stroke-linecap="round"/></svg>`;
     shell.appendChild(addCross);
 
-    const opts = PLANT_CATALOG.map((p) => `<option value="${esc(p.slug)}">${esc(p.title)}</option>`).join('');
+    // Typeable combobox: an <input list> filters the guide as you type. Datalist
+    // option values are the plant TITLES (what you see/type); we resolve back to the
+    // slug. Typing something not in the guide reveals the "type" escape hatch.
+    const opts = PLANT_CATALOG.map((p) => `<option value="${esc(p.title)}"></option>`).join('');
     const catOpts = CAT_ORDER.map((c) => `<option value="${c}">${esc(CAT_LABEL[c] || c)}</option>`).join('');
     addSheet = document.createElement('div');
     addSheet.className = 'add-sheet';
@@ -1138,19 +1165,17 @@ const plantCatalog = getPlants()
       `<div class="add-loc"><span class="add-loc-txt" id="add-loc-txt">Pan the map so the crosshair sits on the spot.</span>` +
         `<button type="button" class="add-useloc">📍 Use my location</button></div>` +
       `<label class="add-row"><span>What did you find?</span>` +
-        `<select class="add-plant" id="add-plant">` +
-          `<option value="" selected disabled>Choose a plant…</option>${opts}` +
-          `<option value="__other">Something else / not in the guide…</option>` +
-        `</select></label>` +
+        `<input type="text" class="add-plant" id="add-plant" list="add-plant-list" autocomplete="off" ` +
+          `placeholder="Type a plant… e.g. Mulberry">` +
+        `<datalist id="add-plant-list">${opts}</datalist></label>` +
       `<div class="add-other" id="add-other" hidden>` +
-        `<label class="add-row"><span>Name it</span><input type="text" id="add-name" maxlength="80" placeholder="e.g. Wild grapes"></label>` +
+        `<div class="add-hint" id="add-hint"></div>` +
         `<label class="add-row"><span>Type</span><select id="add-cat">${catOpts}</select></label></div>` +
       `<label class="add-row"><span>Photo <em>(optional)</em></span>` +
-        `<input type="file" accept="image/jpeg,image/png,image/webp" id="add-photo"></label>` +
+        `<input type="file" accept="image/*" id="add-photo"></label>` +
       `<div class="add-photo-prev" id="add-photo-prev" hidden></div>` +
       `<label class="add-row"><span>Access notes <em>(optional)</em></span>` +
-        `<textarea id="add-notes" rows="2" maxlength="500" placeholder="How to get to it — e.g. behind the fence, which gate. (Picking &amp; cooking live in the plant guide.)"></textarea></label>` +
-      `<label class="add-caution"><input type="checkbox" id="add-caution"><span>⚠ Has a dangerous lookalike</span></label>` +
+        `<textarea id="add-notes" rows="2" maxlength="500" placeholder="How to get to it — e.g. behind the big tree"></textarea></label>` +
       `<div class="add-actions"><button type="button" class="add-cancel">Cancel</button>` +
         `<button type="button" class="add-save" id="add-save" disabled>Save spot</button></div>`;
     shell.appendChild(addSheet);
@@ -1161,12 +1186,19 @@ const plantCatalog = getPlants()
     addSheet.querySelector('.add-x')!.addEventListener('click', endAddMode);
     addSheet.querySelector('.add-cancel')!.addEventListener('click', endAddMode);
     addSheet.querySelector('.add-useloc')!.addEventListener('click', () => { setLocText('Locating…'); locateNow(); });
-    const plantSel = byId<HTMLSelectElement>('add-plant')!;
-    plantSel.addEventListener('change', () => {
-      byId('add-other')!.hidden = plantSel.value !== '__other';
+    const plantInput = byId<HTMLInputElement>('add-plant')!;
+    const syncPlant = () => {
+      const raw = plantInput.value.trim();
+      const matched = resolvePlant();
+      byId('add-other')!.hidden = !(raw && !matched); // unknown text → show the type picker
+      if (raw && !matched) {
+        const h = byId('add-hint');
+        if (h) h.textContent = `“${raw}” isn’t in the guide yet — pick a type so it still shows on the map.`;
+      }
       refreshSave();
-    });
-    byId('add-name')?.addEventListener('input', refreshSave);
+    };
+    plantInput.addEventListener('input', syncPlant);
+    plantInput.addEventListener('change', syncPlant);
     byId<HTMLInputElement>('add-photo')!.addEventListener('change', (e) => handlePhoto(e.target as HTMLInputElement));
     byId<HTMLButtonElement>('add-save')!.addEventListener('click', (e) => doSave(e.currentTarget as HTMLButtonElement));
 

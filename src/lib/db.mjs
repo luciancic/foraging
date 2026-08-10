@@ -393,7 +393,10 @@ export function addPin(s, actor) {
       `INSERT INTO pins (source, verified, name, category, caution, species, season, location, notes, plant, lon, lat, photos, added, updated)
        VALUES ('confirmed', 1, @name, @category, @caution, @species, @season, @location, @notes, @plant, @lon, @lat, @photos, @added, @updated)`,
     ).run({
-      name: s.name, category: s.category, caution: s.caution ? 1 : 0,
+      // Caution is a property of the PLANT (a dangerous lookalike is the same for
+      // every pin of that species), not a per-pin choice — derive it from the plant
+      // link, mirroring syncPinsToPlants. Guideless finds carry no caution.
+      name: s.name, category: s.category, caution: CAUTION_PLANTS.has(s.plant) ? 1 : 0,
       species: s.species ?? null, season: s.season ?? null, location: s.location ?? null,
       notes: s.notes ?? null, plant: s.plant ?? null, lon: s.lon, lat: s.lat,
       photos: JSON.stringify(s.photos ?? []), added: s.added ?? null, updated: s.updated ?? null,
