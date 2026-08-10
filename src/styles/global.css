@@ -396,16 +396,9 @@ body:not(.map-editing) .leaflet-popup-content .scout-promote { display: none; }
   outline: none; border-color: var(--forest);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--forest) 20%, transparent);
 }
-.add-notfound {
-  align-self: flex-start; margin-top: -4px; font: inherit; font-size: .8rem; font-weight: 600;
-  color: var(--forest-deep); background: none; border: 0; padding: 2px 0; cursor: pointer;
-  text-decoration: underline; text-underline-offset: 2px;
-}
-.add-notfound[hidden] { display: none; }
-.add-notfound:hover { color: var(--forest); }
-.add-other { display: flex; flex-direction: column; gap: 11px; }
-.add-other[hidden] { display: none; } /* beat the UA [hidden] that display:flex overrides */
-.add-hint { font-size: .8rem; line-height: 1.35; color: var(--ink-soft); }
+/* The "name your find" row (shown only when "not in the guide" is picked) is a
+   flex .add-row, so beat the UA [hidden] that display:flex would otherwise override. */
+#add-other[hidden] { display: none; }
 .add-photo-prev { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 7px; }
 .add-photo-prev img { display: block; width: 100%; height: 96px; object-fit: cover; border-radius: 9px; }
 .add-photo-note {
