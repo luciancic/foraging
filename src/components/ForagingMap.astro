@@ -20,7 +20,6 @@ const plantCatalog = getPlants()
 ---
 <div class={`map-wrap${fullscreen ? ' full' : ''}`}>
   <div class="map-shell"><div id="map"></div></div>
-  <div class="map-filter" id="map-filter" hidden></div>
   <div class="legend" id="legend"></div>
   <script type="application/json" id="plant-catalog" set:html={JSON.stringify(plantCatalog)}></script>
 </div>
@@ -401,17 +400,23 @@ const plantCatalog = getPlants()
   // ── Deep-link filters (query string) ─────────────────────────────────────
   // The map opens in normal mode with filters pre-applied from the URL, so a plant
   // guide can link straight to its pins and any filter view is shareable:
-  //   ?plants=raspberry,blackberry   one or more plant slugs (multi-select)
+  //   ?plants=raspberry,blackberry   show ONLY these plants (include)
+  //   ?except=apple                  show all plants EXCEPT these (exclude)
   //   ?ripe=1                        only plants in season right now
   //   ?cat=fruit,greens              only these category types
   //   ?plant=<slug>                  back-compat alias for a single ?plants entry
+  // The plant filter is exclude-by-default: every plant shows unless unchecked, so
+  // "ripe now except apples" is natural. The URL picks whichever list is shorter —
+  // ?plants= (a small include set, e.g. a guide link) or ?except= (a few hidden).
   const qs = new URLSearchParams(location.search);
   const csv = (v: string | null) => (v ? v.split(',').map((s) => s.trim()).filter(Boolean) : []);
-  // Set of plant slugs to filter to (empty = all). `plant` (old single) folds in.
-  const plantsFilter = new Set<string>([...csv(qs.get('plants')), ...csv(qs.get('plant'))]);
+  const plantsInclude = new Set<string>([...csv(qs.get('plants')), ...csv(qs.get('plant'))]);
+  const plantsExclude = new Set<string>(csv(qs.get('except')));
+  // Kept for the home embed (include-only preview).
+  const plantsFilter = plantsInclude;
   const initialCats = new Set<string>(csv(qs.get('cat')));
   const initialRipe = qs.get('ripe') === '1';
-  const hasDeepLink = plantsFilter.size > 0 || initialCats.size > 0 || initialRipe;
+  const hasDeepLink = plantsInclude.size > 0 || plantsExclude.size > 0 || initialCats.size > 0 || initialRipe;
 
   // Per-plant metadata (title, category list, ripe window) emitted at build to
   // dist/data/plants.json — joined onto every pin so the map can colour by the
@@ -700,10 +705,20 @@ const plantCatalog = getPlants()
       build(confirmed, true);
       build(leads, false);
 
+      // Every distinct plant present (the guideless tail has no plant → not listed;
+      // those pins bypass the plant filter). `state.plants` is the SHOWN set: all by
+      // default (exclude-by-default), narrowed by a ?plants include or an ?except
+      // exclude deep-link.
+      const allPlantSlugs = [...new Set(records.map((r) => r.plant).filter(Boolean))];
+      const initialShown = plantsInclude.size
+        ? new Set([...plantsInclude].filter((s) => allPlantSlugs.includes(s)))
+        : new Set(allPlantSlugs.filter((s) => !plantsExclude.has(s)));
+      const narrowed = plantsInclude.size > 0 || plantsExclude.size > 0;
+
       // Fit to the confirmed spots (or the deep-linked plants' pins) on first load.
       try {
         const forBounds = records
-          .filter((r) => plantsFilter.size ? plantsFilter.has(r.plant) : r.verified)
+          .filter((r) => narrowed ? (!!r.plant && initialShown.has(r.plant)) : r.verified)
           .map((r) => [r.lat, r.lon]);
         if (forBounds.length) { spotsBounds = L.latLngBounds(forBounds as any); if (!didLocate) map.fitBounds(spotsBounds.pad(0.35)); }
       } catch {}
@@ -714,14 +729,14 @@ const plantCatalog = getPlants()
       div.hidden = false;
 
       // Filter state. Layers: My spots default ON, leads default OFF — but any
-      // deep-link (plants/cat/ripe) forces every source ON so the linked pins
+      // deep-link (plants/except/cat/ripe) forces every source ON so the linked pins
       // actually surface. Category defaults from ?cat (else all on). `plants` is the
-      // multi-select plant filter; `ripeNow` narrows to what's in season today.
+      // SHOWN plant set; `ripeNow` narrows to what's in season today.
       const state = {
         master: {} as Record<string, boolean>,
         cat: {} as Record<string, boolean>,
         caution: true,
-        plants: new Set<string>(plantsFilter),
+        plants: initialShown,
         ripeNow: initialRipe,
       };
       state.master.confirmed = hasDeepLink ? true : loadPref('layer.confirmed', true);
@@ -730,22 +745,27 @@ const plantCatalog = getPlants()
       state.caution = loadPref('filter.caution', true);
 
       // A record shows when its layer is on, at least one of its (plant) categories is
-      // enabled, caution allows it, it's in the plant filter (if any), and it's ripe
-      // now (if that filter is on). Multi-category plants match under any of their types.
+      // enabled, caution allows it, its plant is in the shown set (guideless pins with
+      // no plant bypass this), and it's ripe now (if that filter is on).
       const visible = (r: Rec) =>
         state.master[r.masterKey] &&
         r.categories.some((c) => state.cat[c] !== false) &&
         (state.caution || !r.caution) &&
-        (!state.plants.size || state.plants.has(r.plant)) &&
+        (!r.plant || state.plants.has(r.plant)) &&
         (!state.ripeNow || r.ripe);
 
       // Reflect the active filters into the URL (shareable/bookmarkable) without
-      // reloading. Only writes params that narrow from the default.
+      // reloading. For plants, write whichever list is shorter: ?plants= (only these)
+      // or ?except= (all but these); nothing when all are shown.
       const syncURL = () => {
         const u = new URL(location.href);
         const set = (k: string, v: string) => v ? u.searchParams.set(k, v) : u.searchParams.delete(k);
-        set('plants', [...state.plants].join(','));
-        u.searchParams.delete('plant');   // fold the legacy alias into ?plants
+        const shown = allPlantSlugs.filter((s) => state.plants.has(s));
+        const hidden = allPlantSlugs.filter((s) => !state.plants.has(s));
+        u.searchParams.delete('plant');   // fold the legacy alias in
+        if (!hidden.length) { u.searchParams.delete('plants'); u.searchParams.delete('except'); }
+        else if (shown.length <= hidden.length) { set('plants', shown.join(',')); u.searchParams.delete('except'); }
+        else { set('except', hidden.join(',')); u.searchParams.delete('plants'); }
         set('ripe', state.ripeNow ? '1' : '');
         const offCats = CAT_ORDER.filter((c) => records.some((r) => r.categories.includes(c)) && state.cat[c] === false);
         set('cat', offCats.length ? CAT_ORDER.filter((c) => state.cat[c] !== false && records.some((r) => r.categories.includes(c))).join(',') : '');
@@ -858,17 +878,6 @@ const plantCatalog = getPlants()
       };
       let plantSearch = '';
 
-      // Lightweight active-filter banner (plant / ripe) with a reset link.
-      const renderBanner = () => {
-        const el = document.getElementById('map-filter');
-        if (!el) return;
-        const bits: string[] = [];
-        if (state.plants.size) bits.push(esc([...state.plants].map((s) => plantsMeta[s]?.title || s).join(', ')));
-        if (state.ripeNow) bits.push('ripe now');
-        if (!bits.length) { el.hidden = true; el.innerHTML = ''; return; }
-        el.innerHTML = `<span>Filtered to <strong>${bits.join(' · ')}</strong>.</span><a href="/map">Show all →</a>`;
-        el.hidden = false;
-      };
       // Filter the rendered plant rows by the search box without a full re-render
       // (keeps input focus). Matches on the plant title.
       const applyPlantSearch = () => {
@@ -899,7 +908,8 @@ const plantCatalog = getPlants()
               `<i class="dot" style="background:${CAUTION_COLOR}"></i>⚠ Caution — lookalikes <b>${cautionCount()}</b></label>` : '') +
           `</div>` +
           (pls.length ? `<div class="scout-plants">` +
-            `<div class="scout-tiers-h">Filter by plant <a class="plant-clear" href="#"${state.plants.size ? '' : ' hidden'}>clear</a></div>` +
+            `<div class="scout-tiers-h">Filter by plant` +
+              `<span class="plant-acts"><a class="plant-all" href="#">all</a><a class="plant-none" href="#">none</a></span></div>` +
             `<input type="search" class="plant-search" placeholder="Search plants…" value="${esc(plantSearch)}" autocomplete="off">` +
             `<div class="plant-list">` +
               pls.map((pl) =>
@@ -924,7 +934,7 @@ const plantCatalog = getPlants()
         const rp = div.querySelector('input[data-ripe]');
         if (rp) rp.addEventListener('change', () => {
           state.ripeNow = (rp as HTMLInputElement).checked;
-          apply(); syncURL(); renderBanner();
+          apply(); syncURL();
         });
         const cb = div.querySelector('input[data-caution]');
         if (cb) cb.addEventListener('change', () => {
@@ -932,24 +942,26 @@ const plantCatalog = getPlants()
           savePref('filter.caution', state.caution);
           apply(); renderCtl();
         });
-        const clearEl = div.querySelector('.plant-clear') as HTMLElement | null;
         div.querySelectorAll('input[data-plant]').forEach((el) => el.addEventListener('change', () => {
           const slug = (el as HTMLInputElement).dataset.plant as string;
           if ((el as HTMLInputElement).checked) state.plants.add(slug); else state.plants.delete(slug);
-          if (clearEl) clearEl.hidden = !state.plants.size;   // toggle in place, keep scroll/focus
-          apply(); syncURL(); renderBanner();
+          apply(); syncURL();
         }));
+        // Bulk-select conveniences: all = show every plant (clears the filter/param),
+        // none = hide all (then check a few for an include filter). Both keep the
+        // search box's current text/scroll.
+        const setAllPlants = (on: boolean) => {
+          state.plants = new Set(on ? plantsShown().map((p) => p.slug) : []);
+          div.querySelectorAll('input[data-plant]').forEach((c) => { (c as HTMLInputElement).checked = on; });
+          apply(); syncURL();
+        };
+        div.querySelector('.plant-all')?.addEventListener('click', (e) => { e.preventDefault(); setAllPlants(true); });
+        div.querySelector('.plant-none')?.addEventListener('click', (e) => { e.preventDefault(); setAllPlants(false); });
         const search = div.querySelector('.plant-search') as HTMLInputElement | null;
         if (search) search.addEventListener('input', () => { plantSearch = search.value; applyPlantSearch(); });
-        if (clearEl) clearEl.addEventListener('click', (e) => {
-          e.preventDefault(); state.plants.clear();
-          div.querySelectorAll('input[data-plant]').forEach((c) => { (c as HTMLInputElement).checked = false; });
-          clearEl.hidden = true; apply(); syncURL(); renderBanner();
-        });
         applyPlantSearch();
       };
       renderCtl();
-      renderBanner();
 
       // A contributor's freshly-saved spot drops straight into the live cluster
       // (no reload) as a confirmed teardrop, with the same popup + admin move/
@@ -974,7 +986,8 @@ const plantCatalog = getPlants()
         hasConfirmed = true;
         if (!state.master.confirmed) { state.master.confirmed = true; savePref('layer.confirmed', true); }
         if (!state.cat[category]) { state.cat[category] = true; savePref('filter.cat.' + category, true); }
-        apply(); renderCtl(); renderBanner();
+        if (plant) state.plants.add(plant);   // ensure the fresh pin passes the plant filter
+        apply(); renderCtl();
         // Zoom/decluster so the fresh pin is individually visible, THEN pop it —
         // openPopup on a still-clustered marker is a no-op.
         map.setView([spot.lat, spot.lon], Math.max(map.getZoom(), 16), { animate: true });

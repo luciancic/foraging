@@ -156,12 +156,6 @@ body.fullbleed main { flex: 1 1 auto; min-height: 0; display: flex; }
 .leaflet-popup-content .p-guide { display: inline-block; margin-top: 8px; font-size: .85rem; font-weight: 600; color: var(--accent, #2f7d4f); text-decoration: none; }
 .leaflet-popup-content .p-guide:hover { text-decoration: underline; }
 
-/* filter banner shown when the map is deep-linked to a single plant (?plant=) */
-.map-filter { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; margin: 14px 0 0; font-size: .9rem; color: var(--ink-soft); }
-/* [hidden] alone loses to the display:flex above, leaving the 14px top margin
-   as a flex item and a gap under the fullscreen map — honour hidden explicitly */
-.map-filter[hidden] { display: none; }
-.map-filter a { color: var(--accent, #2f7d4f); }
 
 .legend { display: flex; flex-wrap: wrap; gap: 14px; margin: 14px 0 0; font-size: .85rem; color: var(--ink-soft); }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
@@ -303,8 +297,8 @@ body.map-editing .map-msg {
 /* Filter-by-plant: searchable, scrollable multi-select inside the panel */
 .scout-plants { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; }
 .scout-plants .scout-tiers-h { display: flex; align-items: baseline; }
-.plant-clear { margin-left: auto; text-transform: none; letter-spacing: 0; font-weight: 400; font-size: .72rem; color: var(--accent, #2f7d4f); }
-.plant-clear[hidden] { display: none; }
+.plant-acts { margin-left: auto; display: inline-flex; gap: 10px; text-transform: none; letter-spacing: 0; font-weight: 400; font-size: .72rem; }
+.plant-acts a { color: var(--accent, #2f7d4f); }
 .plant-search { width: 100%; box-sizing: border-box; padding: 5px 8px; font: inherit; font-size: .8rem;
   border: 1px solid var(--line); border-radius: 7px; background: var(--surface); color: var(--ink); }
 .plant-list { max-height: 172px; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 4px; }
