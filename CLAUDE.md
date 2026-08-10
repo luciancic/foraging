@@ -16,10 +16,21 @@ urban-edible plant field guide for Montréal. Live at **https://foraging.condrea
   leads are a **one-time populated dataset** (iNat / Falling Fruit / Ville de Montréal)
   that just lives in the DB — there is **no deploy-time re-import**; recover them after
   a wipe by restoring the DB backup. One colour axis: `category` (fruit/nuts/greens/
-  herbs/mushrooms/other) + a `caution` boolean (dangerous lookalike). `plant` is a
-  validated soft link (checked in app code, not a hard FK — a live FK would deadlock
-  the plant re-sync). Promote a lead = flip `verified` in place (keeps provenance).
-  `pins.id` is `AUTOINCREMENT` so a deleted id is never reused (keeps the audit log clean).
+  herbs/**sap**/mushrooms/other) + a `caution` boolean (dangerous lookalike). **Every
+  pin belongs to a plant guide.** `plant` is a validated soft link (checked in app code,
+  not a hard FK — a live FK would deadlock the plant re-sync). `syncPinsToPlants()` (in
+  `db.mjs`, run idempotently by `db:init` every deploy, like `backfillGenesis`) resolves
+  each pin's species → canonical plant slug, **derives the pin `name` from the plant
+  title** (pins are no longer custom-named — the guide holds the species detail), sets
+  `category` from the plant's primary, and OR-s `caution` for hazardous plants. Pin
+  `notes` are **access precisions only** (behind a fence, which gate…) — picking/cooking
+  live in the guide. The ornamental tail with no guide (honey locust, Callery pear,
+  generic Prunus) stays species-tagged (unlinked). A **plant** may carry SEVERAL
+  categories (`plants.category` is an ordered JSON list, first = primary/colour; e.g.
+  elderberry = fruit+herbs, sugar-maple/birch = sap); a pin stays single-category
+  (colour + type filters come from the plant's list at render). Promote a lead = flip
+  `verified` in place (keeps provenance). `pins.id` is `AUTOINCREMENT` so a deleted id
+  is never reused (keeps the audit log clean).
 - **Every human pin change is logged** in an append-only `pin_events` table (`create`/
   `edit`/`move`/`delete`/`promote`, plus a `genesis` baseline per existing pin) with
   the actor, timestamp, and full before/after snapshots — so changes are attributable
@@ -39,7 +50,15 @@ urban-edible plant field guide for Montréal. Live at **https://foraging.condrea
   /api/activity`). Field edits show without a rebuild. `ForagingMap.astro` fetches `/api/pins`
   (fallback `dist/data/foraging-spots.geojson`) for confirmed + the static
   `dist/data/pins-leads.geojson` (verified=0 export) for leads; both share one feature
-  shape and one clustered layer. In prod Caddy reverse-proxies `/api/*` → `localhost:8787`.
+  shape and one clustered layer. It also fetches `dist/data/plants.json` (per-plant
+  meta: title, category list, ripe window — emitted at build via `plantsMeta()` in
+  `astro.config.mjs`) and **joins it onto every pin** for colour (primary category),
+  display name, the type filter (matches any of a plant's categories), a **"ripe now"**
+  toggle (computed against the live date, mirroring `season.ts`), and a **searchable
+  multi-select plant filter**. Filters are **deep-linkable / shareable**: `?plants=slug,slug`
+  (multi), `?ripe=1`, `?cat=fruit,greens` open the map in normal mode with them applied
+  (plant guides link with `?plants=`; `?plant=` is a back-compat alias), and in-panel
+  filter changes sync back to the URL. In prod Caddy reverse-proxies `/api/*` → `localhost:8787`.
 - **Photos live in Storj** (bucket `foraging`, prefix `media/`), NOT in git. The API
   serves them at `/images/plants/*` (ID shots) and `/photos/spots/*` (map-pin shots) —
   a read-through cache (`media-cache/`) fetches each from Storj on first hit. Caddy
@@ -56,11 +75,17 @@ urban-edible plant field guide for Montréal. Live at **https://foraging.condrea
   `db:init`, which re-syncs the `plants` table from the seed. Fields mirror the old
   frontmatter (`title, scientificName, commonNames, category, season, status,
   ripeStart, ripeEnd, heroImage, gallery, idCues, safety, guides, order, updated`)
-  plus a free-form Markdown `body`.
-- **Add a map spot:** `POST /api/pins` with an actor (`{actor:{id,name}}`, or the edit
-  token to post as admin) and a Point via `lon`/`lat` + `name, category, species,
-  season, location, notes, plant, caution, photos[]`; categories: `fruit nuts greens
-  herbs mushrooms other`. This writes a confirmed (`verified=1`) pin to the live DB
+  plus a free-form Markdown `body`. `category` is a **JSON list** (first = primary /
+  map colour), tolerant of a legacy bare string; values: `fruit nuts greens herbs sap
+  mushrooms other`.
+- **Add a map spot:** the in-map ➕ contribute sheet makes the visitor **pick a plant**;
+  the pin inherits its `name`/`category`/`species` from the guide (an `__other` escape
+  hatch covers finds with no guide yet). Under the hood `POST /api/pins` with an actor
+  (`{actor:{id,name}}`, or the edit token to post as admin) and a Point via `lon`/`lat`
+  + `name, category, species, season, location, notes, plant, caution, photos[]`;
+  categories: `fruit nuts greens herbs sap mushrooms other`. Prefer setting `plant` — a
+  linked pin's `name`/`category` are re-derived from the plant by `syncPinsToPlants` on
+  every deploy anyway (pins follow their guide). This writes a confirmed (`verified=1`) pin to the live DB
   immediately and records a `create` event — confirmed pins are NOT re-seeded on
   deploy, so don't hand-edit them in `seed.json` and expect propagation. `plant` = a
   plant slug interlinks the pin with its guide both ways; "on map" on a plant page is
