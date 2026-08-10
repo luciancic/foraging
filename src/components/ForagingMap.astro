@@ -1014,7 +1014,8 @@ const plantCatalog = getPlants()
   let addMode = false;
   let addSheet: HTMLElement | null = null;
   let addCross: HTMLElement | null = null;
-  let addPhotoFile: File | null = null;
+  let addPhotoFiles: File[] = [];
+  let forceOther = false; // "not in the guide" explicitly chosen → treat as a custom find
   let addBusy = false;
 
   const byId = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T | null;
@@ -1034,7 +1035,7 @@ const plantCatalog = getPlants()
   const setLocText = (t: string) => { const el = byId('add-loc-txt'); if (el) el.textContent = t; };
 
   function endAddMode() {
-    addMode = false; addBusy = false; addPhotoFile = null;
+    addMode = false; addBusy = false; addPhotoFiles = []; forceOther = false;
     document.body.classList.remove('map-adding');
     addSheet?.remove(); addSheet = null;
     addCross?.remove(); addCross = null;
@@ -1044,6 +1045,7 @@ const plantCatalog = getPlants()
   // Resolve the typed combobox value to a guide plant (exact title match, case-
   // insensitive), or null when it's a not-in-the-guide find (escape hatch).
   function resolvePlant() {
+    if (forceOther) return null; // "not in the guide" was chosen — always a custom find
     const raw = (byId<HTMLInputElement>('add-plant')?.value || '').trim().toLowerCase();
     if (!raw) return null;
     return PLANT_CATALOG.find((p) => p.title.toLowerCase() === raw) || null;
@@ -1064,25 +1066,30 @@ const plantCatalog = getPlants()
   }
 
   async function handlePhoto(input: HTMLInputElement) {
-    const f = input.files && input.files[0];
-    addPhotoFile = f || null;
+    addPhotoFiles = input.files ? Array.from(input.files) : [];
     const prev = byId('add-photo-prev');
-    if (!f) { if (prev) { prev.hidden = true; prev.innerHTML = ''; } return; }
+    if (!addPhotoFiles.length) { if (prev) { prev.hidden = true; prev.innerHTML = ''; } return; }
     // HEIC won't render in an <img> on most browsers, so only preview types the
-    // browser can draw; either way the server stores a JPEG.
+    // browser can draw; either way the server stores a JPEG. One thumbnail per pick.
     if (prev) {
-      const previewable = /image\/(jpeg|png|webp|gif)/i.test(f.type);
       prev.hidden = false;
-      prev.innerHTML = previewable ? `<img src="${URL.createObjectURL(f)}" alt="">`
-        : `<div class="add-photo-note">📷 ${esc(f.name)} — ready to upload</div>`;
+      prev.innerHTML = addPhotoFiles.map((f) =>
+        /image\/(jpeg|png|webp|gif)/i.test(f.type)
+          ? `<img src="${URL.createObjectURL(f)}" alt="">`
+          : `<div class="add-photo-note">📷 ${esc(f.name)}</div>`
+      ).join('');
     }
     try {
-      // EXIF auto-place is JPEG-only; HEIC/other fall back to device GPS + manual.
-      const gps = await readExifGps(f);
-      if (gps) {
-        map.setView([gps.lat, gps.lon], Math.max(map.getZoom(), 17), { animate: true });
-        setLocText('Placed from the photo’s location — pan to fine-tune.');
-        flash('📷 Placed from the photo’s location.');
+      // Auto-place from the first geotagged photo. EXIF read is JPEG-only; HEIC/other
+      // fall back to device GPS + manual pan.
+      for (const f of addPhotoFiles) {
+        const gps = await readExifGps(f);
+        if (gps) {
+          map.setView([gps.lat, gps.lon], Math.max(map.getZoom(), 17), { animate: true });
+          setLocText('Placed from the photo’s location — pan to fine-tune.');
+          flash('📷 Placed from the photo’s location.');
+          break;
+        }
       }
     } catch {}
   }
@@ -1107,17 +1114,19 @@ const plantCatalog = getPlants()
       const notes = byId<HTMLTextAreaElement>('add-notes')!.value.trim() || null;
 
       let photos: string[] = [];
-      if (addPhotoFile) {
-        btn.textContent = 'Uploading photo…';
+      for (let i = 0; i < addPhotoFiles.length; i++) {
+        const pf = addPhotoFiles[i];
+        btn.textContent = addPhotoFiles.length > 1
+          ? `Uploading photo ${i + 1}/${addPhotoFiles.length}…` : 'Uploading photo…';
         // iOS HEIC sometimes reports an empty File.type — infer from the name so the
         // server gets a real content-type (it converts HEIC → JPEG on receipt).
-        const ct = addPhotoFile.type || photoTypeFromName(addPhotoFile.name);
+        const ct = pf.type || photoTypeFromName(pf.name);
         const up = await fetch('/api/photos?name=' + encodeURIComponent(user.name), {
-          method: 'POST', headers: { 'Content-Type': ct }, body: addPhotoFile,
+          method: 'POST', headers: { 'Content-Type': ct }, body: pf,
         });
         if (!up.ok) { const e = await up.json().catch(() => ({})); throw new Error(e.error || ('photo upload failed (HTTP ' + up.status + ')')); }
         const { file } = await up.json();
-        if (file) photos = [file];
+        if (file) photos.push(file);
       }
 
       btn.textContent = 'Saving…';
@@ -1168,11 +1177,12 @@ const plantCatalog = getPlants()
         `<input type="text" class="add-plant" id="add-plant" list="add-plant-list" autocomplete="off" ` +
           `placeholder="Type a plant… e.g. Mulberry">` +
         `<datalist id="add-plant-list">${opts}</datalist></label>` +
+      `<button type="button" class="add-notfound" id="add-notfound">Not in the guide? Add it as “Other”</button>` +
       `<div class="add-other" id="add-other" hidden>` +
         `<div class="add-hint" id="add-hint"></div>` +
         `<label class="add-row"><span>Type</span><select id="add-cat">${catOpts}</select></label></div>` +
-      `<label class="add-row"><span>Photo <em>(optional)</em></span>` +
-        `<input type="file" accept="image/*" id="add-photo"></label>` +
+      `<label class="add-row"><span>Photos <em>(optional)</em></span>` +
+        `<input type="file" accept="image/*" id="add-photo" multiple></label>` +
       `<div class="add-photo-prev" id="add-photo-prev" hidden></div>` +
       `<label class="add-row"><span>Access notes <em>(optional)</em></span>` +
         `<textarea id="add-notes" rows="2" maxlength="500" placeholder="How to get to it — e.g. behind the big tree"></textarea></label>` +
@@ -1187,18 +1197,30 @@ const plantCatalog = getPlants()
     addSheet.querySelector('.add-cancel')!.addEventListener('click', endAddMode);
     addSheet.querySelector('.add-useloc')!.addEventListener('click', () => { setLocText('Locating…'); locateNow(); });
     const plantInput = byId<HTMLInputElement>('add-plant')!;
+    const notFoundBtn = byId<HTMLButtonElement>('add-notfound')!;
     const syncPlant = () => {
       const raw = plantInput.value.trim();
       const matched = resolvePlant();
-      byId('add-other')!.hidden = !(raw && !matched); // unknown text → show the type picker
-      if (raw && !matched) {
-        const h = byId('add-hint');
-        if (h) h.textContent = `“${raw}” isn’t in the guide yet — pick a type so it still shows on the map.`;
+      byId('add-other')!.hidden = !(forceOther || (raw && !matched)); // custom find → show the type picker
+      notFoundBtn.hidden = forceOther || !!matched; // hide once we're already in custom-find mode
+      const h = byId('add-hint');
+      if (h) {
+        h.textContent = forceOther
+          ? 'Type what you found and pick a type so it still shows on the map.'
+          : (raw && !matched ? `“${raw}” isn’t in the guide yet — pick a type so it still shows on the map.` : '');
       }
       refreshSave();
     };
     plantInput.addEventListener('input', syncPlant);
     plantInput.addEventListener('change', syncPlant);
+    // Explicit escape hatch — some browsers hide/ignore the datalist, so a visible
+    // button guarantees "not in the guide" is always reachable. Forces a custom find.
+    notFoundBtn.addEventListener('click', () => {
+      forceOther = true;
+      plantInput.setAttribute('placeholder', 'Name your find… e.g. Wild grapes');
+      syncPlant();
+      plantInput.focus();
+    });
     byId<HTMLInputElement>('add-photo')!.addEventListener('change', (e) => handlePhoto(e.target as HTMLInputElement));
     byId<HTMLButtonElement>('add-save')!.addEventListener('click', (e) => doSave(e.currentTarget as HTMLButtonElement));
 
