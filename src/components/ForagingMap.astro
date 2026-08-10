@@ -1019,8 +1019,8 @@ const plantCatalog = getPlants()
   let addSheet: HTMLElement | null = null;
   let addCross: HTMLElement | null = null;
   let addPhotoFiles: File[] = [];
-  let forceOther = false; // "not in the guide" explicitly chosen → treat as a custom find
   let addBusy = false;
+  const OTHER = '__other__'; // sentinel <option> value for a not-in-the-guide find
 
   const byId = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T | null;
 
@@ -1050,25 +1050,26 @@ const plantCatalog = getPlants()
   const setLocText = (t: string) => { const el = byId('add-loc-txt'); if (el) el.textContent = t; };
 
   function endAddMode() {
-    addMode = false; addBusy = false; addPhotoFiles = []; forceOther = false;
+    addMode = false; addBusy = false; addPhotoFiles = [];
     document.body.classList.remove('map-adding');
     addSheet?.remove(); addSheet = null;
     addCross?.remove(); addCross = null;
     clearFlash();
   }
 
-  // Resolve the typed combobox value to a guide plant (exact title match, case-
-  // insensitive), or null when it's a not-in-the-guide find (escape hatch).
+  // The <select> value is a plant slug, the OTHER sentinel, or '' (placeholder).
+  const isOther = () => byId<HTMLSelectElement>('add-plant')?.value === OTHER;
+  // Resolve the selected slug to a guide plant, or null for a not-in-the-guide find.
   function resolvePlant() {
-    if (forceOther) return null; // "not in the guide" was chosen — always a custom find
-    const raw = (byId<HTMLInputElement>('add-plant')?.value || '').trim().toLowerCase();
-    if (!raw) return null;
-    return PLANT_CATALOG.find((p) => p.title.toLowerCase() === raw) || null;
+    const v = byId<HTMLSelectElement>('add-plant')?.value || '';
+    if (!v || v === OTHER) return null;
+    return PLANT_CATALOG.find((p) => p.slug === v) || null;
   }
   function addValid(): boolean {
-    // Any non-empty entry saves: a matched plant inherits its guide; unmatched text
-    // is a custom find whose type defaults from the (always-populated) type select.
-    return !!(byId<HTMLInputElement>('add-plant')?.value || '').trim();
+    // A guide plant chosen, or "other" with a typed name. Category isn't asked for —
+    // it's the plant's (guide) or `other` for a custom find.
+    if (isOther()) return !!(byId<HTMLInputElement>('add-plant-other')?.value || '').trim();
+    return !!resolvePlant();
   }
   function refreshSave() { const b = byId<HTMLButtonElement>('add-save'); if (b) b.disabled = !addValid() || addBusy; }
 
@@ -1122,9 +1123,10 @@ const plantCatalog = getPlants()
         // Known plant → inherit name/category/species from the guide.
         name = meta.title; category = meta.category; species = meta.species || null; plant = meta.slug;
       } else {
-        // Not-in-the-guide find → the typed text is the name, type from the picker.
-        name = byId<HTMLInputElement>('add-plant')!.value.trim();
-        category = byId<HTMLSelectElement>('add-cat')!.value;
+        // Not-in-the-guide find → typed name, always the `other` category (category is
+        // a property of the plant, not the pin; an unlisted plant is "other").
+        name = byId<HTMLInputElement>('add-plant-other')!.value.trim();
+        category = 'other';
       }
       const notes = byId<HTMLTextAreaElement>('add-notes')!.value.trim() || null;
 
@@ -1176,11 +1178,12 @@ const plantCatalog = getPlants()
         `<path d="M22 3v7M22 34v7M3 22h7M34 22h7" stroke="#21492b" stroke-width="2" stroke-linecap="round"/></svg>`;
     shell.appendChild(addCross);
 
-    // Typeable combobox: an <input list> filters the guide as you type. Datalist
-    // option values are the plant TITLES (what you see/type); we resolve back to the
-    // slug. Typing something not in the guide reveals the "type" escape hatch.
-    const opts = PLANT_CATALOG.map((p) => `<option value="${esc(p.title)}"></option>`).join('');
-    const catOpts = CAT_ORDER.map((c) => `<option value="${c}">${esc(CAT_LABEL[c] || c)}</option>`).join('');
+    // Plain native <select> — the most reliable picker on every phone (iOS shows its
+    // wheel, Android its dropdown). Option values are plant SLUGS; a trailing "not in
+    // the guide" sentinel reveals a free-text name (which lands in the `other` category).
+    const opts = `<option value="" disabled selected>Choose what you found…</option>` +
+      PLANT_CATALOG.map((p) => `<option value="${esc(p.slug)}">${esc(p.title)}</option>`).join('') +
+      `<option value="${OTHER}">Something else — not in the guide</option>`;
     addSheet = document.createElement('div');
     addSheet.className = 'add-sheet';
     addSheet.innerHTML =
@@ -1189,13 +1192,10 @@ const plantCatalog = getPlants()
       `<div class="add-loc"><span class="add-loc-txt" id="add-loc-txt">Pan the map so the crosshair sits on the spot.</span>` +
         `<button type="button" class="add-useloc">📍 Use my location</button></div>` +
       `<label class="add-row"><span>What did you find?</span>` +
-        `<input type="text" class="add-plant" id="add-plant" list="add-plant-list" autocomplete="off" ` +
-          `placeholder="Type a plant… e.g. Mulberry">` +
-        `<datalist id="add-plant-list">${opts}</datalist></label>` +
-      `<button type="button" class="add-notfound" id="add-notfound">Not in the guide? Add it as “Other”</button>` +
-      `<div class="add-other" id="add-other" hidden>` +
-        `<div class="add-hint" id="add-hint"></div>` +
-        `<label class="add-row"><span>Type</span><select id="add-cat">${catOpts}</select></label></div>` +
+        `<select class="add-plant" id="add-plant">${opts}</select></label>` +
+      `<label class="add-row" id="add-other" hidden><span>Name your find</span>` +
+        `<input type="text" id="add-plant-other" autocomplete="off" maxlength="80" ` +
+          `placeholder="e.g. Wild grapes"></label>` +
       `<label class="add-row"><span>Photos <em>(optional)</em></span>` +
         `<input type="file" accept="image/*" id="add-photo" multiple></label>` +
       `<div class="add-photo-prev" id="add-photo-prev" hidden></div>` +
@@ -1211,31 +1211,17 @@ const plantCatalog = getPlants()
     addSheet.querySelector('.add-x')!.addEventListener('click', endAddMode);
     addSheet.querySelector('.add-cancel')!.addEventListener('click', endAddMode);
     addSheet.querySelector('.add-useloc')!.addEventListener('click', () => { setLocText('Locating…'); locateNow(); });
-    const plantInput = byId<HTMLInputElement>('add-plant')!;
-    const notFoundBtn = byId<HTMLButtonElement>('add-notfound')!;
+    const plantSel = byId<HTMLSelectElement>('add-plant')!;
+    const otherRow = byId('add-other')!;
+    const otherInput = byId<HTMLInputElement>('add-plant-other')!;
     const syncPlant = () => {
-      const raw = plantInput.value.trim();
-      const matched = resolvePlant();
-      byId('add-other')!.hidden = !(forceOther || (raw && !matched)); // custom find → show the type picker
-      notFoundBtn.hidden = forceOther || !!matched; // hide once we're already in custom-find mode
-      const h = byId('add-hint');
-      if (h) {
-        h.textContent = forceOther
-          ? 'Type what you found and pick a type so it still shows on the map.'
-          : (raw && !matched ? `“${raw}” isn’t in the guide yet — pick a type so it still shows on the map.` : '');
-      }
+      const other = plantSel.value === OTHER;
+      otherRow.hidden = !other; // "not in the guide" → reveal a free-text name field
+      if (other) otherInput.focus();
       refreshSave();
     };
-    plantInput.addEventListener('input', syncPlant);
-    plantInput.addEventListener('change', syncPlant);
-    // Explicit escape hatch — some browsers hide/ignore the datalist, so a visible
-    // button guarantees "not in the guide" is always reachable. Forces a custom find.
-    notFoundBtn.addEventListener('click', () => {
-      forceOther = true;
-      plantInput.setAttribute('placeholder', 'Name your find… e.g. Wild grapes');
-      syncPlant();
-      plantInput.focus();
-    });
+    plantSel.addEventListener('change', syncPlant);
+    otherInput.addEventListener('input', refreshSave);
     byId<HTMLInputElement>('add-photo')!.addEventListener('change', (e) => handlePhoto(e.target as HTMLInputElement));
     byId<HTMLButtonElement>('add-save')!.addEventListener('click', (e) => doSave(e.currentTarget as HTMLButtonElement));
 
