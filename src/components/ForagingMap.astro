@@ -179,7 +179,11 @@ const plantCatalog = getPlants()
     clearFlash();
     const { latitude, longitude, accuracy } = pos.coords;
     updatePosition(latitude, longitude, accuracy);
-    if (recenter) map.setView([latitude, longitude], Math.max(map.getZoom(), 16), { animate: true });
+    if (recenter && addMode && addCross) {
+      // While adding, drop the crosshair (where the pin lands) on the fix.
+      centerCrosshairOn(latitude, longitude, 16);
+      setLocText('Placed on your location — pan to fine-tune.');
+    } else if (recenter) map.setView([latitude, longitude], Math.max(map.getZoom(), 16), { animate: true });
     else firstFix(L.latLng(latitude, longitude));
   }
 
@@ -1020,11 +1024,22 @@ const plantCatalog = getPlants()
 
   const byId = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T | null;
 
-  // The lat/lng under the crosshair's centre, in the map's current view.
-  function crosshairLatLng() {
+  // The crosshair's centre as a pixel point in the map container.
+  function crosshairPoint() {
     const mr = mapEl!.getBoundingClientRect();
     const cr = addCross!.getBoundingClientRect();
-    return map.containerPointToLatLng([cr.left + cr.width / 2 - mr.left, cr.top + cr.height / 2 - mr.top]);
+    return L.point(cr.left + cr.width / 2 - mr.left, cr.top + cr.height / 2 - mr.top);
+  }
+  // The lat/lng under the crosshair's centre, in the map's current view.
+  function crosshairLatLng() {
+    return map.containerPointToLatLng(crosshairPoint());
+  }
+  // Recenter so a given lat/lng lands UNDER the crosshair (not the map centre —
+  // the crosshair sits high, above the sheet). Used by "use my location" and open.
+  function centerCrosshairOn(lat: number, lon: number, minZoom: number) {
+    const z = Math.max(map.getZoom(), minZoom);
+    const target = map.project([lat, lon], z).subtract(crosshairPoint()).add(map.getSize().divideBy(2));
+    map.setView(map.unproject(target, z), z, { animate: true });
   }
   // Keep the crosshair centred in the map area ABOVE the sheet (thumb covers the
   // sheet, eyes on the pin). Recomputed on open and on resize.
@@ -1237,7 +1252,7 @@ const plantCatalog = getPlants()
     buildAddUI();
     // Default the crosshair to the user's location so field contributors barely
     // move it; if we have no fix yet, ask for one (recenters when it lands).
-    if (userMarker) map.setView(userMarker.getLatLng(), Math.max(map.getZoom(), 16), { animate: true });
+    if (userMarker) { const ll = userMarker.getLatLng(); centerCrosshairOn(ll.lat, ll.lng, 16); }
     else locateNow();
   }
 
