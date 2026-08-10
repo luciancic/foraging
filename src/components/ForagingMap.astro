@@ -29,13 +29,13 @@ const { fullscreen = false } = Astro.props;
   // worth keeping. No second colour system.
   const CAT_COLORS: Record<string, string> = {
     fruit: '#8a2f4a', nuts: '#8a6d3b', greens: '#2f7d4f', herbs: '#4a8f7b',
-    mushrooms: '#9c6b4a', other: '#7a7a7a',
+    sap: '#caa03e', mushrooms: '#9c6b4a', other: '#7a7a7a',
   };
   const CAT_LABEL: Record<string, string> = {
     fruit: 'Fruit & berries', nuts: 'Nuts', greens: 'Greens', herbs: 'Herbs & tea',
-    mushrooms: 'Mushrooms', other: 'Other',
+    sap: 'Sap & syrup', mushrooms: 'Mushrooms', other: 'Other',
   };
-  const CAT_ORDER = ['fruit', 'nuts', 'greens', 'herbs', 'mushrooms', 'other'];
+  const CAT_ORDER = ['fruit', 'nuts', 'greens', 'herbs', 'sap', 'mushrooms', 'other'];
   const CATEGORIES = CAT_ORDER;
   const CAUTION_COLOR = '#d98a2b';
   const SRC_LABEL: Record<string, string> = {
@@ -347,23 +347,39 @@ const { fullscreen = false } = Astro.props;
   if (isFullMap) initPanel();
   applyEditState(); // reflect the initial ?edit state onto body + pencil
 
-  // Optional ?plant=<slug> filter: a plant page can deep-link here to show only
-  // the spots that link back to it (properties.plant === slug) — both confirmed
-  // pins AND scouting leads for that plant.
-  const plantFilter = new URLSearchParams(location.search).get('plant');
+  // ── Deep-link filters (query string) ─────────────────────────────────────
+  // The map opens in normal mode with filters pre-applied from the URL, so a plant
+  // guide can link straight to its pins and any filter view is shareable:
+  //   ?plants=raspberry,blackberry   one or more plant slugs (multi-select)
+  //   ?ripe=1                        only plants in season right now
+  //   ?cat=fruit,greens              only these category types
+  //   ?plant=<slug>                  back-compat alias for a single ?plants entry
+  const qs = new URLSearchParams(location.search);
+  const csv = (v: string | null) => (v ? v.split(',').map((s) => s.trim()).filter(Boolean) : []);
+  // Set of plant slugs to filter to (empty = all). `plant` (old single) folds in.
+  const plantsFilter = new Set<string>([...csv(qs.get('plants')), ...csv(qs.get('plant'))]);
+  const initialCats = new Set<string>(csv(qs.get('cat')));
+  const initialRipe = qs.get('ripe') === '1';
+  const hasDeepLink = plantsFilter.size > 0 || initialCats.size > 0 || initialRipe;
 
-  // The deep-linked banner reports confirmed + lead counts, computed once both
-  // loadConfirmed() and loadLeads() settle inside initFullMap().
-  let fbConfirmed = 0, fbLeads = 0, fbLabel = '';
-  function renderFilterBanner() {
-    const el = document.getElementById('map-filter');
-    if (!el || !plantFilter) return;
-    const parts = [`${fbConfirmed} confirmed spot${fbConfirmed === 1 ? '' : 's'}`];
-    if (fbLeads) parts.push(`${fbLeads} scouting lead${fbLeads === 1 ? '' : 's'}`);
-    el.innerHTML =
-      `<span>Showing ${parts.join(' + ')} for <strong>${esc(fbLabel || plantFilter)}</strong>.</span>` +
-      `<a href="/map">Show all spots →</a>`;
-    el.hidden = false;
+  // Per-plant metadata (title, category list, ripe window) emitted at build to
+  // dist/data/plants.json — joined onto every pin so the map can colour by the
+  // plant's primary category, show the guide title as the pin name, filter by any
+  // of a plant's categories, and compute "ripe now" against the real current date.
+  let plantsMeta: Record<string, any> = {};
+  async function loadPlantsMeta() {
+    try { const r = await fetch('/data/plants.json?t=' + Date.now(), { cache: 'no-store' }); if (r.ok) return await r.json(); } catch {}
+    return {};
+  }
+  // Is this plant in season TODAY? Mirrors src/lib/season.ts against the live date
+  // (not the build date), so the badge stays truthful between nightly rebuilds.
+  function isRipeNow(meta: any): boolean {
+    if (!meta || !meta.ripeStart || !meta.ripeEnd) return false;
+    const now = new Date();
+    const md = (s: string) => { const [m, d] = s.split('-').map(Number); return new Date(now.getFullYear(), m - 1, d); };
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const a = md(meta.ripeStart), b = md(meta.ripeEnd);
+    return b >= a ? today >= a && today <= b : today >= a || today <= b;
   }
 
   async function saveMove(id: number, marker: any, origin: any) {
@@ -490,7 +506,7 @@ const { fullscreen = false } = Astro.props;
       const markers: any[] = [];
       for (const f of geo.features || []) {
         const p = f.properties || {};
-        if (plantFilter && p.plant !== plantFilter) continue;
+        if (plantsFilter.size && !plantsFilter.has(p.plant)) continue;
         const cat = p.category || 'other';
         cats.add(cat);
         const [lon, lat] = f.geometry.coordinates;
@@ -589,7 +605,8 @@ const { fullscreen = false } = Astro.props;
     cluster.addTo(map);
 
     type Rec = { id: any; key: string; masterKey: string; verified: boolean; source: string;
-      category: string; caution: boolean; marker: any; props: any; lat: number; lon: number };
+      category: string; categories: string[]; caution: boolean; plant: string; title: string;
+      ripe: boolean; marker: any; props: any; lat: number; lon: number };
     const records: Rec[] = [];
     const inCluster = new Set<string>();
     const presentSrc = new Set<string>();
@@ -598,41 +615,45 @@ const { fullscreen = false } = Astro.props;
     const build = (geo: any, verified: boolean) => {
       for (const f of geo.features || []) {
         const p = f.properties || {};
-        if (plantFilter && p.plant !== plantFilter) continue;
+        const plant = p.plant || '';
+        // Build EVERY pin (not just deep-linked ones): the plant filter seeds from
+        // ?plants but the full plant list stays available to add/remove in-panel.
         const source = p.source || (verified ? 'confirmed' : 'inat');
-        const category = p.category || 'other';
+        // Join the plant guide: title becomes the pin's display name, its category
+        // list drives colour (primary) + the type filter, and its ripe window the
+        // "ripe now" filter. Guideless leads fall back to their own species/category.
+        const meta = plantsMeta[plant];
+        const categories: string[] = meta?.categories?.length ? meta.categories : [p.category || 'other'];
+        const category = categories[0];
+        const title = meta?.title || p.name || (verified ? 'Spot' : 'Lead');
+        const ripe = isRipeNow(meta);
         const caution = !!p.caution;
         const [lon, lat] = f.geometry.coordinates;
         const key = String(f.id);
         const masterKey = verified ? 'confirmed' : source;
+        const props = { ...p, name: title };   // popup shows the plant's title, not a custom name
         const icon = verified
           ? pinIcon(CAT_COLORS[category] || CAT_COLORS.other, caution)
           : leadIcon(SOURCE_SHAPE[source] || 'circle', CAT_COLORS[category] || CAT_COLORS.other, caution);
         const marker = L.marker([lat, lon], { icon })
-          .bindPopup(pinPopup(p, key, verified), { maxWidth: 244, minWidth: 200, maxHeight: 300, autoPan: true, keepInView: true });
+          .bindPopup(pinPopup(props, key, verified), { maxWidth: 244, minWidth: 200, maxHeight: 300, autoPan: true, keepInView: true });
         if (verified && typeof f.id === 'number') enableLongPressMove(marker, f.id as number);
-        records.push({ id: f.id, key, masterKey, verified, source, category, caution, marker, props: p, lat, lon });
+        records.push({ id: f.id, key, masterKey, verified, source, category, categories, caution, plant, title, ripe, marker, props, lat, lon });
         if (verified) hasConfirmed = true; else presentSrc.add(source);
       }
     };
 
-    Promise.all([loadConfirmed(), loadLeads()]).then(([confirmed, leads]) => {
+    Promise.all([loadConfirmed(), loadLeads(), loadPlantsMeta()]).then(([confirmed, leads, meta]) => {
       // The persistent #edit-banner (applyEditState) shows the edit hint; no flash here.
+      plantsMeta = meta || {};
       build(confirmed, true);
       build(leads, false);
 
-      // Deep-link banner (confirmed + lead counts for one plant).
-      if (plantFilter) {
-        fbConfirmed = records.filter((r) => r.verified).length;
-        fbLeads = records.filter((r) => !r.verified).length;
-        const any = records.find((r) => r.props.species || r.props.name);
-        if (any) fbLabel = any.props.species || any.props.name || '';
-        renderFilterBanner();
-      }
-
-      // Fit to the confirmed spots (or everything under a plant filter) on first load.
+      // Fit to the confirmed spots (or the deep-linked plants' pins) on first load.
       try {
-        const forBounds = records.filter((r) => plantFilter || r.verified).map((r) => [r.lat, r.lon]);
+        const forBounds = records
+          .filter((r) => plantsFilter.size ? plantsFilter.has(r.plant) : r.verified)
+          .map((r) => [r.lat, r.lon]);
         if (forBounds.length) { spotsBounds = L.latLngBounds(forBounds as any); if (!didLocate) map.fitBounds(spotsBounds.pad(0.35)); }
       } catch {}
       setTimeout(() => map.invalidateSize(), 60);
@@ -641,20 +662,44 @@ const { fullscreen = false } = Astro.props;
       if (!div) return;
       div.hidden = false;
 
-      // Layer visibility (persisted). My spots default ON; leads default OFF; a
-      // ?plant deep-link forces everything on so the guide's leads surface.
+      // Filter state. Layers: My spots default ON, leads default OFF — but any
+      // deep-link (plants/cat/ripe) forces every source ON so the linked pins
+      // actually surface. Category defaults from ?cat (else all on). `plants` is the
+      // multi-select plant filter; `ripeNow` narrows to what's in season today.
       const state = {
         master: {} as Record<string, boolean>,
         cat: {} as Record<string, boolean>,
         caution: true,
+        plants: new Set<string>(plantsFilter),
+        ripeNow: initialRipe,
       };
-      state.master.confirmed = plantFilter ? true : loadPref('layer.confirmed', true);
-      for (const s of SOURCE_ORDER) state.master[s] = plantFilter ? true : loadPref('scout.on.' + s, false);
-      for (const c of CAT_ORDER) state.cat[c] = loadPref('filter.cat.' + c, true);
+      state.master.confirmed = hasDeepLink ? true : loadPref('layer.confirmed', true);
+      for (const s of SOURCE_ORDER) state.master[s] = hasDeepLink ? true : loadPref('scout.on.' + s, false);
+      for (const c of CAT_ORDER) state.cat[c] = initialCats.size ? initialCats.has(c) : loadPref('filter.cat.' + c, true);
       state.caution = loadPref('filter.caution', true);
 
+      // A record shows when its layer is on, at least one of its (plant) categories is
+      // enabled, caution allows it, it's in the plant filter (if any), and it's ripe
+      // now (if that filter is on). Multi-category plants match under any of their types.
       const visible = (r: Rec) =>
-        state.master[r.masterKey] && state.cat[r.category] && (state.caution || !r.caution);
+        state.master[r.masterKey] &&
+        r.categories.some((c) => state.cat[c] !== false) &&
+        (state.caution || !r.caution) &&
+        (!state.plants.size || state.plants.has(r.plant)) &&
+        (!state.ripeNow || r.ripe);
+
+      // Reflect the active filters into the URL (shareable/bookmarkable) without
+      // reloading. Only writes params that narrow from the default.
+      const syncURL = () => {
+        const u = new URL(location.href);
+        const set = (k: string, v: string) => v ? u.searchParams.set(k, v) : u.searchParams.delete(k);
+        set('plants', [...state.plants].join(','));
+        u.searchParams.delete('plant');   // fold the legacy alias into ?plants
+        set('ripe', state.ripeNow ? '1' : '');
+        const offCats = CAT_ORDER.filter((c) => records.some((r) => r.categories.includes(c)) && state.cat[c] === false);
+        set('cat', offCats.length ? CAT_ORDER.filter((c) => state.cat[c] !== false && records.some((r) => r.categories.includes(c))).join(',') : '');
+        history.replaceState(null, '', u);
+      };
 
       const apply = () => {
         const add: any[] = [], remove: any[] = [];
@@ -748,28 +793,71 @@ const { fullscreen = false } = Astro.props;
       });
 
       const layerCount = (mk: string) => records.filter((r) => r.masterKey === mk).length;
-      const catCount = (c: string) => records.filter((r) => r.category === c && (state.caution || !r.caution)).length;
+      const okCaution = (r: Rec) => state.caution || !r.caution;
+      const catCount = (c: string) => records.filter((r) => r.categories.includes(c) && okCaution(r)).length;
       const cautionCount = () => records.filter((r) => r.caution).length;
-      const catsShown = CAT_ORDER.filter((c) => records.some((r) => r.category === c));
+      const ripeCount = () => records.filter((r) => r.ripe && okCaution(r)).length;
+      const catsShown = () => CAT_ORDER.filter((c) => records.some((r) => r.categories.includes(c)));
       const srcShown = SOURCE_ORDER.filter((s) => presentSrc.has(s));
+      // Distinct plants present (guideless tail excluded — nothing to name it by).
+      const plantsShown = () => {
+        const agg: Record<string, { slug: string; title: string; count: number }> = {};
+        for (const r of records) { if (!r.plant) continue; (agg[r.plant] ||= { slug: r.plant, title: r.title, count: 0 }).count++; }
+        return Object.values(agg).sort((a, b) => a.title.localeCompare(b.title));
+      };
+      let plantSearch = '';
+
+      // Lightweight active-filter banner (plant / ripe) with a reset link.
+      const renderBanner = () => {
+        const el = document.getElementById('map-filter');
+        if (!el) return;
+        const bits: string[] = [];
+        if (state.plants.size) bits.push(esc([...state.plants].map((s) => plantsMeta[s]?.title || s).join(', ')));
+        if (state.ripeNow) bits.push('ripe now');
+        if (!bits.length) { el.hidden = true; el.innerHTML = ''; return; }
+        el.innerHTML = `<span>Filtered to <strong>${bits.join(' · ')}</strong>.</span><a href="/map">Show all →</a>`;
+        el.hidden = false;
+      };
+      // Filter the rendered plant rows by the search box without a full re-render
+      // (keeps input focus). Matches on the plant title.
+      const applyPlantSearch = () => {
+        const q = plantSearch.trim().toLowerCase();
+        div.querySelectorAll('.plant-opt').forEach((el) => {
+          const name = (el as HTMLElement).dataset.name || '';
+          (el as HTMLElement).style.display = !q || name.includes(q) ? '' : 'none';
+        });
+      };
 
       renderCtl = () => {
         const layerRow = (mk: string, glyph: string, label: string, tag: string, on: boolean) =>
           `<label class="scout-master"><input type="checkbox" data-master="${mk}"${on ? ' checked' : ''}>` +
           `<span class="scout-src"><b>${glyph} ${label}</b><em>${tag} · ${layerCount(mk)}</em></span></label>`;
+        const pls = plantsShown();
         div.innerHTML =
           `<h4 class="panel-h">Map pins <em>colour = type · ⚠ = lookalike</em></h4>` +
           (hasConfirmed ? layerRow('confirmed', '📍', 'My spots', 'confirmed', state.master.confirmed) : '') +
           srcShown.map((s) => layerRow(s, SOURCES[s].glyph, SOURCES[s].label, SOURCES[s].tag, state.master[s])).join('') +
           `<div class="scout-tiers">` +
+            `<label class="scout-tier scout-ripe"><input type="checkbox" data-ripe${state.ripeNow ? ' checked' : ''}>` +
+              `<i class="dot" style="background:#2f7d4f"></i>🟢 Ripe now <b>${ripeCount()}</b></label>` +
             `<div class="scout-tiers-h">Filter by type</div>` +
-            catsShown.map((c) =>
-              `<label class="scout-tier"><input type="checkbox" data-cat="${c}"${state.cat[c] ? ' checked' : ''}>` +
+            catsShown().map((c) =>
+              `<label class="scout-tier"><input type="checkbox" data-cat="${c}"${state.cat[c] !== false ? ' checked' : ''}>` +
               `<i class="dot" style="background:${CAT_COLORS[c]}"></i>${CAT_LABEL[c]} <b>${catCount(c)}</b></label>`).join('') +
             (cautionCount() ? `<label class="scout-tier scout-caution"><input type="checkbox" data-caution${state.caution ? ' checked' : ''}>` +
               `<i class="dot" style="background:${CAUTION_COLOR}"></i>⚠ Caution — lookalikes <b>${cautionCount()}</b></label>` : '') +
           `</div>` +
+          (pls.length ? `<div class="scout-plants">` +
+            `<div class="scout-tiers-h">Filter by plant <a class="plant-clear" href="#"${state.plants.size ? '' : ' hidden'}>clear</a></div>` +
+            `<input type="search" class="plant-search" placeholder="Search plants…" value="${esc(plantSearch)}" autocomplete="off">` +
+            `<div class="plant-list">` +
+              pls.map((pl) =>
+                `<label class="plant-opt" data-name="${esc(pl.title.toLowerCase())}"><input type="checkbox" data-plant="${esc(pl.slug)}"${state.plants.has(pl.slug) ? ' checked' : ''}>` +
+                `<span>${esc(pl.title)}</span><b>${pl.count}</b></label>`).join('') +
+            `</div>` +
+          `</div>` : '') +
           srcShown.filter((s) => SOURCES[s].attrib).map((s) => `<p class="scout-attrib">${SOURCES[s].attrib}</p>`).join('');
+
         div.querySelectorAll('input[data-master]').forEach((el) => el.addEventListener('change', () => {
           const k = (el as HTMLInputElement).dataset.master as string;
           state.master[k] = (el as HTMLInputElement).checked;
@@ -780,16 +868,37 @@ const { fullscreen = false } = Astro.props;
           const c = (el as HTMLInputElement).dataset.cat as string;
           state.cat[c] = (el as HTMLInputElement).checked;
           savePref('filter.cat.' + c, state.cat[c]);
-          apply();
+          apply(); syncURL();
         }));
+        const rp = div.querySelector('input[data-ripe]');
+        if (rp) rp.addEventListener('change', () => {
+          state.ripeNow = (rp as HTMLInputElement).checked;
+          apply(); syncURL(); renderBanner();
+        });
         const cb = div.querySelector('input[data-caution]');
         if (cb) cb.addEventListener('change', () => {
           state.caution = (cb as HTMLInputElement).checked;
           savePref('filter.caution', state.caution);
           apply(); renderCtl();
         });
+        const clearEl = div.querySelector('.plant-clear') as HTMLElement | null;
+        div.querySelectorAll('input[data-plant]').forEach((el) => el.addEventListener('change', () => {
+          const slug = (el as HTMLInputElement).dataset.plant as string;
+          if ((el as HTMLInputElement).checked) state.plants.add(slug); else state.plants.delete(slug);
+          if (clearEl) clearEl.hidden = !state.plants.size;   // toggle in place, keep scroll/focus
+          apply(); syncURL(); renderBanner();
+        }));
+        const search = div.querySelector('.plant-search') as HTMLInputElement | null;
+        if (search) search.addEventListener('input', () => { plantSearch = search.value; applyPlantSearch(); });
+        if (clearEl) clearEl.addEventListener('click', (e) => {
+          e.preventDefault(); state.plants.clear();
+          div.querySelectorAll('input[data-plant]').forEach((c) => { (c as HTMLInputElement).checked = false; });
+          clearEl.hidden = true; apply(); syncURL(); renderBanner();
+        });
+        applyPlantSearch();
       };
       renderCtl();
+      renderBanner();
     }).catch((err) => {
       if (mapEl) mapEl.innerHTML = '<p style="padding:20px">Could not load map data.</p>';
       console.error(err);

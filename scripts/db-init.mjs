@@ -13,7 +13,8 @@ import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import {
-  DB_PATH, loadSeed, replacePlants, replaceConfirmed, confirmedEmpty, backfillGenesis, dumpSeed,
+  DB_PATH, loadSeed, replacePlants, replaceConfirmed, confirmedEmpty, backfillGenesis,
+  syncPinsToPlants, dumpSeed,
 } from '../src/lib/db.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
@@ -29,6 +30,12 @@ if (fresh || force) {
   if (confirmedEmpty()) replaceConfirmed(seed.spots); // first deploy after table exists but empty
   console.log(`Synced plants from seed into ${DB_PATH}; live confirmed spots left in place.`);
 }
+
+// Bind every resolvable pin to its plant guide (name/category/caution follow the
+// plant). Idempotent — safe on every deploy; leaves the guideless ornamental tail
+// untouched. Runs after plants are (re)synced so slugs exist to link against.
+const linked = syncPinsToPlants();
+if (linked) console.log(`Synced ${linked} pin(s) to their plant guide (name/category/caution).`);
 
 const genesis = backfillGenesis();
 if (genesis) console.log(`Backfilled ${genesis} genesis event(s) for confirmed pins with no history.`);

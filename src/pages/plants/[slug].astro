@@ -12,6 +12,10 @@ const { plant } = Astro.props;
 const d = plant.data;
 const live = effectiveStatus(d);
 const statusLabel = STATUS_LABEL;
+const CAT_LABEL: Record<string, string> = {
+  fruit: 'Fruit & berries', nuts: 'Nuts', greens: 'Greens', herbs: 'Herbs & tea',
+  sap: 'Sap & syrup', mushrooms: 'Mushrooms', other: 'Other',
+};
 // Derived at build time from the unified `pins` table — one `WHERE plant = slug`
 // query returns both counts. A confirmed spot (verified=1) or an unverified
 // scouting lead (verified=0) with this `plant` link lights the badge up
@@ -26,8 +30,9 @@ const onMap = spots + leads;
     {d.scientificName && <p class="sci">{d.scientificName}{d.commonNames.length ? ` · also: ${d.commonNames.join(', ')}` : ''}</p>}
     <p style="margin:-6px 0 20px;">
       <span class={`badge ${live}`}>{statusLabel[live]}</span>
+      {d.category.map((c) => <span class="cat-chip">{CAT_LABEL[c] ?? c}</span>)}
       {d.season && <span style="color:var(--ink-soft); margin-left:10px;">🗓 {d.season}</span>}
-      {onMap > 0 && <a href={`/map?plant=${plant.id}`} style="margin-left:10px;">📍 {onMap} on map{leads > 0 && ` (${spots} confirmed)`}</a>}
+      {onMap > 0 && <a href={`/map?plants=${plant.id}`} style="margin-left:10px;">📍 {onMap} on map{leads > 0 && ` (${spots} confirmed)`}</a>}
     </p>
 
     {d.heroImage && <img class="hero-img" src={d.heroImage} alt={d.title} loading="eager" />}

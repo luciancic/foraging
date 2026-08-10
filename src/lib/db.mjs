@@ -35,14 +35,38 @@ import { randomUUID } from 'node:crypto';
 export const DB_PATH = process.env.FORAGING_DB || join(process.cwd(), 'data', 'foraging.db');
 
 // Columns whose stored value is a JSON string; parsed on read, stringified on write.
+// `category` is NOT here — plants store it as a JSON array but tolerate a legacy bare
+// string, so it's normalized explicitly (normalizeCategories) rather than JSON.parsed.
 const PLANT_JSON = ['commonNames', 'gallery', 'idCues', 'safety', 'guides'];
 const PIN_JSON = ['photos', 'meta'];
 
 // ── Category taxonomy ───────────────────────────────────────────────────────
-// ONE axis for every pin: what it is / which food part (objective, browseable).
-// Colour on the map keys off this. Effort/safety lives in the note + the `caution`
-// flag (dangerous-lookalike), not in a second colour system.
-export const PIN_CATEGORIES = ['fruit', 'nuts', 'greens', 'herbs', 'mushrooms', 'other'];
+// What a plant/pin is (which food part). A PLANT may carry SEVERAL categories —
+// e.g. a maple gives both `sap` and (some) fruit — stored as an ordered JSON list
+// where the first is primary (drives the map marker colour). A PIN stays a single
+// string (a spot is one concrete harvest); guideless leads fall back to it, but a
+// plant-linked pin takes its colour + type filters from the plant's list at render.
+// Effort/safety lives in the note + the `caution` flag, not a second colour system.
+export const PIN_CATEGORIES = ['fruit', 'nuts', 'greens', 'herbs', 'sap', 'mushrooms', 'other'];
+
+/** Coerce a stored/seed category value (JSON array, bare string, or null) into a
+ *  clean, de-duplicated array of known category slugs. Empty → ['other']. */
+export function normalizeCategories(raw) {
+  let list = [];
+  if (Array.isArray(raw)) list = raw;
+  else if (typeof raw === 'string') {
+    const s = raw.trim();
+    if (s.startsWith('[')) { try { list = JSON.parse(s); } catch { list = [s]; } }
+    else if (s) list = [s];
+  }
+  const seen = new Set();
+  const out = [];
+  for (const c of list) {
+    const v = String(c || '').trim();
+    if (v && !seen.has(v)) { seen.add(v); out.push(v); }
+  }
+  return out.length ? out : ['other'];
+}
 
 // Canonical plant-slug → category, so a spot inherits its plant's type on migration
 // and the seed stays consistent. (Trees are typed by their *product*, not habit.)
@@ -53,6 +77,7 @@ export const PLANT_TYPE = {
   'lambs-quarters': 'greens', purslane: 'greens', chicory: 'greens', linden: 'greens',
   'wood-sorrel': 'greens', 'broadleaf-plantain': 'greens',
   'staghorn-sumac': 'herbs',
+  'sugar-maple': 'sap', birch: 'sap',
 };
 // Fallback when there's no plant link: map the legacy habit/part category onto a type.
 const LEGACY_TO_TYPE = {
@@ -228,13 +253,41 @@ function decode(row, jsonCols) {
   return out;
 }
 
+// A plant row → app shape: the JSON columns parsed AND `category` normalized to an
+// ordered array (first = primary). Tolerates the legacy bare-string category still
+// sitting in an un-migrated DB or seed.
+function decodePlant(row) {
+  if (!row) return row;
+  const out = decode(row, PLANT_JSON);
+  out.category = normalizeCategories(row.category);
+  return out;
+}
+
 // ── Plants ──────────────────────────────────────────────────────────────────
 export function allPlants() {
   return getDb().prepare(`SELECT * FROM plants ORDER BY "order" ASC, title ASC`).all()
-    .map((r) => decode(r, PLANT_JSON));
+    .map(decodePlant);
 }
 export function getPlant(slug) {
-  return decode(getDb().prepare(`SELECT * FROM plants WHERE slug = ?`).get(slug), PLANT_JSON);
+  return decodePlant(getDb().prepare(`SELECT * FROM plants WHERE slug = ?`).get(slug));
+}
+
+/** Compact per-plant metadata for the map to join onto pins client-side: display
+ *  title, category list (colour + type filters), and the ripening window (so the
+ *  map computes "ripe now" against the real current date, not the build date).
+ *  Keyed by slug. Emitted to dist/data/plants.json at build. */
+export function plantsMeta() {
+  const out = {};
+  for (const p of allPlants()) {
+    out[p.slug] = {
+      title: p.title,
+      categories: p.category,
+      status: p.status,
+      ripeStart: p.ripeStart || null,
+      ripeEnd: p.ripeEnd || null,
+    };
+  }
+  return out;
 }
 
 // ── Pins ──────────────────────────────────────────────────────────────────
@@ -423,6 +476,85 @@ export function backfillGenesis() {
   return rows.length;
 }
 
+// ── Pin → plant normalization ────────────────────────────────────────────────
+// Every pin now belongs to a plant guide. Leads carry Latin binomials (often with a
+// cultivar in quotes); confirmed pins carry mixed "common (Latin)" strings. Resolve
+// a species string to a canonical plant slug: disambiguating common-name keywords
+// first (Rubus splits into blackberry vs raspberry; currants; grape), then a Latin
+// species override, then genus. Returns null for the guideless ornamental tail
+// (honey locust, Callery pear, generic ornamental Prunus…), which stays species-only.
+const GENUS_TO_SLUG = {
+  malus: 'crabapple', amelanchier: 'serviceberry', tilia: 'linden', acer: 'sugar-maple',
+  juglans: 'black-walnut', carya: 'hickory', quercus: 'oak', ginkgo: 'ginkgo', betula: 'birch',
+  celtis: 'hackberry', corylus: 'hazelnut', fagus: 'beech', crataegus: 'hawthorn', sorbus: 'rowan',
+  rhus: 'staghorn-sumac', sambucus: 'elderberry', morus: 'mulberry', vitis: 'grape', ribes: 'black-currant',
+  rosa: 'rose-hips', aronia: 'aronia',
+  asclepias: 'milkweed', trifolium: 'red-clover', daucus: 'wild-carrot', alliaria: 'garlic-mustard',
+  urtica: 'nettle', arctium: 'burdock', achillea: 'yarrow', matricaria: 'pineappleweed',
+  fragaria: 'wild-strawberry', viburnum: 'highbush-cranberry', artemisia: 'mugwort',
+  allium: 'chives', cichorium: 'chicory', chenopodium: 'lambs-quarters', portulaca: 'purslane',
+  plantago: 'broadleaf-plantain', oxalis: 'wood-sorrel',
+};
+const SPECIES_TO_SLUG = {
+  'juglans cinerea': 'butternut', 'juglans ailantifolia': 'butternut',
+  'prunus serotina': 'black-cherry', 'prunus virginiana': 'chokecherry',
+  'malus domestica': 'apple', 'ribes rubrum': 'red-currant', 'ribes nigrum': 'black-currant',
+};
+export function slugForSpecies(species) {
+  if (!species) return null;
+  const s = species.toLowerCase();
+  if (s.includes('blackberry')) return 'blackberry';
+  if (s.includes('raspberry')) return 'raspberry';
+  if (s.includes('red currant')) return 'red-currant';
+  if (s.includes('black currant')) return 'black-currant';
+  if (s.includes('grape')) return 'grape';
+  // Prefer a Latin name inside parentheses ("wild rose (Rosa sp.)"), else the whole string.
+  const paren = species.match(/\(([^)]+)\)/);
+  const latin = paren ? paren[1] : species;
+  const m = latin.match(/[A-Z][a-zà-ÿ]+(?:\s+[a-zà-ÿ]+)?/); // Genus [species]
+  if (!m) return null;
+  const [genus, sp] = m[0].toLowerCase().split(/\s+/);
+  return SPECIES_TO_SLUG[sp ? `${genus} ${sp}` : genus] || GENUS_TO_SLUG[genus] || null;
+}
+
+// Plants whose pins should carry the amber caution ring — a dangerous lookalike or a
+// real handle-with-care hazard (raw-toxic, cyanogenic pits, contact irritant, deadly
+// umbellifer cousins). syncPinsToPlants OR-s this in; it never clears a set caution.
+const CAUTION_PLANTS = new Set([
+  'wild-carrot', 'grape', 'milkweed', 'chives', 'ginkgo',
+  'elderberry', 'chokecherry', 'black-cherry', 'highbush-cranberry',
+]);
+
+/** Idempotent deploy-time normalization (runs after plants are synced): bind every
+ *  resolvable pin to its plant guide and make the pin's own fields follow the plant —
+ *  name = the plant's title (pins are no longer custom-named; the guide holds the
+ *  species detail), category = the plant's PRIMARY category, caution OR-ed up for
+ *  hazardous plants. An existing valid plant link is kept; otherwise it's derived
+ *  from the species. Pins that don't resolve (the ornamental tail) are left untouched.
+ *  Returns the number of pins changed. */
+export function syncPinsToPlants() {
+  const db = getDb();
+  const plants = {};
+  for (const r of db.prepare(`SELECT slug, title, category FROM plants`).all())
+    plants[r.slug] = { title: r.title, primary: normalizeCategories(r.category)[0] };
+  const pins = db.prepare(`SELECT id, plant, species, name, category, caution FROM pins`).all();
+  const upd = db.prepare(`UPDATE pins SET plant = ?, name = ?, category = ?, caution = ? WHERE id = ?`);
+  let changed = 0;
+  db.transaction(() => {
+    for (const p of pins) {
+      const slug = p.plant && plants[p.plant] ? p.plant : slugForSpecies(p.species);
+      if (!slug || !plants[slug]) continue;                    // guideless tail
+      const name = plants[slug].title;
+      const category = plants[slug].primary;
+      const caution = (p.caution || CAUTION_PLANTS.has(slug)) ? 1 : 0;
+      if (p.plant === slug && p.name === name && p.category === category && p.caution === caution) continue;
+      upd.run(slug, name, category, caution, p.id);
+      changed++;
+    }
+  })();
+  return changed;
+}
+
 // ── Seed (init / export) ────────────────────────────────────────────────────
 // Only CONFIRMED pins round-trip through git (seed.json) — leads are regenerated,
 // never committed. Plants are content: git is authoritative, re-synced every deploy.
@@ -438,7 +570,8 @@ export function replacePlants(plants) {
     for (const p of plants ?? []) {
       ins.run({
         slug: p.slug, title: p.title, scientificName: p.scientificName ?? null,
-        commonNames: JSON.stringify(p.commonNames ?? []), category: p.category,
+        commonNames: JSON.stringify(p.commonNames ?? []),
+        category: JSON.stringify(normalizeCategories(p.category)),
         season: p.season ?? null, status: p.status ?? 'year-round',
         ripeStart: p.ripeStart ?? null, ripeEnd: p.ripeEnd ?? null, heroImage: p.heroImage ?? null,
         gallery: JSON.stringify(p.gallery ?? []), idCues: JSON.stringify(p.idCues ?? []),

@@ -97,6 +97,9 @@ body.fullbleed main { flex: 1 1 auto; min-height: 0; display: flex; }
 .badge.coming-soon { background: #fdf0dc; color: #93611a; }
 .badge.note-for-next-year { background: #eef0f4; color: #55607a; }
 .badge.year-round { background: #eef2ec; color: #4a6350; }
+.cat-chip { display: inline-flex; align-items: center; font-size: .72rem; font-weight: 600; color: var(--ink-soft);
+  background: color-mix(in srgb, var(--surface) 60%, transparent); border: 1px solid var(--line);
+  padding: 2px 9px; border-radius: 999px; margin-left: 6px; }
 .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
 
 /* plant detail */
@@ -294,6 +297,19 @@ body.map-editing .map-msg {
 .scout-tier { font-size: .8rem; }
 .scout-tier .dot { width: 10px; height: 10px; flex: none; }
 .scout-tier b { margin-left: auto; font-weight: 600; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.scout-tier.scout-ripe { font-weight: 600; }
+
+/* Filter-by-plant: searchable, scrollable multi-select inside the panel */
+.scout-plants { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; }
+.scout-plants .scout-tiers-h { display: flex; align-items: baseline; }
+.plant-clear { margin-left: auto; text-transform: none; letter-spacing: 0; font-weight: 400; font-size: .72rem; color: var(--accent, #2f7d4f); }
+.plant-clear[hidden] { display: none; }
+.plant-search { width: 100%; box-sizing: border-box; padding: 5px 8px; font: inherit; font-size: .8rem;
+  border: 1px solid var(--line); border-radius: 7px; background: var(--surface); color: var(--ink); }
+.plant-list { max-height: 172px; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 4px; }
+.plant-opt { font-size: .8rem; }
+.plant-opt span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.plant-opt b { margin-left: auto; font-weight: 600; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
 
 /* scouting popup tier badge */
 .leaflet-popup-content .p-cat { display: inline-flex; align-items: center; gap: 6px; font-size: .74rem; font-weight: 600; color: #566152; margin: 2px 0 6px; }

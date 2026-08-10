@@ -8,7 +8,9 @@
         "white mulberry",
         "red mulberry"
       ],
-      "category": "fruit",
+      "category": [
+        "fruit"
+      ],
       "season": "Fruit ripe late June–July",
       "status": "ripe-now",
       "ripeStart": "06-20",
@@ -48,7 +50,9 @@
         "goosefoot",
         "chénopode blanc"
       ],
-      "category": "greens",
+      "category": [
+        "greens"
+      ],
       "season": "Spring through fall",
       "status": "ripe-now",
       "ripeStart": "05-01",
@@ -83,7 +87,9 @@
         "little hogweed",
         "verdolaga"
       ],
-      "category": "greens",
+      "category": [
+        "greens"
+      ],
       "season": "Summer",
       "status": "ripe-now",
       "ripeStart": "06-01",
@@ -118,7 +124,9 @@
         "feral apple",
         "pommier"
       ],
-      "category": "fruit",
+      "category": [
+        "fruit"
+      ],
       "season": "Fruit ripe late summer into fall (windfalls can start dropping late July)",
       "status": "ripe-now",
       "ripeStart": "07-25",
@@ -160,7 +168,9 @@
         "coffeeweed",
         "chicorée sauvage"
       ],
-      "category": "greens",
+      "category": [
+        "greens"
+      ],
       "season": "Greens spring & fall; flowers summer; roots dug in fall",
       "status": "ripe-now",
       "ripeStart": "06-01",
@@ -195,7 +205,9 @@
         "crab apple",
         "pommetier"
       ],
-      "category": "fruit",
+      "category": [
+        "fruit"
+      ],
       "season": "Fruit ripe mid-July through fall",
       "status": "ripe-now",
       "ripeStart": "07-15",
@@ -235,7 +247,10 @@
         "lime tree",
         "tilleul"
       ],
-      "category": "greens",
+      "category": [
+        "greens",
+        "herbs"
+      ],
       "season": "Flowers early summer; young leaves spring",
       "status": "year-round",
       "ripeStart": null,
@@ -269,7 +284,9 @@
         "sourgrass",
         "oxalide"
       ],
-      "category": "greens",
+      "category": [
+        "greens"
+      ],
       "season": "Spring through fall",
       "status": "ripe-now",
       "ripeStart": "05-01",
@@ -304,7 +321,9 @@
         "white man's footstep",
         "plantain majeur"
       ],
-      "category": "greens",
+      "category": [
+        "greens"
+      ],
       "season": "Spring through fall",
       "status": "year-round",
       "ripeStart": null,
@@ -337,7 +356,9 @@
         "wild red raspberry",
         "framboise sauvage"
       ],
-      "category": "fruit",
+      "category": [
+        "fruit"
+      ],
       "season": "Ripe July–Aug (often a lighter second flush into fall)",
       "status": "ripe-now",
       "ripeStart": "07-01",
@@ -387,7 +408,9 @@
         "aronia",
         "aronie"
       ],
-      "category": "fruit",
+      "category": [
+        "fruit"
+      ],
       "season": "Ripe Aug–Sep; fruit hangs on into fall",
       "status": "ripe-now",
       "ripeStart": "08-01",
@@ -430,6 +453,44 @@
       "body": "Aronia is one of the great under-appreciated urban berries — commonly planted as a landscape shrub, so it's everywhere, and almost nobody picks it. Raw it's ferociously astringent (that's the \"choke\"), but it's one of the highest-antioxidant fruits going, and it transforms completely once cooked or sweetened.\n\n## Harvest\n- Pick when berries are fully **purple-black and slightly soft**, August into September. They hold on the bush for weeks, so there's no rush.\n- Whole clusters strip off easily. A frost sweetens them and knocks back the astringency — like rowan, it's worth waiting or freezing the pick overnight.\n\n## Prep\n- **Raw:** edible but drying — a nibble is fine, a handful is a pucker. Best mixed into other things.\n- **Juice / syrup:** the classic use — deep ruby, tart, great cut with apple or added to sparkling water.\n- **Jam & baking:** cook down with sugar (and pectin-rich apple/crabapple) into a dark preserve; or fold into muffins, oatmeal, smoothies.\n- **Dried:** dehydrate for a chewy raisin-like snack that mellows the astringency.\n\n## Notes\n- Very high in anthocyanins/vitamin C — the health-food \"aronia\" powders are this exact berry.\n- _(Two patches logged on the Aug 4 Verdun walk — see the map.)_"
     },
     {
+      "slug": "blackberry",
+      "title": "Blackberry",
+      "scientificName": "Rubus allegheniensis",
+      "commonNames": [
+        "Allegheny blackberry",
+        "mûre"
+      ],
+      "category": [
+        "fruit"
+      ],
+      "season": "Late summer",
+      "status": "ripe-now",
+      "ripeStart": "08-01",
+      "ripeEnd": "09-10",
+      "heroImage": null,
+      "gallery": [],
+      "idCues": [
+        "Thorny, arching biennial canes forming dense thickets on edges and clearings",
+        "Aggregate berry of many small drupelets; ripens green to red to glossy black",
+        "Picked fruit stays SOLID — it keeps its white core (torus), unlike a raspberry which pulls off hollow",
+        "Compound leaves with 3–5 toothed leaflets; white five-petalled flowers in spring"
+      ],
+      "safety": [
+        "No toxic lookalikes; the main hazard is the thorns — wear long sleeves",
+        "Eat only fully black, soft berries — red or shiny-firm ones are sour and unripe",
+        "Wash fruit from roadsides or sprayed areas; avoid canes overhanging dog-walked paths"
+      ],
+      "guides": [
+        {
+          "label": "iNaturalist — Rubus allegheniensis",
+          "url": "https://www.inaturalist.org/taxa/82110"
+        }
+      ],
+      "order": 60,
+      "updated": "2026-08-09",
+      "body": "## Harvest\nWork the sunny edges of thickets, trails, and railway margins from early August on. Ripe blackberries are dull-black, plump, and detach with the gentlest tug; if you have to pull, leave it another day. The give-away versus a black raspberry: a picked blackberry stays **solid** — it keeps its pale central core — while a raspberry slips off hollow like a thimble. Bring a container you don't mind staining and expect thorns.\n\n## Prep\nEat them warm off the cane. At home, rinse gently and use within a day or two — they mould fast. They freeze well spread on a tray, and cook down into jam, cobbler, or a sauce for yogurt. Seeds are noticeable; strain if you want a smooth coulis.\n\n## Notes\nCanes are biennial: first-year shoots leaf out, second-year canes fruit then die. Come back to a good patch yearly. Compare with the red raspberry guide — same genus, opposite core."
+    },
+    {
       "slug": "serviceberry",
       "title": "Serviceberry / Saskatoon",
       "scientificName": "Amelanchier sp.",
@@ -439,7 +500,9 @@
         "serviceberry",
         "amélanchier"
       ],
-      "category": "fruit",
+      "category": [
+        "fruit"
+      ],
       "season": "Fruit ripe late June–early July",
       "status": "note-for-next-year",
       "ripeStart": "06-15",
@@ -476,6 +539,44 @@
       "body": "One of the best native berries and planted everywhere as an ornamental — but it ripens **late June to early July**, so by late July you've likely missed this year's window. The move now: **note the bushes** and come back next June.\n\nThere's already one on the map near the Verdun riverfront.\n\n## Harvest\n- Ripe berries are deep purple and soft, and come off with a gentle roll of the fingers.\n- Birds love them — a well-placed bush can be stripped in a day when ripe, so check daily as they turn.\n\n## Prep\n- Eat fresh; flavour is like a sweeter, almondy blueberry.\n- Classic in pies, muffins, pancakes, and jam (the prairie \"saskatoon pie\"). Freeze exactly like blueberries.\n\n## Notes\n_(Mark bloom date and ripening date each year — that's how you catch the window.)_"
     },
     {
+      "slug": "red-currant",
+      "title": "Red Currant",
+      "scientificName": "Ribes rubrum",
+      "commonNames": [
+        "garden red currant",
+        "gadelle rouge"
+      ],
+      "category": [
+        "fruit"
+      ],
+      "season": "Early to mid summer",
+      "status": "coming-soon",
+      "ripeStart": "06-25",
+      "ripeEnd": "07-31",
+      "heroImage": null,
+      "gallery": [],
+      "idCues": [
+        "Translucent, jewel-red berries hanging in strings (racemes) of 8–15",
+        "Lobed, maple-like leaves with 3–5 pointed lobes; thornless stems",
+        "Small green-yellow flowers in spring, also in drooping clusters",
+        "Common garden escape along fences, hedges, and yard edges"
+      ],
+      "safety": [
+        "No dangerous lookalikes; thornless and easy to identify by the hanging red strings",
+        "Tart and safe raw, though sour enough that most people prefer it cooked",
+        "Only harvest from clearly unsprayed hedges and fence lines"
+      ],
+      "guides": [
+        {
+          "label": "iNaturalist — Ribes rubrum",
+          "url": "https://www.inaturalist.org/taxa/54431"
+        }
+      ],
+      "order": 61,
+      "updated": "2026-08-09",
+      "body": "## Harvest\nLook along fences, alley edges, and old garden borders where a cultivated bush has gone feral. The fruit is unmistakable: clear red berries strung on delicate stems like tiny grapes, over maple-shaped leaves on thornless wood. Pick whole strings by the stem rather than individual berries — it's faster and gentler on the fruit. They hold on the bush well, so you have a wide window.\n\n## Prep\nRed currants are sharply tart raw — good in small amounts, but they shine cooked. They're loaded with natural pectin, so they jelly beautifully with just sugar and no added setting agent. Simmer, strain out the seeds and skins, and you get a bright, clean jelly. They also lift into sauces, cordials, and baking.\n\n## Notes\nStrip the berries off the stem with a fork before cooking. A single established bush can yield generously year after year."
+    },
+    {
       "slug": "black-currant",
       "title": "Black Currant",
       "scientificName": "Ribes nigrum",
@@ -484,7 +585,9 @@
         "cassis",
         "gadellier noir"
       ],
-      "category": "fruit",
+      "category": [
+        "fruit"
+      ],
       "season": "Ripe July–Aug",
       "status": "ripe-now",
       "ripeStart": "07-10",
@@ -530,6 +633,44 @@
       "body": "Cassis — the intensely aromatic black berry behind the liqueur and the jam. Escaped garden plants turn up in hedges and along fences; the crush-and-smell test makes it one of the easier berries to confirm.\n\n## Harvest\n- Pick when berries are fully **black, glossy and soft**, mid-to-late summer. Ripe ones come off easily; strip whole strings and sort later.\n- The flavour is much more assertive than a store raspberry — sharp, musky, \"grown-up.\" A little goes a long way.\n\n## Prep\n- **Raw:** edible but tart and resinous — most people prefer them cooked or sweetened.\n- **Jam / cassis syrup:** the classic. High in pectin, so they set well.\n- **Cordial / infusions:** steep in sugar syrup (or spirit, for a homemade crème de cassis).\n- **Leaves:** a few aromatic young leaves make a fragrant tea.\n\n## Notes\n- Very high in vitamin C.\n- _(Verdun hedge logged Aug 4, next to the raspberry brambles.)_"
     },
     {
+      "slug": "wild-strawberry",
+      "title": "Wild Strawberry",
+      "scientificName": "Fragaria virginiana",
+      "commonNames": [
+        "Virginia strawberry",
+        "fraise des champs"
+      ],
+      "category": [
+        "fruit"
+      ],
+      "season": "Early summer",
+      "status": "coming-soon",
+      "ripeStart": "06-10",
+      "ripeEnd": "07-10",
+      "heroImage": null,
+      "gallery": [],
+      "idCues": [
+        "Tiny red berries, a fraction the size of cultivated ones but intensely sweet and aromatic",
+        "WHITE five-petalled flowers",
+        "Toothed trifoliate leaves (three leaflets); spreads by runners over the ground",
+        "Seeds sit in small pits on the berry's surface, not raised above it"
+      ],
+      "safety": [
+        "No dangerous lookalikes",
+        "Mock strawberry (Potentilla indica / Duchesnea) is a harmless but disappointing double: it has YELLOW flowers and bland, watery, seedy fruit whose seeds stick OUT",
+        "True wild strawberry has WHITE flowers and unmistakable strawberry aroma and flavour — use scent and taste to confirm"
+      ],
+      "guides": [
+        {
+          "label": "iNaturalist — Fragaria virginiana",
+          "url": "https://www.inaturalist.org/taxa/77155"
+        }
+      ],
+      "order": 62,
+      "updated": "2026-08-09",
+      "body": "## Harvest\nHunt sunny lawns, meadow edges, and trail verges in June. The plants hug the ground and spread by runners, so a single find usually means a whole colony. The berries are small — pea to fingernail sized — and easy to miss under the leaves, but each one packs more flavour than a supermarket strawberry. Pick only deep-red, soft, fragrant fruit; pale ones are sour.\n\n## Prep\nHonestly, most get eaten on the spot. If you gather enough, they're extraordinary over yogurt, folded into pancakes, or macerated with a little sugar. They don't keep — use them the same day.\n\n## Notes\nBefore picking, check the flower and the smell. WHITE flowers plus real strawberry aroma = the genuine article. YELLOW flowers with bland, seedy, stick-out fruit = mock strawberry — safe to eat but a letdown, not worth the basket space."
+    },
+    {
       "slug": "plum",
       "title": "Plum",
       "scientificName": "Prunus domestica (and wild Prunus)",
@@ -538,7 +679,9 @@
         "prune",
         "prunier"
       ],
-      "category": "fruit",
+      "category": [
+        "fruit"
+      ],
       "season": "Fruit ripe Aug–Sep",
       "status": "ripe-now",
       "ripeStart": "08-01",
@@ -585,7 +728,9 @@
         "sorbier",
         "cormier"
       ],
-      "category": "fruit",
+      "category": [
+        "fruit"
+      ],
       "season": "Berries colour up Aug–Sep; best after first frost, hold on the tree into winter",
       "status": "ripe-now",
       "ripeStart": "08-01",
@@ -637,7 +782,9 @@
         "cerisier de Virginie",
         "cerise à grappes"
       ],
-      "category": "fruit",
+      "category": [
+        "fruit"
+      ],
       "season": "Fruit ripens late July–Sep, colouring dark red to near-black",
       "status": "ripe-now",
       "ripeStart": "07-20",
@@ -690,7 +837,9 @@
         "églantier",
         "cynorrhodon"
       ],
-      "category": "fruit",
+      "category": [
+        "fruit"
+      ],
       "season": "Hips colour up Sep; best after the first frosts, hold into winter",
       "status": "coming-soon",
       "ripeStart": "09-15",
@@ -739,7 +888,9 @@
         "sumac vinaigrier",
         "velvet sumac"
       ],
-      "category": "herbs",
+      "category": [
+        "herbs"
+      ],
       "season": "Red cones ripe August, hold into winter",
       "status": "coming-soon",
       "ripeStart": "08-01",
@@ -766,6 +917,232 @@
       "body": "The tart red spice-and-lemonade plant, ripening in **August**. Flag the colonies now (they're easy to spot) and come back when the cones deepen to firm red.\n\n## Harvest\n- Pick whole cones on a **dry day** (rain washes out the tart coating that gives the flavour). Ripe cones are deep red and firm.\n- Taste-test: lick a cone — it should be distinctly sour/tart. Bland means under-ripe or rain-washed.\n\n## Prep\n- **Sumac-ade:** crush a few cones, soak in **cold** water 15–30 min (hot water pulls out bitter tannins), swish, strain through cloth, sweeten. A pink, tart, lemonade-like drink.\n- **Spice:** dry the berries, rub off and grind the outer red flesh from the seeds — that red powder is the tangy *za'atar* sumac. Great on flatbread, fish, salads.\n\n## Notes\n_(Mark the colonies now; check ripeness through August.)_"
     },
     {
+      "slug": "sugar-maple",
+      "title": "Sugar Maple",
+      "scientificName": "Acer saccharum",
+      "commonNames": [
+        "hard maple",
+        "érable à sucre"
+      ],
+      "category": [
+        "sap"
+      ],
+      "season": "Tap late Feb–early Apr",
+      "status": "note-for-next-year",
+      "ripeStart": "02-20",
+      "ripeEnd": "04-05",
+      "heroImage": null,
+      "gallery": [],
+      "idCues": [
+        "Opposite branching; classic 5-lobed leaf with smooth-edged (not toothed) sinuses",
+        "Mature bark grey, furrowed into long vertical plates",
+        "Tap in leaf-off late winter, but ID the tree the previous summer/fall while in leaf",
+        "Black maple (Acer nigrum) looks similar and taps identically"
+      ],
+      "safety": [
+        "Sap itself is harmless; risk is over-tapping or damaging a tree — one tap per mature trunk, drill only ~5cm deep",
+        "Don't tap boxelder near roads or trees of unknown health; know your tree before drilling"
+      ],
+      "guides": [
+        {
+          "label": "iNaturalist — Acer saccharum",
+          "url": "https://www.inaturalist.org/taxa/52543"
+        }
+      ],
+      "order": 70,
+      "updated": "2026-08-09",
+      "body": "## Harvest\nTap in late winter, when daytime highs climb above 0°C but nights still drop below freezing — that freeze/thaw pump is what moves the sap. Drill a hole ~5cm deep at a slight upward angle, seat a spile, and hang a covered bucket. Collect the clear, faintly sweet sap daily and keep it cold. Any maple can be tapped, but sugar maple runs the highest sugar, so it's the least work to boil down. Identify the tree the prior season while it's in leaf; the trunk is anonymous in February.\n\n## Prep\nSap is basically sweet water — boil it down hard, roughly 40:1, to reach syrup. Do the bulk boil outdoors (it throws off enormous steam) and finish gently indoors, watching the temperature so it doesn't scorch. Filter before bottling.\n\n## Notes\nStop tapping once buds swell — sap turns off-flavoured. Black maple taps identically. A single tap won't hurt a healthy mature tree."
+    },
+    {
+      "slug": "birch",
+      "title": "Birch",
+      "scientificName": "Betula papyrifera",
+      "commonNames": [
+        "paper birch",
+        "white birch",
+        "bouleau"
+      ],
+      "category": [
+        "sap"
+      ],
+      "season": "Tap early–late Apr",
+      "status": "note-for-next-year",
+      "ripeStart": "04-01",
+      "ripeEnd": "04-25",
+      "heroImage": null,
+      "gallery": [],
+      "idCues": [
+        "Chalky white bark that peels in papery horizontal strips",
+        "Small doubly-toothed oval leaves; slender, often clumped trunks",
+        "River birch and yellow birch are also tappable",
+        "Runs later than maple — tap as the buds begin to swell"
+      ],
+      "safety": [
+        "Sap is safe to drink fresh; risk is over-tapping — one tap per healthy mature trunk, shallow hole, plug when done",
+        "Birch sap sours within a day or two — keep it cold and use it quickly"
+      ],
+      "guides": [
+        {
+          "label": "iNaturalist — Betula papyrifera",
+          "url": "https://www.inaturalist.org/taxa/49883"
+        }
+      ],
+      "order": 71,
+      "updated": "2026-08-09",
+      "body": "## Harvest\nTap birch after the maple run ends, as the buds swell — usually a short window in April. Drill a shallow hole, set a spile, and collect the thin, clear sap. Peeling white paper bark makes the tree easy to confirm. Don't over-tap: one tap per mature trunk, and give the tree years between visits.\n\n## Prep\nBirch sap is only about 1% sugar — roughly 100:1 to syrup, so most foragers skip syruping and instead drink it fresh, or lightly ferment it into a country wine or a mildly fizzy tonic. If you do reduce it, go low and slow; its sugars scorch far more easily than maple's, so finish gently.\n\n## Notes\nUse it fast — birch sap sours within a day or two even refrigerated. River birch and yellow birch tap the same way. Plug the hole with a whittled peg when the run ends."
+    },
+    {
+      "slug": "hackberry",
+      "title": "Hackberry",
+      "scientificName": "Celtis occidentalis",
+      "commonNames": [
+        "common hackberry",
+        "micocoulier"
+      ],
+      "category": [
+        "fruit"
+      ],
+      "season": "Ripe mid-Sep into winter",
+      "status": "coming-soon",
+      "ripeStart": "09-15",
+      "ripeEnd": "11-30",
+      "heroImage": null,
+      "gallery": [],
+      "idCues": [
+        "Corky, warty ridged bark — the most reliable field mark",
+        "Small pea-size drupes on long individual stalks, ripening dark orange to purple",
+        "Asymmetric, toothed leaves with a long tapering tip",
+        "Fruit persists on bare branches well into winter"
+      ],
+      "safety": [
+        "No toxic parts, but the seed is a hard, crunchy stone — go easy on teeth and dental work",
+        "Confirm the warty bark; simply a low-risk fruit once identified"
+      ],
+      "guides": [
+        {
+          "label": "iNaturalist — Celtis occidentalis",
+          "url": "https://www.inaturalist.org/taxa/54857"
+        }
+      ],
+      "order": 76,
+      "updated": "2026-08-09",
+      "body": "## Harvest\nLook for small dark orange-to-purple drupes, each pea-sized on its own long stalk, from mid-September on. The tree gives itself away by its warty, corky ridged bark. Pick when the flesh has darkened; the berries persist on bare branches through winter, so this is a reliable cold-weather forage when little else is left.\n\n## Prep\nEach fruit is a thin layer of sweet, date-like flesh over a hard crunchy seed. The traditional move is to eat the whole thing — flesh and shell — and either crunch it down or grind the lot into a paste. Pounded with a little water it makes a rich \"hackberry milk\"; pressed into bars it's a compact trail food. The ground seed adds a nutty, almost creamy body.\n\n## Notes\nThe seed is genuinely hard — grind rather than bite if you're protective of your teeth. Flavour is best after a frost or two."
+    },
+    {
+      "slug": "black-cherry",
+      "title": "Black Cherry",
+      "scientificName": "Prunus serotina",
+      "commonNames": [
+        "wild black cherry",
+        "cerisier tardif"
+      ],
+      "category": [
+        "fruit"
+      ],
+      "season": "Ripe mid-Aug–mid-Sep",
+      "status": "coming-soon",
+      "ripeStart": "08-15",
+      "ripeEnd": "09-15",
+      "heroImage": null,
+      "gallery": [],
+      "idCues": [
+        "Small dark cherries hanging in long drooping racemes (strings), not single-stalked",
+        "Older bark breaks into dark scaly plates likened to 'burnt cornflakes'",
+        "Finely toothed, glossy elliptical leaves; crushed twig smells of bitter almond",
+        "Single hard pit per cherry"
+      ],
+      "safety": [
+        "Pits, leaves, twigs, and bark are CYANOGENIC — never eat or crush the pits, and don't chew leaves or twigs",
+        "Use the flesh only; spit or strain out every pit before cooking",
+        "Wilting foliage is especially toxic to livestock — keep clippings away from animals"
+      ],
+      "guides": [
+        {
+          "label": "iNaturalist — Prunus serotina",
+          "url": "https://www.inaturalist.org/taxa/54834"
+        }
+      ],
+      "order": 77,
+      "updated": "2026-08-09",
+      "body": "## Harvest\nBlack cherry ripens mid-August into September, hanging in long drooping racemes of small dark cherries — the string-of-fruit habit separates it from ornamental cherries. Confirm the tree by its older bark, which flakes into dark scaly plates often described as burnt cornflakes. Pick the darkest, softest fruit; underripe cherries are punishingly astringent.\n\n## Prep\nRaw, the flesh is thin and mouth-puckering, so black cherry is a cooking fruit. Simmer the whole cherries, then pass through a food mill or strainer to remove every pit before reducing to jelly, syrup, or a base for wine. The flavour deepens beautifully with sugar and heat.\n\n## Notes\nThe pits, leaves, twigs, and bark all contain cyanogenic compounds — use the flesh only, and never crush or eat the stones. Strain thoroughly; a milled pit fragment carries the same bitter-almond toxin. Keep prunings away from grazing animals."
+    },
+    {
+      "slug": "hawthorn",
+      "title": "Hawthorn",
+      "scientificName": "Crataegus",
+      "commonNames": [
+        "thornapple",
+        "aubépine"
+      ],
+      "category": [
+        "fruit"
+      ],
+      "season": "Ripe mid-Sep–Oct",
+      "status": "coming-soon",
+      "ripeStart": "09-15",
+      "ripeEnd": "10-31",
+      "heroImage": null,
+      "gallery": [],
+      "idCues": [
+        "Small red (sometimes orange or black) pomes — 'haws' — like tiny apples",
+        "Long sharp thorns on twigs and branches",
+        "Lobed or toothed leaves; white five-petalled apple-family blossom in spring",
+        "Many species; all true haws are treated the same in the kitchen"
+      ],
+      "safety": [
+        "Sharp thorns — mind hands and eyes while picking",
+        "The SEEDS are cyanogenic — don't crush or eat the seeds; use the flesh only",
+        "Folk tradition uses hawthorn for the heart, but this is not medical advice — no therapeutic claims here"
+      ],
+      "guides": [
+        {
+          "label": "iNaturalist — Crataegus",
+          "url": "https://www.inaturalist.org/taxa/51148"
+        }
+      ],
+      "order": 78,
+      "updated": "2026-08-09",
+      "body": "## Harvest\nHaws ripen from mid-September through October — small red pomes, like miniature apples, clustered on thorny branches. There are many Crataegus species around Montréal and they're notoriously hard to tell apart, but for foraging purposes all true haws are handled alike. Watch the long thorns while you pick; gloves help.\n\n## Prep\nThe flesh is mealy and mild, better cooked than eaten out of hand. Simmer the haws, then push the pulp through a sieve to leave the seeds behind, and turn it into haw jelly or a tangy haw \"ketchup\" for meats. The pectin-poor pulp usually wants added apple or a little pectin to set.\n\n## Notes\nThe seeds are cyanogenic — sieve them out and never crush them; use flesh only. Hawthorn has a long folk reputation as a heart tonic, but treat that as lore, not medical advice."
+    },
+    {
+      "slug": "grape",
+      "title": "Wild Grape",
+      "scientificName": "Vitis riparia",
+      "commonNames": [
+        "riverbank grape",
+        "vigne des rivages"
+      ],
+      "category": [
+        "fruit"
+      ],
+      "season": "Ripe mid-Sep–mid-Oct",
+      "status": "coming-soon",
+      "ripeStart": "09-10",
+      "ripeEnd": "10-15",
+      "heroImage": null,
+      "gallery": [],
+      "idCues": [
+        "Climbing vine with forked TENDRILS opposite the leaves",
+        "Toothed, often lobed leaves; small dark purple grapes in true bunches",
+        "Several round-to-pear-shaped seeds per grape",
+        "Common along riverbanks, fences, and woodland edges"
+      ],
+      "safety": [
+        "TOXIC LOOKALIKE — Canada moonseed (Menispermum canadense) vines alongside wild grape and is poisonous",
+        "Moonseed has NO tendrils, a single CRESCENT-shaped seed, non-toothed leaves, and fruit in loose sprays — grape has forked tendrils, several round/pear seeds, toothed leaves, and true bunches",
+        "Cut a berry and check the seed before eating any wild grape; when unsure, don't"
+      ],
+      "guides": [
+        {
+          "label": "iNaturalist — Vitis riparia",
+          "url": "https://www.inaturalist.org/taxa/119936"
+        }
+      ],
+      "order": 79,
+      "updated": "2026-08-09",
+      "body": "## Harvest\nRiverbank grape ripens from mid-September, hanging in true bunches of small dark purple grapes along rivers, fences, and woodland edges. Confirm the vine by its forked tendrils and toothed, often lobed leaves. Pick after the fruit softens and sweetens; earlier grapes are sharply sour but still good for jelly. Young leaves and tendrils are edible too — tendrils as a sour trail nibble, tender leaves for dolmades.\n\n## Prep\nWild grapes are small, seedy, and tart — best as juice, jelly, or a rustic wine rather than out-of-hand eating. Simmer and strain out skins and seeds before setting the jelly. Blanched grape leaves roll around rice for stuffed dolmades.\n\n## Notes\nCRITICAL: Canada moonseed grows alongside grapes and is toxic. Moonseed has no tendrils, a single crescent-shaped seed, and non-toothed leaves, in loose sprays. Grape has forked tendrils, several round seeds, and toothed leaves in bunches. Slice a berry and check the seed every time before eating."
+    },
+    {
       "slug": "elderberry",
       "title": "Elderberry",
       "scientificName": "Sambucus canadensis",
@@ -773,7 +1150,10 @@
         "common elderberry",
         "sureau"
       ],
-      "category": "fruit",
+      "category": [
+        "fruit",
+        "herbs"
+      ],
       "season": "Flowers June; berries Aug–Sep",
       "status": "coming-soon",
       "ripeStart": "08-15",
@@ -800,17 +1180,708 @@
       "order": 80,
       "updated": "2026-07-27",
       "body": "A two-season plant: fragrant **elderflowers** now (fritters, cordial) and dark **elderberries** in late August–September (syrup, immune tonic). Both need a light touch — the flowers are delicate and the berries must be cooked.\n\n## Harvest\n- **Flowers:** snip whole umbels on a dry sunny morning when most florets are open and fragrant; shake out insects, don't wash (rinses off pollen/aroma). Use fresh.\n- **Berries:** cut whole clusters when fully purple-black and drooping; strip berries off the stems with a fork (keep stems out — they're the bitter/toxic part).\n\n## Prep\n- **Elderflower cordial:** steep flowers with sugar, lemon, and water; strain — a classic summer syrup for spritzers.\n- **Elderberry syrup:** simmer de-stemmed berries with water, strain, add honey — the well-known cold/immune syrup. Always cooked.\n\n## Notes\n_(Mark shrubs at flowering so you can return for berries.)_"
+    },
+    {
+      "slug": "highbush-cranberry",
+      "title": "Highbush Cranberry",
+      "scientificName": "Viburnum opulus",
+      "commonNames": [
+        "guelder-rose",
+        "pimbina"
+      ],
+      "category": [
+        "fruit"
+      ],
+      "season": "Autumn",
+      "status": "coming-soon",
+      "ripeStart": "09-15",
+      "ripeEnd": "10-31",
+      "heroImage": null,
+      "gallery": [],
+      "idCues": [
+        "Shrub with maple-like, three-lobed opposite leaves",
+        "Translucent red drupes in flat-topped clusters, each holding a single flat seed",
+        "Flat-topped spring flower clusters with showy sterile outer flowers",
+        "Cooked fruit gives off a distinctive musky, sweaty smell"
+      ],
+      "safety": [
+        "NOT a true cranberry — it is a Viburnum; do not confuse the name with a Vaccinium",
+        "The European guelder-rose (Viburnum opulus) fruit is very bitter and can cause stomach upset if eaten raw or in quantity",
+        "The native American form (var. americanum, formerly V. trilobum) is the pleasant tart edible one — the two are hard to tell apart, so taste-test cautiously",
+        "Always COOK the fruit (jelly or sauce); never eat raw berries in bulk, and don't eat the seed"
+      ],
+      "guides": [
+        {
+          "label": "iNaturalist — Viburnum opulus",
+          "url": "https://www.inaturalist.org/taxa/55969"
+        }
+      ],
+      "order": 82,
+      "updated": "2026-08-09",
+      "body": "## Harvest\nFind these shrubs in damp thickets, woodland edges, and hedgerows; many ornamental plantings are the European guelder-rose. Wait until after the first frosts, when the translucent red drupes have hung in their flat clusters and softened. Pick whole clusters. Taste one raw, warily: acceptable-tart means the edible American form, mouth-puckering bitterness means the European type — cook only, and sparingly.\n\n## Prep\nAlways cook. Simmer the fruit, then press through a sieve to remove the single flat seed and skins. High pectin makes it set into a tart, ruby jelly that pairs with meat like real cranberry sauce. Expect a musky, sweaty odour while it cooks — it fades, and the finished jelly tastes bright.\n\n## Notes\nOne flat seed per berry marks a Viburnum, not a true cranberry. The maple-shaped opposite leaves and flat flower heads are your year-round ID."
+    },
+    {
+      "slug": "black-walnut",
+      "title": "Black Walnut",
+      "scientificName": "Juglans nigra",
+      "commonNames": [
+        "eastern black walnut",
+        "noyer noir"
+      ],
+      "category": [
+        "nuts"
+      ],
+      "season": "Nuts drop Sep–Oct",
+      "status": "coming-soon",
+      "ripeStart": "09-15",
+      "ripeEnd": "10-20",
+      "heroImage": null,
+      "gallery": [],
+      "idCues": [
+        "Large tree with deeply furrowed dark bark and long pinnately compound leaves (15–23 leaflets)",
+        "Nuts fall as <strong>round</strong>, tennis-ball-sized green husks — solid, not sticky-hairy",
+        "Crush a leaf or scratch a twig: aromatic, spicy-citrusy walnut smell",
+        "Husks bruise brown-black and stain everything they touch"
+      ],
+      "safety": [
+        "Husks contain <strong>juglone</strong> and tannins that stain skin and clothing a deep brown that won't wash out — wear gloves and old clothes.",
+        "The nut meat itself is safe and excellent; the staining/irritant issue is entirely in the husk.",
+        "Juglone is toxic to many plants and to horses' bedding — don't compost husks near a garden."
+      ],
+      "guides": [
+        {
+          "label": "iNaturalist — Juglans nigra",
+          "url": "https://www.inaturalist.org/taxa/54504"
+        }
+      ],
+      "order": 84,
+      "updated": "2026-08-09",
+      "body": "## Harvest\nCollect the round green husks off the ground once they start dropping in mid-September. Take only firm ones; skip any that are mush. Wear rubber gloves — the husks stain hands brown for a week and ruin clothing permanently.\n\n## Prep\nRemove the husk first: stomp them, or roll underfoot on pavement, then peel the blackening flesh away. Wash the hard shells, then <strong>cure</strong> the nuts by drying in a single layer in a ventilated spot for 2–4 weeks. Cracking is genuinely hard work — a vise or a heavy hammer on concrete beats a normal nutcracker. The meat is rich, dark, and intensely flavored, worth the effort.\n\n## Notes\nSquirrels are fast competitors, so gather early. A stained-hands session is a rite of passage. Don't dump the husks in a veggie bed — juglone suppresses many plants."
+    },
+    {
+      "slug": "butternut",
+      "title": "Butternut",
+      "scientificName": "Juglans cinerea",
+      "commonNames": [
+        "white walnut",
+        "noyer cendré"
+      ],
+      "category": [
+        "nuts"
+      ],
+      "season": "Nuts drop Sep–Oct",
+      "status": "coming-soon",
+      "ripeStart": "09-15",
+      "ripeEnd": "10-20",
+      "heroImage": null,
+      "gallery": [],
+      "idCues": [
+        "Close cousin of black walnut, but husks are <strong>oblong/egg-shaped</strong>, not round",
+        "Husk surface is sticky and covered in fine sticky hairs (glandular)",
+        "Lighter grey, smoother bark than black walnut; pinnately compound leaves",
+        "Nut shell is ridged and pointed at one end"
+      ],
+      "safety": [
+        "Same juglone/tannin staining as black walnut — the sticky husk stains skin and clothes; wear gloves.",
+        "The nut meat is safe and sweeter/oilier than black walnut.",
+        "Butternut is a declining species (butternut canker fungus) — harvest lightly and leave plenty; don't strip a healthy tree."
+      ],
+      "guides": [
+        {
+          "label": "iNaturalist — Juglans cinerea",
+          "url": "https://www.inaturalist.org/taxa/54792"
+        }
+      ],
+      "order": 85,
+      "updated": "2026-08-09",
+      "body": "## Harvest\nGather the oblong, sticky-hairy husks from the ground in fall. The stickiness rubs off dark onto your hands, so glove up. Take a modest share only — butternut is being wiped out across its range by a canker fungus, and every surviving tree matters.\n\n## Prep\nHusk and wash as you would black walnut, then cure the shells 2–4 weeks in a dry, airy spot. The shell is hard and ridged; crack with a hammer. The meat is oilier and sweeter than black walnut — closer to a mild, buttery pecan, which is where the name comes from.\n\n## Notes\nIf you find a healthy, productive butternut, note it and protect it — they're increasingly rare. Leave seed nuts behind to regenerate. Because of the oil content the meat goes rancid faster than other nuts; use or freeze it promptly."
+    },
+    {
+      "slug": "hickory",
+      "title": "Shagbark Hickory",
+      "scientificName": "Carya ovata",
+      "commonNames": [
+        "shagbark hickory",
+        "caryer ovale"
+      ],
+      "category": [
+        "nuts"
+      ],
+      "season": "Nuts drop late Sep–Oct",
+      "status": "coming-soon",
+      "ripeStart": "09-20",
+      "ripeEnd": "10-25",
+      "heroImage": null,
+      "gallery": [],
+      "idCues": [
+        "Unmistakable <strong>shaggy bark</strong> that peels away in long, curling vertical plates",
+        "Compound leaves with usually 5 leaflets (the top three larger)",
+        "Nut in a thick woody husk that splits cleanly into 4 sections when ripe",
+        "Nutshell rounded, off-white; kernel sweet like a mild pecan"
+      ],
+      "safety": [
+        "<strong>Don't confuse with bitternut hickory (Carya cordiformis)</strong>: bitternut has smooth (not shaggy) bark and a bitter, unpalatable kernel — not toxic, just inedible and a waste of effort.",
+        "Shagbark nuts are safe and excellent raw or roasted.",
+        "Sort as you crack: discard any kernel that tastes bitter or looks discoloured/wormy."
+      ],
+      "guides": [
+        {
+          "label": "iNaturalist — Carya ovata",
+          "url": "https://www.inaturalist.org/taxa/54791"
+        }
+      ],
+      "order": 86,
+      "updated": "2026-08-09",
+      "body": "## Harvest\nLook up for the shaggy bark, then look down — collect fallen nuts once the husks have split. Ripe husks open into four segments and release the nut cleanly. Beat the squirrels; good nuts vanish fast in a productive year.\n\n## Prep\nPeel off any remaining husk, wash, and dry the nuts a week or two. Crack with a hammer or heavy nutcracker and pick the sweet kernel from the shell. It's one of the best wild nuts here — rich, sweet, pecan-like. Shell fragments are sharp, so sort carefully.\n\n## Notes\nThe inner bark makes a distinctive <strong>hickory-bark syrup</strong>: gently toast (don't scorch) clean bark, simmer to a tea, strain, then reduce with sugar into a smoky syrup — no tapping required. Always confirm shaggy bark; bitternut looks similar from a distance but the nut is inedibly bitter."
+    },
+    {
+      "slug": "oak",
+      "title": "Oak (Acorns)",
+      "scientificName": "Quercus rubra",
+      "commonNames": [
+        "oak",
+        "red oak",
+        "chêne"
+      ],
+      "category": [
+        "nuts"
+      ],
+      "season": "Acorns drop Sep–Oct",
+      "status": "coming-soon",
+      "ripeStart": "09-15",
+      "ripeEnd": "10-31",
+      "heroImage": null,
+      "gallery": [],
+      "idCues": [
+        "Lobed leaves; red-oak group has <strong>bristle-tipped</strong> lobes, white-oak group has rounded lobes",
+        "Acorns sit in a scaly cap; collect only mature brown nuts, not green",
+        "White-oak-group acorns are less bitter (lower tannin) than red-oak-group",
+        "Reject any acorn with a small exit hole — that's a weevil"
+      ],
+      "safety": [
+        "<strong>Never eat acorns raw or unleached</strong> — they're loaded with tannins, astringent and hard on the stomach/kidneys.",
+        "Leach out tannins with repeated cold- or hot-water changes until the water runs clear and the acorn no longer tastes bitter — then they're safe.",
+        "Red-oak-group acorns need much more leaching than white-oak; both are safe once fully leached."
+      ],
+      "guides": [
+        {
+          "label": "iNaturalist — Quercus rubra",
+          "url": "https://www.inaturalist.org/taxa/49005"
+        }
+      ],
+      "order": 87,
+      "updated": "2026-08-09",
+      "body": "## Harvest\nGather mature brown acorns off the ground in fall. Float-test at home: drop them in water and discard floaters (bug-damaged or dried out). Shell the sinkers — a slit and a squeeze pops most caps and shells off.\n\n## Prep\n<strong>Leaching is mandatory.</strong> Cold leach: grind the nutmeats coarse, soak in cold water, change the water daily until it stays clear and a taste is no longer bitter (days for white oak, up to a week-plus for red oak). Hot leach is faster — boil in changes of water — but sets the starch so you can't make crisp flour after. Dry the leached meal and grind into <strong>acorn flour</strong> for breads and pancakes.\n\n## Notes\nWhite-oak-group acorns are the beginner's choice — sweeter, faster to leach. Don't shortcut the leaching; unleached acorns taste terrible and upset the gut."
+    },
+    {
+      "slug": "hazelnut",
+      "title": "Hazelnut",
+      "scientificName": "Corylus americana",
+      "commonNames": [
+        "American hazelnut",
+        "filbert",
+        "noisette"
+      ],
+      "category": [
+        "nuts"
+      ],
+      "season": "Nuts ripen late Aug–Sep",
+      "status": "ripe-now",
+      "ripeStart": "08-20",
+      "ripeEnd": "09-20",
+      "heroImage": null,
+      "gallery": [],
+      "idCues": [
+        "Multi-stemmed shrub with round, doubly-toothed leaves that come to a point",
+        "Nuts held in clusters wrapped in a <strong>leafy, frilled green husk</strong> (involucre)",
+        "Husks and young stems have fine bristly hairs",
+        "Nut inside is the familiar round hazelnut/filbert"
+      ],
+      "safety": [
+        "No toxicity concerns — hazelnuts are a common food nut.",
+        "Standard tree-nut allergen; sample cautiously if you have nut allergies.",
+        "Turkish hazel (Corylus colurna), a common Montréal street tree, also produces edible nuts in a spikier husk — safe, just fiddlier to extract."
+      ],
+      "guides": [
+        {
+          "label": "iNaturalist — Corylus americana",
+          "url": "https://www.inaturalist.org/taxa/54770"
+        }
+      ],
+      "order": 88,
+      "updated": "2026-08-09",
+      "body": "## Harvest\nWatch the clusters from mid-August. Squirrels strip these plants clean the moment nuts approach ripeness, so pick <strong>slightly early</strong> — when the husks are still greenish but the nut inside has filled and firmed — then finish curing at home. Snap whole clusters off; the frilly husks are easy to spot.\n\n## Prep\nPeel the leafy husks away (gloves help with the bristles) and spread the nuts to cure a couple of weeks until the shells harden and the kernels rattle slightly. Crack and eat raw, or roast for deeper flavor. Small but genuinely good — real hazelnuts.\n\n## Notes\nDon't wait for \"perfect\" ripeness in the wild; you'll lose the crop to wildlife. The Turkish hazels planted along many Montréal streets are also worth checking in late summer."
+    },
+    {
+      "slug": "beech",
+      "title": "American Beech",
+      "scientificName": "Fagus grandifolia",
+      "commonNames": [
+        "beechnut",
+        "hêtre"
+      ],
+      "category": [
+        "nuts"
+      ],
+      "season": "Nuts drop Sep–Oct (masting years)",
+      "status": "coming-soon",
+      "ripeStart": "09-15",
+      "ripeEnd": "10-15",
+      "heroImage": null,
+      "gallery": [],
+      "idCues": [
+        "Smooth, grey \"elephant-skin\" bark; often holds tan dead leaves through winter",
+        "Small <strong>triangular</strong> nuts, two per soft-spiny four-part husk",
+        "Leaves oval, glossy, with straight parallel veins ending in fine teeth",
+        "Crops vary wildly year to year — big \"mast\" years then near-nothing"
+      ],
+      "safety": [
+        "Raw beechnuts contain <strong>saponins and fagin</strong> — eating more than a small handful raw can cause stomach upset; <strong>roast them</strong> if eating a quantity.",
+        "The thin skin over the kernel is bitter and tannic — rub it off.",
+        "Safe and pleasant in small amounts raw; roasting neutralizes the irritants and improves flavor."
+      ],
+      "guides": [
+        {
+          "label": "iNaturalist — Fagus grandifolia",
+          "url": "https://www.inaturalist.org/taxa/49202"
+        }
+      ],
+      "order": 89,
+      "updated": "2026-08-09",
+      "body": "## Harvest\nBeech only crops heavily in periodic <strong>mast years</strong>, so some autumns there's a feast and others almost nothing. When husks litter the ground and split open, gather them — the little triangular nuts hide two to a husk. Skip flat, empty husks; a lot of nuts don't fill.\n\n## Prep\nOpen the soft-spiny husks and shell the nuts — fiddly work for the small reward. Rub off the bitter skin. Eat raw only a small handful at a time; to eat more, <strong>roast</strong> them, which drives off the fagin/saponins and brings out a sweet, mild flavor. Roasted beechnuts are also a classic coffee substitute when ground.\n\n## Notes\nPatience is the whole game here: fill quality is low and shelling is tedious, but a good mast year is worth grabbing."
+    },
+    {
+      "slug": "ginkgo",
+      "title": "Ginkgo",
+      "scientificName": "Ginkgo biloba",
+      "commonNames": [
+        "maidenhair tree"
+      ],
+      "category": [
+        "nuts"
+      ],
+      "season": "Seeds drop Oct–early Nov",
+      "status": "coming-soon",
+      "ripeStart": "10-01",
+      "ripeEnd": "11-10",
+      "heroImage": null,
+      "gallery": [],
+      "idCues": [
+        "Unmistakable <strong>fan-shaped, notched leaves</strong> that turn brilliant gold in fall",
+        "Only <strong>female</strong> trees drop the fleshy, apricot-like seeds — many street trees are male and never fruit",
+        "Fallen seed pulp smells strongly of rancid butter/vomit (butyric acid)",
+        "Inside the foul pulp is a hard tan shell around a green edible kernel"
+      ],
+      "safety": [
+        "The fleshy seed coat causes <strong>urushiol-like contact dermatitis</strong> (same chemical family as poison ivy) — always handle with gloves, remove the flesh, and wash hands and tools.",
+        "Kernels are edible <strong>only cooked</strong> and <strong>only in small quantity</strong>: they contain <strong>ginkgotoxin (MPN)</strong>, which can cause poisoning and seizures in excess.",
+        "<strong>Never eat raw.</strong> Keep adult portions small (a handful, well cooked); do not give to children — they are far more susceptible to ginkgotoxin poisoning."
+      ],
+      "guides": [
+        {
+          "label": "iNaturalist — Ginkgo biloba",
+          "url": "https://www.inaturalist.org/taxa/64350"
+        }
+      ],
+      "order": 90,
+      "updated": "2026-08-09",
+      "body": "## Harvest\nOnly female trees drop seeds, and the smell announces them — a pungent, rancid-butter reek underfoot in October. <strong>Wear gloves</strong> before touching anything: the pulp blisters skin like poison ivy. Collect the fleshy seeds into a bag.\n\n## Prep\nGloved, squeeze or scrub the stinking flesh off under running water (outdoors — it reeks), leaving the smooth tan inner shell. Dry the shells, then crack to free the green kernel. <strong>Always cook</strong> — roast, boil, or steam — never eat raw. Wash hands, tools, and any surface the pulp touched.\n\n## Notes\nStrict quantity limits: the kernels contain ginkgotoxin, so keep to a small handful even cooked, and <strong>never serve to children</strong>. Treated with respect, cooked ginkgo nuts (ginnan) are a prized delicacy — chewy, faintly bitter, jade-green. This is an advanced forage; the dermatitis and the toxin are both real."
+    },
+    {
+      "slug": "milkweed",
+      "title": "Common Milkweed",
+      "scientificName": "Asclepias syriaca",
+      "commonNames": [
+        "common milkweed",
+        "asclépiade commune"
+      ],
+      "category": [
+        "greens"
+      ],
+      "season": "Late spring to mid-summer",
+      "status": "ripe-now",
+      "ripeStart": "05-15",
+      "ripeEnd": "07-15",
+      "heroImage": null,
+      "gallery": [],
+      "idCues": [
+        "Stout, thick, unbranched stem when young — does not fork",
+        "Broad opposite leaves with a pale midrib, felty underside",
+        "Milky white sap oozes from any broken part",
+        "Pink-to-purple flower umbels; later warty, teardrop seed pods",
+        "Colonizes fields, roadsides and disturbed ground"
+      ],
+      "safety": [
+        "Eat ONLY common milkweed (A. syriaca), and only the young parts — spring shoots, unopened flower buds, and young firm pods — always COOKED, never raw.",
+        "LOOKALIKE: young dogbane (Apocynum) is toxic. Dogbane has thinner, reddish, forking/branched stems and stays slender; milkweed is stout and unbranched early. Both bleed milky sap, so sap is NOT a distinguishing test.",
+        "When in doubt on young shoots, wait for the unmistakable flower buds or pods before harvesting.",
+        "Do not eat mature pods (they turn fibrous and filled with silk) or any part raw."
+      ],
+      "guides": [
+        {
+          "label": "iNaturalist — Asclepias syriaca",
+          "url": "https://www.inaturalist.org/taxa/47911"
+        }
+      ],
+      "order": 91,
+      "updated": "2026-08-09",
+      "body": "## Harvest\nTake young shoots under about 20 cm, tight unopened flower-bud clusters, and young pods that are still firm and under ~4 cm (they should squeak and have no silk inside). Snap cleanly; the plant regrows. Confirm the stout, unbranched stem and opposite leaves — never harvest a thin, forking, reddish stem, which may be toxic dogbane.\n\n## Prep\nAlways cook. Boil in a change or two of water until tender; this softens texture and mellows any bitterness. Buds cook like tiny broccoli, young pods like okra, shoots like asparagus. Drain and finish in butter, soups, or stir-fries.\n\n## Notes\nMilkweed is the host plant of the monarch butterfly, so harvest lightly and leave plenty of flowering stems standing. It spreads by rhizome in large patches, so a few shoots taken from a big colony is negligible. The reward for the caution is one of the best cooked wild vegetables of the season."
+    },
+    {
+      "slug": "red-clover",
+      "title": "Red Clover",
+      "scientificName": "Trifolium pratense",
+      "commonNames": [
+        "red clover",
+        "trèfle rouge"
+      ],
+      "category": [
+        "herbs"
+      ],
+      "season": "Early summer to early fall",
+      "status": "ripe-now",
+      "ripeStart": "06-01",
+      "ripeEnd": "09-30",
+      "heroImage": null,
+      "gallery": [],
+      "idCues": [
+        "Rounded pink-to-magenta flower heads, egg-shaped",
+        "Trifoliate leaves (three leaflets), often with a pale V/chevron marking",
+        "Softly hairy stems and leaves",
+        "Grows in lawns, meadows, roadsides and field edges"
+      ],
+      "safety": [
+        "Widespread and safe; eat in moderation.",
+        "Use fresh, dry flower heads or cook young leaves — large quantities of old, damp or fermented flowers can taste off.",
+        "Contains phytoestrogens, so those who are pregnant, nursing, or on hormone-sensitive medication may prefer to keep intake light."
+      ],
+      "guides": [
+        {
+          "label": "iNaturalist — Trifolium pratense",
+          "url": "https://www.inaturalist.org/taxa/51875"
+        }
+      ],
+      "order": 92,
+      "updated": "2026-08-09",
+      "body": "## Harvest\nPick flower heads at their peak — plump, bright magenta, and not yet browning at the base. Pinch the head off just below the bloom. Young leaves can be gathered any time in the growing season; look for the tell-tale pale chevron on the leaflets.\n\n## Prep\nNibble fresh flowers straight off the stem for a mild sweet-pea note, or scatter them over salads. To dry for tea, spread heads on a screen out of direct sun until crisp, then store airtight; steep for a mild, hay-sweet infusion. Young leaves are best cooked briefly, like a mild green, since raw they can be tough.\n\n## Notes\nRed clover is one of the most forgiving beginner plants in Montréal — no dangerous lookalikes, and it grows in nearly every untreated lawn and meadow. Avoid patches near roadsides or sprayed turf. Bees love the blooms, so leave plenty behind."
+    },
+    {
+      "slug": "wild-carrot",
+      "title": "Wild Carrot",
+      "scientificName": "Daucus carota",
+      "commonNames": [
+        "Queen Anne's lace",
+        "carotte sauvage"
+      ],
+      "category": [
+        "greens"
+      ],
+      "season": "Fall (first-year root)",
+      "status": "coming-soon",
+      "ripeStart": "09-01",
+      "ripeEnd": "10-31",
+      "heroImage": null,
+      "gallery": [],
+      "idCues": [
+        "HAIRY stem — 'Queen Anne has hairy legs' — is the single most important tell",
+        "Whole plant, and especially the crushed root, smells distinctly of carrot",
+        "Flat-topped white umbel, often with one dark reddish/purple floret in the very center",
+        "Umbel curls up into a 'bird's nest' as it goes to seed",
+        "Three-times-divided, ferny, finely cut leaves"
+      ],
+      "safety": [
+        "DEADLY LOOKALIKES — this plant is in a family with two potentially FATAL relatives: poison hemlock (Conium maculatum) and water hemlock (Cicuta). Ingesting either can kill. Do not attempt this plant unless you are experienced and 100% certain.",
+        "Key tell: wild carrot has a HAIRY stem and smells like carrot. Poison hemlock has a HAIRLESS (smooth) stem with PURPLE blotches and a musty, mousy smell. Water hemlock grows in wet ground and has a chambered rootstock.",
+        "Look for the single dark reddish floret in the umbel center and the ferny carrot scent — but treat NO single feature as proof on its own; every trait must line up.",
+        "When there is any doubt at all, DO NOT harvest or eat it. The edible part is the first-year root; the dried seed can also be used as a spice."
+      ],
+      "guides": [
+        {
+          "label": "iNaturalist — Daucus carota",
+          "url": "https://www.inaturalist.org/taxa/76610"
+        }
+      ],
+      "order": 93,
+      "updated": "2026-08-09",
+      "body": "## Harvest\nOnly for experienced foragers. The edible part is the pale first-year taproot, dug in fall from rosettes that have not yet sent up a flower stalk. Before digging, positively identify the patch the previous summer by its flowering plants: hairy stems, carrot smell, and the dark central floret. Crush a leaf and the root — it must smell unmistakably of carrot.\n\n## Prep\nFirst-year roots are thin, tough and woody compared to garden carrots; scrub and simmer them in soups or stocks rather than eating raw. The dried ripe seeds work as a caraway-like spice in small amounts.\n\n## Notes\nThis is the most dangerous plant in this guide. Poison and water hemlock grow in the same habitats and have killed foragers who mistook them for wild carrot or wild parsnip. If you cannot confidently distinguish a hairy carrot-scented stem from a smooth purple-blotched one, leave the entire family alone."
+    },
+    {
+      "slug": "garlic-mustard",
+      "title": "Garlic Mustard",
+      "scientificName": "Alliaria petiolata",
+      "commonNames": [
+        "garlic mustard",
+        "alliaire"
+      ],
+      "category": [
+        "greens"
+      ],
+      "season": "Mid-spring to early summer",
+      "status": "ripe-now",
+      "ripeStart": "04-15",
+      "ripeEnd": "06-15",
+      "heroImage": null,
+      "gallery": [],
+      "idCues": [
+        "Crushed leaves smell distinctly of garlic — the definitive test",
+        "First-year: low rosette of kidney-shaped, scalloped-edged leaves",
+        "Second-year: toothed, triangular leaves up a stalk topped with small white 4-petal flowers",
+        "White taproot with a faint S-shaped crook near the top",
+        "Common in shaded woodland edges, trails and gardens"
+      ],
+      "safety": [
+        "Invasive in Québec — forage freely and pull whole plants to help control it; bag and bin, do not compost seeding plants.",
+        "Contains mild goitrogens and trace cyanogenic compounds, so avoid eating large quantities of raw leaves daily; cooking reduces these.",
+        "Positively confirm the garlic smell — a few unrelated plants share the leaf shape but will not smell of garlic when crushed."
+      ],
+      "guides": [
+        {
+          "label": "iNaturalist — Alliaria petiolata",
+          "url": "https://www.inaturalist.org/taxa/56061"
+        }
+      ],
+      "order": 94,
+      "updated": "2026-08-09",
+      "body": "## Harvest\nPick young first-year rosette leaves and the tender tops of second-year plants in spring; both should smell of garlic when crushed. Later in the season leaves grow more bitter, so harvest early. Since it is invasive, pull the whole plant, root and all — every plant removed is a small win for the forest floor.\n\n## Prep\nLeaves go into pesto (they blend the bitterness beautifully), salads, or wilted as a green; expect a mild garlic-mustard bite. The slender white taproot, scrubbed and grated, makes a horseradish-like condiment. Cooking or blanching softens both the bitterness and the trace compounds.\n\n## Notes\nThis is a guilt-free harvest: garlic mustard crowds out native spring ephemerals, so taking as much as you like is genuinely helpful. Just keep raw daily portions modest, and never re-plant or compost seeding stalks."
+    },
+    {
+      "slug": "nettle",
+      "title": "Stinging Nettle",
+      "scientificName": "Urtica dioica",
+      "commonNames": [
+        "stinging nettle",
+        "ortie"
+      ],
+      "category": [
+        "greens"
+      ],
+      "season": "Spring (tender tops before flowering)",
+      "status": "ripe-now",
+      "ripeStart": "04-15",
+      "ripeEnd": "06-01",
+      "heroImage": null,
+      "gallery": [],
+      "idCues": [
+        "Opposite, toothed, heart-to-lance-shaped leaves with a pointed tip",
+        "Square stem and leaves covered in fine stinging hairs",
+        "Small greenish flower tassels dangle from leaf axils on older plants",
+        "Grows in moist, rich soil along streams, hedges and disturbed ground"
+      ],
+      "safety": [
+        "Stings on contact — wear gloves (and long sleeves) to harvest; the fine hairs inject an irritant that raises a burning welt.",
+        "Cooking or thorough drying completely destroys the sting, making the plant fully safe to eat.",
+        "Harvest tender spring tops BEFORE flowering; older/flowering nettle develops gritty mineral cystoliths that can irritate the urinary tract — avoid it.",
+        "Wood nettle (Laportea canadensis) is a similar edible with alternate leaves, but confirm your plant before eating any lookalike."
+      ],
+      "guides": [
+        {
+          "label": "iNaturalist — Urtica dioica",
+          "url": "https://www.inaturalist.org/taxa/51884"
+        }
+      ],
+      "order": 95,
+      "updated": "2026-08-09",
+      "body": "## Harvest\nWear gloves. Pinch or snip the top few pairs of leaves from young, non-flowering plants in spring — the tender growing tips are the prize. Collect into a bag rather than handling loose. Once plants begin to flower, stop; the texture turns gritty and the leaves are best left.\n\n## Prep\nHeat or drying kills the sting instantly. Blanch for 30–60 seconds, then use like spinach in soups, pasta, frittata, or a bright green purée; the flavour is deep and mineral. Dry the leaves for a nourishing tea. Never eat mature nettle raw.\n\n## Notes\nStinging nettle is among the finest wild cooked greens Montréal offers, thriving in the moist rich soil along the city's ravines and riverbanks. Harvesting the tops actually encourages tender regrowth, so a well-tended patch can be picked repeatedly through spring."
+    },
+    {
+      "slug": "burdock",
+      "title": "Burdock",
+      "scientificName": "Arctium minus",
+      "commonNames": [
+        "lesser burdock",
+        "common burdock",
+        "bardane"
+      ],
+      "category": [
+        "greens"
+      ],
+      "season": "Fall (first-year root); early spring of year two",
+      "status": "coming-soon",
+      "ripeStart": "09-15",
+      "ripeEnd": "11-15",
+      "heroImage": null,
+      "gallery": [],
+      "idCues": [
+        "Huge rhubarb-like basal leaves, dull green above and woolly white-felted beneath",
+        "First-year plant is a low rosette with no flower stalk",
+        "Second-year plant sends up a tall branched stem tipped with the unmistakable hooked burrs",
+        "Crushed root and leaf smell distinctly of burdock (gobo)"
+      ],
+      "safety": [
+        "Don't confuse a first-year rosette with foxglove (Digitalis, toxic): burdock leaves are dull, deeply veined, woolly-white beneath and smell of burdock; foxglove leaves are toothed and lack that felt and scent",
+        "When unsure, wait for the burrs — they are unmistakable and confirm the plant",
+        "Dig only where soil is clean and untreated; roots concentrate what's in the ground"
+      ],
+      "guides": [
+        {
+          "label": "iNaturalist — Arctium minus",
+          "url": "https://www.inaturalist.org/taxa/59570"
+        }
+      ],
+      "order": 96,
+      "updated": "2026-08-09",
+      "body": "## Harvest\nThe prize is the **first-year taproot** — this is the *gobo* of Japanese cooking. Find a leafy rosette with no flower stalk and dig deep in the fall of its first year, or in the spring of year two before it bolts; once the burr stalk shoots up the root turns woody. It's a long, stubborn root, so bring a spade and lever from the side. Young leaf stalks (petioles) are edible too — cut before the plant flowers.\n\n## Prep\nScrub the root, then peel off the bitter skin; the pale core discolours fast, so drop it in acidulated water. Slice or shave and braise, stir-fry, or add to soups — earthy and sweet. Peel leaf stalks of their stringy skin and simmer like a mild vegetable.\n\n## Notes\nBurdock is a biennial: a rosette the first year, burrs the second. The felted white leaf underside plus the burdock smell separate it from toxic foxglove. Common on disturbed ground, alleys, and vacant lots across Montréal."
+    },
+    {
+      "slug": "yarrow",
+      "title": "Yarrow",
+      "scientificName": "Achillea millefolium",
+      "commonNames": [
+        "milfoil",
+        "achillée millefeuille"
+      ],
+      "category": [
+        "herbs"
+      ],
+      "season": "Early summer to early fall",
+      "status": "ripe-now",
+      "ripeStart": "06-01",
+      "ripeEnd": "09-30",
+      "heroImage": null,
+      "gallery": [],
+      "idCues": [
+        "Soft, finely-divided feathery leaves — the 'millefeuille' (thousand-leaf) look, running all along the stem",
+        "Flat-topped clusters of small white (sometimes pale pink) flowers",
+        "Strong, distinct aromatic scent when leaves are crushed"
+      ],
+      "safety": [
+        "Its lacy leaves and white flat-topped flower clusters can superficially resemble toxic carrot-family plants such as poison hemlock — but yarrow's leaves are soft and feathery all along the stem and smell distinctly aromatic; confirm by the feathery leaf plus scent before use",
+        "A bitter, potent herb — use sparingly as a seasoning, tea, or medicinal",
+        "Avoid in pregnancy; can cause skin sensitivity in some people"
+      ],
+      "guides": [
+        {
+          "label": "iNaturalist — Achillea millefolium",
+          "url": "https://www.inaturalist.org/taxa/52821"
+        }
+      ],
+      "order": 97,
+      "updated": "2026-08-09",
+      "body": "## Harvest\nSnip leafy tops and flower clusters through summer, ideally in the morning once the dew has dried. Take a little from many plants rather than stripping one. Yarrow grows in sunny lawns, road edges, and rough grassland all over the city.\n\n## Prep\nThink of yarrow as a bitter aromatic — a pinch goes a long way. Steep fresh or dried leaves and flowers for a grassy, slightly medicinal tea, or use finely chopped to season sparingly. Dry bunches upside down in a shaded, airy spot for winter.\n\n## Notes\nThe feathery, many-divided leaf running the length of the stem, plus the strong aroma, are your safety check: poison hemlock and other toxic umbellifers have broader, glossy, non-aromatic foliage and smooth purple-blotched stems. If a plant is odourless or smells musty, walk away. Use in moderation and avoid during pregnancy."
+    },
+    {
+      "slug": "pineappleweed",
+      "title": "Pineappleweed",
+      "scientificName": "Matricaria discoidea",
+      "commonNames": [
+        "wild chamomile",
+        "matricaire odorante"
+      ],
+      "category": [
+        "herbs"
+      ],
+      "season": "Summer",
+      "status": "ripe-now",
+      "ripeStart": "06-01",
+      "ripeEnd": "09-15",
+      "heroImage": null,
+      "gallery": [],
+      "idCues": [
+        "Low weed of paths, driveways, sidewalk cracks, and compacted soil",
+        "Cone-shaped yellow-green flower heads with NO white petals",
+        "Feathery, finely-divided leaves",
+        "Crush a flower head — it smells sweetly of pineapple and chamomile"
+      ],
+      "safety": [
+        "Safe and highly distinctive — the petal-less green cone plus sweet pineapple scent are unmistakable",
+        "Harvest away from roadsides, sprayed edges, and heavily trafficked paths where it often grows"
+      ],
+      "guides": [
+        {
+          "label": "iNaturalist — Matricaria discoidea",
+          "url": "https://www.inaturalist.org/taxa/52992"
+        }
+      ],
+      "order": 98,
+      "updated": "2026-08-09",
+      "body": "## Harvest\nLook down: pineappleweed thrives in the poorest, most trodden ground — driveways, gravel lots, and the cracks between paving stones. Pinch off the little green cone-shaped flower heads between finger and thumb through summer. Confirm every batch by crushing a head and smelling that sweet pineapple-chamomile scent.\n\n## Prep\nThe flower heads make a gentle, apple-sweet tea — steep a small handful fresh, or dry them for later. They're also pleasant to nibble raw, and can be scattered over fruit or infused into syrups and shortbread. The feathery leaves are aromatic but the heads carry the best flavour.\n\n## Notes\nA close chamomile relative, but with no white ray petals — just the raised green-yellow cone. Because it favours compacted, disturbed ground right where people and cars pass, choose clean patches and give them a rinse. Abundant and easy for a first forage."
+    },
+    {
+      "slug": "mugwort",
+      "title": "Mugwort",
+      "scientificName": "Artemisia vulgaris",
+      "commonNames": [
+        "mugwort",
+        "armoise"
+      ],
+      "category": [
+        "herbs"
+      ],
+      "season": "Summer to early fall",
+      "status": "ripe-now",
+      "ripeStart": "06-01",
+      "ripeEnd": "09-30",
+      "heroImage": null,
+      "gallery": [],
+      "idCues": [
+        "Tall roadside and wasteland weed, often chest-high",
+        "Deeply lobed leaves: green above, silvery-white and woolly beneath",
+        "Grooved, often reddish stems",
+        "Sage-like aroma when leaves are crushed"
+      ],
+      "safety": [
+        "Contains thujone — use only in small culinary amounts",
+        "AVOID in pregnancy",
+        "A common pollen allergen; those sensitive to ragweed/Asteraceae may react",
+        "Harvest away from roadside verges where it often grows and accumulates traffic pollution"
+      ],
+      "guides": [
+        {
+          "label": "iNaturalist — Artemisia vulgaris",
+          "url": "https://www.inaturalist.org/taxa/52856"
+        }
+      ],
+      "order": 99,
+      "updated": "2026-08-09",
+      "body": "## Harvest\nMugwort lines railway edges, alleys, and vacant lots across Montréal, often growing waist- to chest-high by late summer. Pick young leafy tops before the plant flowers, when the flavour is cleanest. Flip a leaf to confirm the silvery-white woolly underside against the green top — the plant's signature.\n\n## Prep\nA bitter aromatic — treat it like a strong herb, not a green. A few chopped leaves season fatty meats, poultry, and rich stews (its traditional role), cutting the grease. It also makes a bitter tea. Dry sprigs for winter; the flavour concentrates, so use even less.\n\n## Notes\nBecause mugwort contains thujone, keep it to small culinary quantities and avoid it entirely during pregnancy. Its late-summer pollen is a well-known allergen, so sensitive foragers should handle flowering plants with care. Silvery leaf underside plus sage-like scent make it easy to recognise once you know it."
+    },
+    {
+      "slug": "chives",
+      "title": "Wild Chives",
+      "scientificName": "Allium schoenoprasum",
+      "commonNames": [
+        "wild chives",
+        "ciboulette"
+      ],
+      "category": [
+        "herbs"
+      ],
+      "season": "Late spring through early fall",
+      "status": "ripe-now",
+      "ripeStart": "05-01",
+      "ripeEnd": "09-30",
+      "heroImage": null,
+      "gallery": [],
+      "idCues": [
+        "Hollow, round, grass-like leaves growing in clumps",
+        "Pink-purple pompom flower heads",
+        "Every part smells strongly of onion when crushed"
+      ],
+      "safety": [
+        "ALWAYS confirm the onion/garlic smell — every part of an edible wild Allium smells strongly of onion when crushed",
+        "If there is NO onion smell, it is NOT chives and could be a toxic lookalike such as death camas or star-of-Bethlehem — do not eat",
+        "Death camas can grow among grasses and has flat (not hollow, round) leaves and no onion odour; when in doubt, discard"
+      ],
+      "guides": [
+        {
+          "label": "iNaturalist — Allium schoenoprasum",
+          "url": "https://www.inaturalist.org/taxa/59254"
+        }
+      ],
+      "order": 100,
+      "updated": "2026-08-09",
+      "body": "## Harvest\nWild chives grow in grassy clumps in lawns, park edges, and rocky spots, sending up hollow round leaves and, from late spring, pink-purple pompom flowers. Snip leaves with scissors a couple of centimetres above the base so the clump regrows, and pick a few flower heads. **Crush a leaf and smell it every single time** — a strong onion scent is your go/no-go test.\n\n## Prep\nUse exactly like garden chives: snip the hollow leaves raw over eggs, potatoes, salads, and soups for a mild onion bite. The purple flowers pull apart into florets that garnish and flavour dishes, and steep into a pink onion vinegar.\n\n## Notes\nThe onion smell is the whole safety story. Toxic lookalikes like death camas and star-of-Bethlehem can share a grassy look but have flat leaves and no onion odour. No smell, no harvest — no exceptions."
     }
   ],
   "spots": [
     {
       "id": 1,
-      "name": "Crabapple tree",
+      "name": "Crabapple",
       "category": "fruit",
       "species": "crabapple (Malus sp.)",
       "season": "ripe mid-July",
       "location": "Boulevard Gaétan-Laberge, Verdun",
-      "notes": "Photographed Jul 10; small dark-red pomes.",
+      "notes": null,
       "added": "2026-07-24",
       "plant": "crabapple",
       "lon": -73.562631,
@@ -822,12 +1893,12 @@
     },
     {
       "id": 2,
-      "name": "Saskatoon berry bush",
+      "name": "Serviceberry / Saskatoon",
       "category": "fruit",
       "species": "saskatoon / serviceberry (Amelanchier)",
       "season": "ripe late June–early July",
       "location": "Verdun (near riverfront)",
-      "notes": "Photographed Jul 4; red pomes with star-crown tip.",
+      "notes": null,
       "added": "2026-07-24",
       "plant": "serviceberry",
       "lon": -73.560513,
@@ -839,12 +1910,12 @@
     },
     {
       "id": 3,
-      "name": "Crabapple (Verdun/Beatty)",
+      "name": "Crabapple",
       "category": "fruit",
       "species": "crabapple (Malus sp.)",
       "season": "late summer/fall",
       "location": "Rue de Verdun & Beatty, Verdun",
-      "notes": "Loaded crabapple at the street crossing, by the bike-path sign.",
+      "notes": "At the street crossing, by the bike-path sign.",
       "added": "2026-07-24",
       "plant": "crabapple",
       "lon": -73.572285,
@@ -856,12 +1927,12 @@
     },
     {
       "id": 4,
-      "name": "Staghorn sumac",
+      "name": "Staghorn Sumac",
       "category": "herbs",
       "species": "staghorn sumac (Rhus typhina)",
       "season": "drupes ripe Aug–Sept (usable into fall)",
       "location": "Verdun (near riverfront)",
-      "notes": "Photographed Jul 27; upright dark-red fuzzy drupe clusters. Steep clusters in cold water for pink 'sumac-ade'; also ground as a tart spice. Don't confuse with poison sumac (white drooping berries, wet ground).",
+      "notes": null,
       "added": "2026-07-27",
       "plant": "staghorn-sumac",
       "lon": -73.564744,
@@ -873,12 +1944,12 @@
     },
     {
       "id": 5,
-      "name": "Lamb's quarters",
+      "name": "Lamb's Quarters",
       "category": "greens",
       "species": "lamb's quarters (Chenopodium album)",
       "season": "leaves best late spring–summer, before flowering",
       "location": "Verdun (near riverfront)",
-      "notes": "Photographed Jul 27; mealy-white new growth, toothed diamond-shaped leaves. Cook like spinach (mild oxalates — eat cooked in quantity). Wild relative of quinoa.",
+      "notes": null,
       "added": "2026-07-27",
       "plant": "lambs-quarters",
       "lon": -73.562222,
@@ -890,12 +1961,12 @@
     },
     {
       "id": 6,
-      "name": "Crabapple (Verdun park)",
+      "name": "Crabapple",
       "category": "fruit",
       "species": "crabapple (Malus sp.)",
       "season": "late summer/fall",
       "location": "Verdun (park bench near footpath)",
-      "notes": "Photographed Jul 29; mature tree loaded with small red pomes, ~2 cm. Tart raw — best cooked into jelly (high pectin), sauce, or fruit leather.",
+      "notes": null,
       "added": "2026-07-29",
       "plant": "crabapple",
       "lon": -73.565147,
@@ -907,12 +1978,12 @@
     },
     {
       "id": 7,
-      "name": "Apple trees (bike path)",
+      "name": "Apple",
       "category": "fruit",
       "species": "apple (Malus domestica)",
       "season": "ripe now (windfalls dropping); holds into fall",
       "location": "By the bike path (a few young trees lined up)",
-      "notes": "Photographed Jul 30; a row of young apple trees right beside the bike path. Ripe now — apples on the ground below. Full-size domestic apple; grab off the tree, cook the bruised windfalls.",
+      "notes": "A row of young trees right beside the bike path; windfalls on the ground below.",
       "added": "2026-07-30",
       "plant": "apple",
       "lon": -73.544075,
@@ -925,12 +1996,12 @@
     },
     {
       "id": 8,
-      "name": "Rowan / Mountain-ash (LaSalle)",
+      "name": "Rowan / Mountain-Ash",
       "category": "fruit",
       "species": "rowan / European mountain-ash (Sorbus aucuparia)",
       "season": "berries Aug–fall; best after first frost, hold on the tree into winter",
       "location": "LaSalle (beside a paved path)",
-      "notes": "Photographed Aug 4; small tree loaded with flat-topped clusters of orange-red pomes, pinnate serrated leaflets. Cook-don't-graze: raw is bitter/irritating, but cooked (ideally after a frost) makes a classic tart rowan jelly. High pectin.",
+      "notes": null,
       "added": "2026-08-04",
       "plant": "rowan",
       "lon": -73.577094,
@@ -943,12 +2014,12 @@
     },
     {
       "id": 9,
-      "name": "Black chokeberry (aronia) — west",
+      "name": "Aronia / Black Chokeberry",
       "category": "fruit",
       "species": "black chokeberry (Aronia melanocarpa)",
       "season": "ripe Aug–Sep",
       "location": "Verdun",
-      "notes": "Photographed Aug 4; glossy toothed leaves, purple-black star-tipped pomes. Astringent raw — cook/juice. Ripe now.",
+      "notes": null,
       "added": "2026-08-04",
       "plant": "aronia",
       "lon": -73.571553,
@@ -961,12 +2032,12 @@
     },
     {
       "id": 10,
-      "name": "Black chokeberry (aronia) — east",
+      "name": "Aronia / Black Chokeberry",
       "category": "fruit",
       "species": "black chokeberry (Aronia melanocarpa)",
       "season": "ripe Aug–Sep",
       "location": "Verdun",
-      "notes": "Photographed Aug 4; second patch ~200 m east of the first. Same shrub, loaded.",
+      "notes": "Second patch ~200 m east of the first aronia.",
       "added": "2026-08-04",
       "plant": "aronia",
       "lon": -73.568925,
@@ -979,12 +2050,13 @@
     },
     {
       "id": 11,
-      "name": "Elderberry (Verdun)",
+      "name": "Elderberry",
       "category": "fruit",
+      "caution": 1,
       "species": "common elderberry (Sambucus canadensis)",
       "season": "berries Aug–Sep (cook)",
       "location": "Verdun",
-      "notes": "Photographed Aug 4; green unripe berry umbels. Come back when clusters are deep purple-black and drooping — then cook. Never eat raw.",
+      "notes": null,
       "added": "2026-08-04",
       "plant": "elderberry",
       "lon": -73.569472,
@@ -996,12 +2068,12 @@
     },
     {
       "id": 12,
-      "name": "Red raspberry brambles (Verdun)",
+      "name": "Red Raspberry",
       "category": "fruit",
       "species": "red raspberry (Rubus idaeus)",
       "season": "ripe now (Jul–Aug)",
       "location": "Verdun",
-      "notes": "Photographed Aug 4; ripe red berries. Brambles run along the path — a second stretch ~75 m south too. Eat on the spot.",
+      "notes": "Brambles run along the path; a second stretch ~75 m south too.",
       "added": "2026-08-04",
       "plant": "raspberry",
       "lon": -73.568297,
@@ -1014,12 +2086,12 @@
     },
     {
       "id": 13,
-      "name": "Black currant (Verdun)",
+      "name": "Black Currant",
       "category": "fruit",
       "species": "black currant (Ribes nigrum, likely garden escape)",
       "season": "ripe now (Jul–Aug)",
       "location": "Verdun",
-      "notes": "Photographed Aug 4; glossy black berries in short strings on aromatic maple-lobed leaves, thornless. Right beside the raspberries. Tart — great cooked.",
+      "notes": "Right beside the raspberries.",
       "added": "2026-08-04",
       "plant": "black-currant",
       "lon": -73.568262,
@@ -1032,12 +2104,12 @@
     },
     {
       "id": 14,
-      "name": "Wild rose / rose hips (Verdun)",
+      "name": "Rose Hips",
       "category": "fruit",
       "species": "wild rose (Rosa sp.)",
       "season": "hips ripen Sep, best after frost",
       "location": "Verdun",
-      "notes": "Photographed Aug 4; green immature hips. Return in fall once they turn red-orange and soften — cook & strain for syrup (remove the irritant seed hairs).",
+      "notes": null,
       "added": "2026-08-04",
       "plant": "rose-hips",
       "lon": -73.568434,
@@ -1050,12 +2122,12 @@
     },
     {
       "id": 15,
-      "name": "Rowan / Mountain-ash (Verdun)",
+      "name": "Rowan / Mountain-Ash",
       "category": "fruit",
       "species": "rowan / European mountain-ash (Sorbus aucuparia)",
       "season": "berries Aug–fall; best after first frost, hold on the tree into winter",
       "location": "Verdun",
-      "notes": "Photographed Aug 4; second rowan (separate from the LaSalle tree), loaded with flat-topped clusters of orange pomes, pinnate serrated leaflets. Cook-don't-graze: raw is bitter/irritating, cooked (ideally after a frost) makes a tart rowan jelly. High pectin.",
+      "notes": "Separate tree from the LaSalle rowan.",
       "added": "2026-08-04",
       "plant": "rowan",
       "lon": -73.567927,
@@ -1068,27 +2140,28 @@
     },
     {
       "id": 16,
-      "name": "Red currant (community-garden fence)",
+      "name": "Red Currant",
       "category": "fruit",
       "species": "red currant (Ribes rubrum)",
       "season": "ripe now (Jul–Aug)",
       "location": "Verdun — SE edge of the community garden by the Piste cyclable des Berges",
-      "notes": "Confirmed in person Aug 4 (iNat lead promoted). Translucent red berries in hanging clusters on lobed maple-like leaves, thornless — growing on the public/outside edge of the community-garden fence (path side), not inside the plot. Eat raw or cook into jelly. Tart.",
+      "notes": "On the public / path-side edge of the community-garden fence — not inside the plot.",
       "added": "2026-08-04",
-      "plant": null,
-      "lon": -73.565165,
-      "lat": 45.45269,
+      "plant": "red-currant",
+      "lon": -73.565148,
+      "lat": 45.452622,
       "photos": [],
-      "updated": null
+      "updated": "2026-08-08"
     },
     {
       "id": 17,
-      "name": "Chokecherry (Verdun)",
+      "name": "Chokecherry",
       "category": "fruit",
+      "caution": 1,
       "species": "chokecherry (Prunus virginiana)",
       "season": "fruit ripe late Jul–Sep (cook)",
       "location": "Verdun — riverside path (Piste cyclable des Berges), beyond the fence near the Centre d'hébergement / Parc Woodland",
-      "notes": "Photographed Aug 4; small dark cherries in long drooping racemes (grape-like clusters) on finely-toothed oval leaves. On the grass strip beyond the fence, right by the bike path. Ripe now. Cook-and-strain only — astringent raw and the pits are cyanogenic; never eat the stones. Makes a deep-red jelly/syrup.",
+      "notes": "On the grass strip beyond the fence, right by the bike path.",
       "added": "2026-08-04",
       "plant": "chokecherry",
       "lon": -73.566378,
@@ -1101,30 +2174,31 @@
     },
     {
       "id": 18,
-      "name": "Wild grapes (Verdun / 4e Ave)",
+      "name": "Wild Grape",
       "category": "fruit",
+      "caution": 1,
       "species": "wild grape (Vitis sp.)",
       "season": "ripe Sept–Oct",
       "location": "Verdun — 4e Avenue",
-      "notes": "Vine over a backyard trellis/pergola, spilling toward the lane. Green unripe clusters in early Aug — check back Sept–Oct for ripe purple grapes. Leaves + tendrils also usable (dolmades).",
+      "notes": "Vine over a backyard trellis/pergola, spilling toward the lane.",
       "added": "2026-08-06",
-      "plant": null,
-      "lon": -73.57126,
-      "lat": 45.45658,
+      "plant": "grape",
+      "lon": -73.571277,
+      "lat": 45.456603,
       "photos": [
         "grape-verdun-4e-ave-1.jpeg",
         "grape-verdun-4e-ave-2.jpeg"
       ],
-      "updated": "2026-08-06"
+      "updated": "2026-08-08"
     },
     {
       "id": 19,
-      "name": "Black chokeberry (aronia) — Desmarchais",
+      "name": "Aronia / Black Chokeberry",
       "category": "fruit",
       "species": "black chokeberry (Aronia melanocarpa)",
       "season": "ripe Aug–Sept",
       "location": "Verdun — Avenue Desmarchais",
-      "notes": "Third aronia find, ~90 m NE of the east bush. Loaded with ripe dark-purple berries in early Aug. Very astringent raw — best cooked/juiced. Obovate glossy leaves in corymbs.",
+      "notes": "~90 m NE of the east aronia bush.",
       "added": "2026-08-06",
       "plant": "aronia",
       "lon": -73.568265,
@@ -1137,12 +2211,12 @@
     },
     {
       "id": 20,
-      "name": "Lamb's quarters (Verdun / 6e Ave)",
+      "name": "Lamb's Quarters",
       "category": "greens",
       "species": "lamb's quarters (Chenopodium album)",
       "season": "leaves spring–fall",
       "location": "Verdun — 6e Avenue",
-      "notes": "Roadside weedy strip. Mealy/glaucous goosefoot leaves — cook like spinach. Same patch as the blackberry pin.",
+      "notes": "Roadside strip; same patch as the blackberry.",
       "added": "2026-08-06",
       "plant": "lambs-quarters",
       "lon": -73.570751,
@@ -1155,14 +2229,14 @@
     },
     {
       "id": 21,
-      "name": "Blackberry brambles (Verdun / 6e Ave)",
+      "name": "Blackberry",
       "category": "fruit",
       "species": "blackberry (Rubus sp.)",
       "season": "ripe Aug–Sept",
       "location": "Verdun — 6e Avenue",
-      "notes": "Thorny brambles in the same roadside patch as the lamb's quarters. Berries still in the red unripe stage in early Aug — they ripen red→black, so come back late Aug for black ones. (ID note: solid berries turning dark = blackberry, not a ripe red raspberry.)",
+      "notes": "Same roadside patch as the lamb’s quarters.",
       "added": "2026-08-06",
-      "plant": null,
+      "plant": "blackberry",
       "lon": -73.570842,
       "lat": 45.455124,
       "photos": [
@@ -1173,28 +2247,13 @@
       "updated": "2026-08-06"
     },
     {
-      "id": 1759,
-      "name": "Plum tree",
-      "category": "fruit",
-      "species": "Prunus sp. (plum)",
-      "season": "Aug–Sep",
-      "location": "Street tree",
-      "notes": "Cultivated/wild plum. Purple fruit with waxy bloom ripening early Aug; green immature fruit still on tree. Fruit ~2.5 cm.",
-      "added": "2026-08-06",
-      "plant": null,
-      "lon": -73.576356,
-      "lat": 45.455944,
-      "photos": [],
-      "updated": "2026-08-06"
-    },
-    {
       "id": 1760,
       "name": "Crabapple",
       "category": "fruit",
       "species": "Malus sp. (crabapple)",
       "season": "Sep–Oct",
       "location": "",
-      "notes": "Small deep-red pomes (~1 cm) on long red pedicels, persistent calyx. Not ripe yet in early Aug — firm. Good for jelly once soft.",
+      "notes": null,
       "added": "2026-08-06",
       "plant": "crabapple",
       "lon": -73.571275,
@@ -1204,12 +2263,12 @@
     },
     {
       "id": 1761,
-      "name": "Raspberry patch",
+      "name": "Red Raspberry",
       "category": "fruit",
       "species": "Rubus idaeus (red raspberry)",
       "season": "Jul–Aug",
       "location": "Along fence/edge",
-      "notes": "Wild red raspberry. A few ripe red berries, many still green/unripe. Thorny canes, white-backed compound leaves.",
+      "notes": null,
       "added": "2026-08-06",
       "plant": "raspberry",
       "lon": -73.571206,
@@ -1221,10 +2280,11 @@
       "id": 1762,
       "name": "Elderberry",
       "category": "fruit",
+      "caution": 1,
       "species": "Sambucus canadensis (American elder)",
       "season": "Aug–Sep",
       "location": "By brick wall / lattice",
-      "notes": "Large shrub, flat-topped cymes of green berries on red-purple stems in early Aug — not ripe. Only eat fully-ripe dark berries, cooked; raw/unripe berries + stems are toxic.",
+      "notes": null,
       "added": "2026-08-06",
       "plant": "elderberry",
       "lon": -73.568353,
@@ -1234,12 +2294,12 @@
     },
     {
       "id": 1833,
-      "name": "Apple / crabapple",
+      "name": "Apple",
       "category": "fruit",
       "species": "Malus",
       "season": null,
       "location": null,
-      "notes": "Wild & feral apples/crabapples — taste one; cook the sour crabapples into jelly.",
+      "notes": null,
       "added": "2026-08-06",
       "plant": "apple",
       "lon": -73.572631,
@@ -1254,13 +2314,30 @@
       "species": "Morus alba",
       "season": null,
       "location": null,
-      "notes": "Ripe near-black berries eat raw; unripe/white ones can upset the stomach.",
+      "notes": null,
       "added": "2026-08-06",
       "plant": "mulberry",
       "lon": -73.578075,
       "lat": 45.454665,
       "photos": [],
       "updated": "2026-08-06"
+    },
+    {
+      "id": 4374,
+      "name": "Plum",
+      "category": "fruit",
+      "species": "Prunus sp. (plum)",
+      "season": "Aug–Sep",
+      "location": "Street tree",
+      "notes": null,
+      "added": "2026-08-07",
+      "plant": "plum",
+      "lon": -73.576212,
+      "lat": 45.45599,
+      "photos": [
+        "plum-fruit-1.jpg"
+      ],
+      "updated": "2026-08-08"
     }
   ]
 }

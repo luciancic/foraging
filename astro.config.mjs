@@ -1,7 +1,7 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import { writeFileSync, mkdirSync } from 'node:fs';
-import { pinsGeoJSON } from './src/lib/db.mjs';
+import { pinsGeoJSON, plantsMeta } from './src/lib/db.mjs';
 
 // Emit the current pins as static GeoJSON into the build output. The map fetches
 // live confirmed pins from /api/pins (falling back to foraging-spots.geojson when
@@ -16,6 +16,9 @@ const exportPins = {
       mkdirSync(outDir, { recursive: true });
       writeFileSync(new URL('foraging-spots.geojson', outDir), JSON.stringify(pinsGeoJSON({ verified: true }), null, 2));
       writeFileSync(new URL('pins-leads.geojson', outDir), JSON.stringify(pinsGeoJSON({ verified: false }), null, 2));
+      // Per-plant metadata (title, category list, ripe window) the map joins onto
+      // pins for colour, derived names, type + ripe-now + plant-name filters.
+      writeFileSync(new URL('plants.json', outDir), JSON.stringify(plantsMeta()));
     },
   },
 };
