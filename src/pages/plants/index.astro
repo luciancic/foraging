@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import { effectiveStatus, STATUS_LABEL } from '../../lib/season';
 import { spotCount } from '../../lib/spots';
+import { mediaVariant } from '../../lib/media';
 import { getPlants } from '../../lib/content.mjs';
 
 const order = { 'ripe-now': 0, 'coming-soon': 1, 'year-round': 2, 'note-for-next-year': 3 };
@@ -19,7 +20,7 @@ const plants = getPlants()
     <div class="grid">
       {plants.map((p) => (
         <a class="card" href={`/plants/${p.id}`}>
-          <div class="thumb" style={p.data.heroImage ? `--ph:url('${p.data.heroImage}')` : ''}></div>
+          <div class="thumb" style={p.data.heroImage ? `--ph:url('${mediaVariant(p.data.heroImage, 'thumb')}')` : ''}></div>
           <div class="body">
             <span class="name">{p.data.title}</span>
             {p.data.scientificName && <span class="sci">{p.data.scientificName}</span>}

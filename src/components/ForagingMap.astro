@@ -607,7 +607,7 @@ const plantCatalog = getPlants()
     const src = p.source || (verified ? 'confirmed' : 'inat');
     const photos: string[] = verified && Array.isArray(p.photos) ? p.photos : [];
     const imgs = photos
-      .map((f) => `<a href="/photos/spots/${seg(f)}" target="_blank" rel="noopener"><img src="/photos/spots/${seg(f)}" alt="${esc(p.name)}" loading="lazy" /></a>`)
+      .map((f) => `<a href="/photos/spots/${seg(f)}" target="_blank" rel="noopener"><img src="/photos/spots/${seg(f)}?v=thumb" alt="${esc(p.name)}" loading="lazy" /></a>`)
       .join('');
     let prov = '';
     if (!verified) {

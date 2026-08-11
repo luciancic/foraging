@@ -2,6 +2,7 @@
 import Base from '../layouts/Base.astro';
 import ForagingMap from '../components/ForagingMap.astro';
 import { effectiveStatus } from '../lib/season';
+import { mediaVariant } from '../lib/media';
 import { getPlants } from '../lib/content.mjs';
 
 const plants = getPlants()
@@ -11,7 +12,7 @@ const ripeNow = plants.filter((p) => p.live === 'ripe-now');
 const soon = plants.filter((p) => p.live === 'coming-soon');
 
 function thumb(p: any) {
-  return p.data.heroImage ? `--ph:url('${p.data.heroImage}')` : '';
+  return p.data.heroImage ? `--ph:url('${mediaVariant(p.data.heroImage, 'thumb')}')` : '';
 }
 ---
 <Base title="Forage MTL — map & plant guide" page="home">

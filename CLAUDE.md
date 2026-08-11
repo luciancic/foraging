@@ -66,6 +66,21 @@ urban-edible plant field guide for Montréal. Live at **https://foraging.condrea
   `media/images/plants/<file>` or `media/photos/spots/<file>` in the bucket (reuse the
   Storj creds in `~/myclaw/.env`); reference it by the same `/images/...` or `/photos/...`
   URL. Image URLs are unchanged from before — only where they're served from changed.
+- **Images are optimized** (`sharp`). Every upload (`POST /api/photos`) is run through
+  `optimizeImage()` in `server/api.mjs`: auto-orient from EXIF, strip metadata, cap the
+  long edge at **2048px**, recompress (JPEG q80 mozjpeg / WebP q80 / PNG level 9),
+  keeping the same format — so a 3–7 MB phone photo lands in Storj at a few hundred KB
+  (HEIC is transcoded to JPEG here too). The stored full-res **originals** live in Storj
+  under `media/originals/<rel>` (kept so the downscale stays reversible). The pre-existing
+  backlog was optimized once by `scripts/optimize-media.mjs` (idempotent, re-runnable:
+  skips any object that already has an `originals/` copy; `--dry` to preview) — run it
+  again after a bulk hand-upload. Downscaled the backlog ~144 MB → ~24 MB (−84%).
+- **On-the-fly thumbnails.** `serveMedia` also produces cached WebP derivatives keyed by
+  `?v=` — `thumb` (480px) and `card` (800px) — rendered on first request and cached under
+  `media-cache/_variants/<v>/`. The plant gallery, plant-list/home cards, and map-popup
+  shots request `?v=thumb`; the plant hero requests `?v=card` (helper: `mediaVariant()`
+  in `src/lib/media.ts`, which only rewrites our own `/images|/photos` paths). Full-res
+  is still at the bare URL (the gallery/popup `<a href>` links to it).
 - Status badges ("ripe now" etc.) are **date-driven** from each plant's `ripeStart`/
   `ripeEnd` window — `src/lib/season.ts`. A nightly systemd timer rebuilds so they stay current.
 
@@ -102,8 +117,10 @@ urban-edible plant field guide for Montréal. Live at **https://foraging.condrea
   live `data/foraging.db` directly (so field edits are safe) but does NOT touch the
   git-tracked seed, to avoid a perpetually-dirty prod working tree.
 - **Better photos:** replace the object in Storj under `media/images/plants/<file>`
-  (or `media/photos/spots/<file>`); clear the API's `media-cache/<path>` so the new
-  one is re-fetched.
+  (or `media/photos/spots/<file>`); clear the API's `media-cache/<path>` (and any
+  `media-cache/_variants/*/<path>.webp`) so the new one is re-fetched. If you upload a
+  full-res original by hand (not via `POST /api/photos`), run `node
+  scripts/optimize-media.mjs` afterward to downscale it + stash the original.
 - **Scouting leads render alongside confirmed pins** in ONE clustered layer, coloured
   by `category` and shaped by provenance (confirmed = teardrop, iNat = circle, FF =
   diamond, city = triangle); an amber ring flags `caution`. Each source has its own
