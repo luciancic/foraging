@@ -20,7 +20,8 @@
     "better-sqlite3": "^13.0.3",
     "leaflet": "^1.9.4",
     "leaflet.markercluster": "^1.5.3",
-    "markdown-it": "^15.0.0"
+    "markdown-it": "^15.0.0",
+    "sharp": "^0.35.3"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^9.6.0",

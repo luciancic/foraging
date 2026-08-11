@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import { effectiveStatus, STATUS_LABEL } from '../../lib/season';
 import { pinCounts } from '../../lib/spots';
+import { mediaVariant } from '../../lib/media';
 import { getPlants } from '../../lib/content.mjs';
 
 export async function getStaticPaths() {
@@ -35,7 +36,7 @@ const onMap = spots + leads;
       {onMap > 0 && <a href={`/map?plants=${plant.id}`} style="margin-left:10px;">📍 {onMap} on map{leads > 0 && ` (${spots} confirmed)`}</a>}
     </p>
 
-    {d.heroImage && <img class="hero-img" src={d.heroImage} alt={d.title} loading="eager" />}
+    {d.heroImage && <img class="hero-img" src={mediaVariant(d.heroImage, 'card')} alt={d.title} loading="eager" />}
 
     {d.idCues.length > 0 && (
       <div class="panel">
@@ -58,7 +59,7 @@ const onMap = spots + leads;
       <div class="gallery">
         {d.gallery.map((g) => (
           <figure>
-            <a href={g.src} target="_blank" rel="noopener"><img src={g.src} alt={g.caption || d.title} loading="lazy" /></a>
+            <a href={g.src} target="_blank" rel="noopener"><img src={mediaVariant(g.src, 'thumb')} alt={g.caption || d.title} loading="lazy" /></a>
             {(g.caption || g.credit) && <figcaption>{g.caption}{g.credit ? ` — ${g.credit}` : ''}</figcaption>}
           </figure>
         ))}
