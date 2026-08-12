@@ -748,15 +748,23 @@ const plantCatalog = getPlants()
       for (const c of CAT_ORDER) state.cat[c] = initialCats.size ? initialCats.has(c) : loadPref('filter.cat.' + c, true);
       state.caution = loadPref('filter.caution', true);
 
-      // A record shows when its layer is on, at least one of its (plant) categories is
-      // enabled, caution allows it, its plant is in the shown set (guideless pins with
-      // no plant bypass this), and it's ripe now (if that filter is on).
-      const visible = (r: Rec) =>
-        state.master[r.masterKey] &&
-        r.categories.some((c) => state.cat[c] !== false) &&
-        (state.caution || !r.caution) &&
-        (!r.plant || state.plants.has(r.plant)) &&
-        (!state.ripeNow || r.ripe);
+      // Type (category) and plant are two independent filter dimensions, but the plant
+      // filter is AUTHORITATIVE once NARROWED (the user has hidden at least one guided
+      // plant): a hand-picked plant then shows regardless of the type toggles — choosing
+      // a category isn't a prerequisite for filtering by plant — and guideless pins
+      // (which have no row in the plant list, so can't be picked) drop out instead of
+      // bypassing the filter. While every guided plant is shown (browse mode) the type
+      // filter drives what's visible and guideless pins follow their category. Layer,
+      // caution, and ripe-now gates always apply. `plantsNarrowed` is recomputed in
+      // apply() (cheaper than per-record) just before this runs over the record set.
+      let plantsNarrowed = false;
+      const visible = (r: Rec) => {
+        if (!state.master[r.masterKey]) return false;
+        if (r.caution && !state.caution) return false;
+        if (state.ripeNow && !r.ripe) return false;
+        if (plantsNarrowed) return !!r.plant && state.plants.has(r.plant);
+        return r.categories.some((c) => state.cat[c] !== false);
+      };
 
       // Reflect the active filters into the URL (shareable/bookmarkable) without
       // reloading. For plants, write whichever list is shorter: ?plants= (only these)
@@ -777,6 +785,9 @@ const plantCatalog = getPlants()
       };
 
       const apply = () => {
+        // Narrowed = at least one guided plant is currently hidden. Uses records (not the
+        // load-time allPlantSlugs, which a freshly-added spot can outdate) and short-circuits.
+        plantsNarrowed = records.some((r) => r.plant && !state.plants.has(r.plant));
         const add: any[] = [], remove: any[] = [];
         for (const r of records) {
           const show = visible(r);
