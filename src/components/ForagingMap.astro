@@ -229,8 +229,14 @@ const plantCatalog = getPlants()
       L.DomEvent.disableClickPropagation(a);
       L.DomEvent.on(a, 'click', L.DomEvent.stop);
       L.DomEvent.on(a, 'click', () => {
-        if (userMarker) map.setView(userMarker.getLatLng(), Math.max(map.getZoom(), 16), { animate: true });
-        else locateNow();
+        if (userMarker) {
+          const ll = userMarker.getLatLng();
+          // While adding a spot, the crosshair (not the map centre) is what matters —
+          // the sheet covers the lower half, so centre on the crosshair like the
+          // in-sheet "use my location" does. Otherwise centre the whole map.
+          if (addMode && addCross) { centerCrosshairOn(ll.lat, ll.lng, 16); setLocText('Placed on your location — pan to fine-tune.'); }
+          else map.setView(ll, Math.max(map.getZoom(), 16), { animate: true });
+        } else locateNow();
       });
       return a;
     },
@@ -1030,6 +1036,7 @@ const plantCatalog = getPlants()
   let addSheet: HTMLElement | null = null;
   let addCross: HTMLElement | null = null;
   let addPhotoFiles: File[] = [];
+  let addPhotoUrls: string[] = []; // object URLs currently shown in the preview (revoked on re-render)
   let addBusy = false;
   const OTHER = '__other__'; // sentinel <option> value for a not-in-the-guide find
 
@@ -1062,6 +1069,8 @@ const plantCatalog = getPlants()
 
   function endAddMode() {
     addMode = false; addBusy = false; addPhotoFiles = [];
+    addPhotoUrls.forEach((u) => { try { URL.revokeObjectURL(u); } catch {} });
+    addPhotoUrls = [];
     document.body.classList.remove('map-adding');
     addSheet?.remove(); addSheet = null;
     addCross?.remove(); addCross = null;
@@ -1092,27 +1101,56 @@ const plantCatalog = getPlants()
       heic: 'image/heic', heif: 'image/heif' } as Record<string, string>)[ext] || 'application/octet-stream';
   }
 
-  async function handlePhoto(input: HTMLInputElement) {
-    addPhotoFiles = input.files ? Array.from(input.files) : [];
+  // Identity of a picked file, so re-picking the same one (or a repeated library
+  // multi-select) doesn't duplicate it in the accumulated list.
+  const photoKey = (f: File) => f.name + '|' + f.size + '|' + (f.lastModified || 0);
+
+  // Render the accumulated picks as a thumbnail grid, each with a ✕ to remove it.
+  // HEIC won't render in an <img> on most browsers, so only draw types the browser
+  // can paint (the server stores a JPEG either way); others show a filename chip.
+  function renderPhotoPrev() {
     const prev = byId('add-photo-prev');
-    if (!addPhotoFiles.length) { if (prev) { prev.hidden = true; prev.innerHTML = ''; } return; }
-    // HEIC won't render in an <img> on most browsers, so only preview types the
-    // browser can draw; either way the server stores a JPEG. One thumbnail per pick.
-    if (prev) {
-      prev.hidden = false;
-      prev.innerHTML = addPhotoFiles.map((f) =>
-        /image\/(jpeg|png|webp|gif)/i.test(f.type)
-          ? `<img src="${URL.createObjectURL(f)}" alt="">`
-          : `<div class="add-photo-note">📷 ${esc(f.name)}</div>`
-      ).join('');
-    }
+    if (!prev) return;
+    addPhotoUrls.forEach((u) => { try { URL.revokeObjectURL(u); } catch {} });
+    addPhotoUrls = [];
+    if (!addPhotoFiles.length) { prev.hidden = true; prev.innerHTML = ''; return; }
+    prev.hidden = false;
+    prev.innerHTML = addPhotoFiles.map((f, i) => {
+      let inner: string;
+      if (/image\/(jpeg|png|webp|gif)/i.test(f.type)) {
+        const u = URL.createObjectURL(f); addPhotoUrls.push(u);
+        inner = `<img src="${u}" alt="">`;
+      } else inner = `<div class="add-photo-note">📷 ${esc(f.name)}</div>`;
+      return `<div class="add-photo-item">${inner}` +
+        `<button type="button" class="add-photo-rm" data-i="${i}" aria-label="Remove photo">✕</button></div>`;
+    }).join('');
+    prev.querySelectorAll('.add-photo-rm').forEach((b) => b.addEventListener('click', () => {
+      const i = Number((b as HTMLElement).dataset.i);
+      if (i >= 0) { addPhotoFiles.splice(i, 1); renderPhotoPrev(); }
+    }));
+  }
+
+  async function handlePhoto(input: HTMLInputElement) {
+    const picked = input.files ? Array.from(input.files) : [];
+    // Reset the input so the SAME file (or the next camera shot) fires `change` again —
+    // otherwise a second capture with an identical value is silently ignored and
+    // "take another photo" appears to do nothing / replace the last one.
+    input.value = '';
+    if (!picked.length) return;
+    // ACCUMULATE across picks (dedup): a library multi-select adds its batch, and each
+    // on-the-spot camera shot appends one more instead of replacing the previous.
+    const have = new Set(addPhotoFiles.map(photoKey));
+    for (const f of picked) { const k = photoKey(f); if (!have.has(k)) { addPhotoFiles.push(f); have.add(k); } }
+    renderPhotoPrev();
     try {
-      // Auto-place from the first geotagged photo. EXIF read is JPEG-only; HEIC/other
-      // fall back to device GPS + manual pan.
-      for (const f of addPhotoFiles) {
+      // Auto-place from the first geotagged photo among the NEW picks. EXIF read is
+      // JPEG-only; HEIC/other fall back to device GPS + manual pan. Centre the found
+      // location UNDER the crosshair (not the map centre — the sheet covers the lower
+      // half), so the pin lands where the crosshair shows it.
+      for (const f of picked) {
         const gps = await readExifGps(f);
         if (gps) {
-          map.setView([gps.lat, gps.lon], Math.max(map.getZoom(), 17), { animate: true });
+          centerCrosshairOn(gps.lat, gps.lon, 17);
           setLocText('Placed from the photo’s location — pan to fine-tune.');
           flash('📷 Placed from the photo’s location.');
           break;
