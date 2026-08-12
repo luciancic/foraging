@@ -400,11 +400,23 @@ body:not(.map-editing) .leaflet-popup-content .scout-promote { display: none; }
    flex .add-row, so beat the UA [hidden] that display:flex would otherwise override. */
 #add-other[hidden] { display: none; }
 .add-photo-prev { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 7px; }
-.add-photo-prev img { display: block; width: 100%; height: 96px; object-fit: cover; border-radius: 9px; }
+.add-photo-item { position: relative; }
+.add-photo-item img { display: block; width: 100%; height: 96px; object-fit: cover; border-radius: 9px; }
+/* A tap-target ✕ in the corner of each pick so photos can be removed individually. */
+.add-photo-rm {
+  position: absolute; top: 4px; right: 4px; width: 24px; height: 24px;
+  display: flex; align-items: center; justify-content: center;
+  font: inherit; font-size: .78rem; line-height: 1; color: #fff; cursor: pointer;
+  background: rgba(0, 0, 0, .6); border: 1.5px solid rgba(255, 255, 255, .85);
+  border-radius: 50%; padding: 0;
+}
+.add-photo-rm:hover { background: rgba(0, 0, 0, .8); }
 .add-photo-note {
   font-size: .82rem; color: var(--ink-soft);
   background: color-mix(in srgb, var(--ink) 4%, var(--surface));
   border: 1px solid var(--line); border-radius: 9px; padding: 9px 10px;
+  /* Leave room for the ✕ so it doesn't cover the filename. */
+  padding-right: 32px;
 }
 .add-actions { display: flex; gap: 10px; margin-top: 2px; }
 .add-cancel, .add-save {
