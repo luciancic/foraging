@@ -35,5 +35,44 @@ const { title, description = 'A personal foraging map and plant field guide for 
       </div>
     </footer>
     )}
+
+    <div id="lightbox" class="lightbox" hidden aria-hidden="true" role="dialog" aria-modal="true" aria-label="Photo viewer">
+      <button type="button" class="lightbox-close" aria-label="Close">✕</button>
+      <img class="lightbox-img" src="" alt="" />
+    </div>
+    <script is:inline>
+      (() => {
+        const lb = document.getElementById('lightbox');
+        if (!lb) return;
+        const img = lb.querySelector('.lightbox-img');
+        const closeBtn = lb.querySelector('.lightbox-close');
+        // Any anchor whose href points at one of our photo paths.
+        const isPhotoLink = (a) => /\/(images\/plants|photos\/spots)\//.test(a.getAttribute('href') || '');
+        const open = (src, alt) => {
+          img.src = src;
+          img.alt = alt || '';
+          lb.hidden = false;
+          lb.setAttribute('aria-hidden', 'false');
+          document.body.classList.add('lightbox-open');
+        };
+        const close = () => {
+          lb.hidden = true;
+          lb.setAttribute('aria-hidden', 'true');
+          img.src = '';
+          document.body.classList.remove('lightbox-open');
+        };
+        // Delegated: works for build-time galleries AND Leaflet popups injected later.
+        document.addEventListener('click', (e) => {
+          const a = e.target.closest && e.target.closest('a');
+          if (!a || !isPhotoLink(a)) return;
+          e.preventDefault();
+          const thumb = a.querySelector('img');
+          open(a.getAttribute('href'), thumb ? thumb.alt : '');
+        });
+        closeBtn.addEventListener('click', close);
+        lb.addEventListener('click', (e) => { if (e.target === lb) close(); });
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !lb.hidden) close(); });
+      })();
+    </script>
   </body>
 </html>
