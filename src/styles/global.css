@@ -294,14 +294,20 @@ body.map-editing .map-msg {
 .scout-tier b { margin-left: auto; font-weight: 600; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
 .scout-tier.scout-ripe { font-weight: 600; }
 
-/* Filter-by-plant: searchable, scrollable multi-select inside the panel */
+/* Leads master → indented per-source sub-toggles (shown only while master is on) */
+.scout-subs { margin-left: 22px; display: flex; flex-direction: column; }
+.scout-sub { margin-top: 5px; }
+.scout-sub .scout-src b { font-weight: 500; }
+
+/* Filter-by-plant: searchable multi-select inside the panel (no nested scroll —
+   the panel itself is the single scroll region) */
 .scout-plants { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; }
 .scout-plants .scout-tiers-h { display: flex; align-items: baseline; }
 .plant-acts { margin-left: auto; display: inline-flex; gap: 10px; text-transform: none; letter-spacing: 0; font-weight: 400; font-size: .72rem; }
 .plant-acts a { color: var(--accent, #2f7d4f); }
 .plant-search { width: 100%; box-sizing: border-box; padding: 5px 8px; font: inherit; font-size: .8rem;
   border: 1px solid var(--line); border-radius: 7px; background: var(--surface); color: var(--ink); }
-.plant-list { max-height: 172px; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 4px; }
+.plant-list { display: flex; flex-direction: column; gap: 4px; }
 .plant-opt { font-size: .8rem; }
 .plant-opt span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .plant-opt b { margin-left: auto; font-weight: 600; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
