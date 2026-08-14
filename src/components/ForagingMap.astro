@@ -744,13 +744,17 @@ const plantCatalog = getPlants()
       // SHOWN plant set; `ripeNow` narrows to what's in season today.
       const state = {
         master: {} as Record<string, boolean>,
+        leadsOn: false,
         cat: {} as Record<string, boolean>,
         caution: true,
         plants: initialShown,
         ripeNow: initialRipe,
       };
       state.master.confirmed = hasDeepLink ? true : loadPref('layer.confirmed', true);
-      for (const s of SOURCE_ORDER) state.master[s] = hasDeepLink ? true : loadPref('scout.on.' + s, false);
+      // Leads: one master gate (default off), then per-source (default on — they only
+      // surface while the master is on, which starts them all checked).
+      state.leadsOn = hasDeepLink ? true : loadPref('scout.leads.on', false);
+      for (const s of SOURCE_ORDER) state.master[s] = hasDeepLink ? true : loadPref('scout.on.' + s, true);
       for (const c of CAT_ORDER) state.cat[c] = initialCats.size ? initialCats.has(c) : loadPref('filter.cat.' + c, true);
       state.caution = loadPref('filter.caution', true);
 
@@ -765,7 +769,8 @@ const plantCatalog = getPlants()
       // apply() (cheaper than per-record) just before this runs over the record set.
       let plantsNarrowed = false;
       const visible = (r: Rec) => {
-        if (!state.master[r.masterKey]) return false;
+        if (r.masterKey === 'confirmed') { if (!state.master.confirmed) return false; }
+        else if (!state.leadsOn || !state.master[r.masterKey]) return false;
         if (r.caution && !state.caution) return false;
         if (state.ripeNow && !r.ripe) return false;
         if (plantsNarrowed) return !!r.plant && state.plants.has(r.plant);
@@ -914,10 +919,21 @@ const plantCatalog = getPlants()
           `<label class="scout-master"><input type="checkbox" data-master="${mk}"${on ? ' checked' : ''}>` +
           `<span class="scout-src"><b>${glyph} ${label}</b><em>${tag} · ${layerCount(mk)}</em></span></label>`;
         const pls = plantsShown();
+        // Scouting leads are a single master toggle: unchecked hides all sources; checked
+        // reveals the per-source sub-rows (indented) so a source can be dropped individually.
+        const leadsTotal = srcShown.reduce((n, s) => n + layerCount(s), 0);
+        const subRow = (s: string) =>
+          `<label class="scout-master scout-sub"><input type="checkbox" data-master="${s}"${state.master[s] ? ' checked' : ''}>` +
+          `<span class="scout-src"><b>${SOURCES[s].glyph} ${SOURCES[s].label}</b><em>${SOURCES[s].tag} · ${layerCount(s)}</em></span></label>`;
+        const leadsBlock = srcShown.length
+          ? `<label class="scout-master"><input type="checkbox" data-leads${state.leadsOn ? ' checked' : ''}>` +
+            `<span class="scout-src"><b>🔍 Scouting leads</b><em>unverified · ${leadsTotal}</em></span></label>` +
+            (state.leadsOn ? `<div class="scout-subs">` + srcShown.map(subRow).join('') + `</div>` : '')
+          : '';
         div.innerHTML =
           `<h4 class="panel-h">Map pins <em>colour = type · ⚠ = lookalike</em></h4>` +
           (hasConfirmed ? layerRow('confirmed', '📍', 'My spots', 'confirmed', state.master.confirmed) : '') +
-          srcShown.map((s) => layerRow(s, SOURCES[s].glyph, SOURCES[s].label, SOURCES[s].tag, state.master[s])).join('') +
+          leadsBlock +
           `<div class="scout-tiers">` +
             `<label class="scout-tier scout-ripe"><input type="checkbox" data-ripe${state.ripeNow ? ' checked' : ''}>` +
               `<i class="dot" style="background:#2f7d4f"></i>🟢 Ripe now <b>${ripeCount()}</b></label>` +
@@ -938,7 +954,7 @@ const plantCatalog = getPlants()
                 `<span>${esc(pl.title)}</span><b>${pl.count}</b></label>`).join('') +
             `</div>` +
           `</div>` : '') +
-          srcShown.filter((s) => SOURCES[s].attrib).map((s) => `<p class="scout-attrib">${SOURCES[s].attrib}</p>`).join('');
+          (state.leadsOn ? srcShown.filter((s) => SOURCES[s].attrib).map((s) => `<p class="scout-attrib">${SOURCES[s].attrib}</p>`).join('') : '');
 
         div.querySelectorAll('input[data-master]').forEach((el) => el.addEventListener('change', () => {
           const k = (el as HTMLInputElement).dataset.master as string;
@@ -946,6 +962,15 @@ const plantCatalog = getPlants()
           savePref(k === 'confirmed' ? 'layer.confirmed' : 'scout.on.' + k, state.master[k]);
           apply();
         }));
+        // The leads master gates every source: turning it on shows the sub-rows with
+        // all sources checked; off hides them entirely. Re-render to add/drop the sub-rows.
+        const lb = div.querySelector('input[data-leads]');
+        if (lb) lb.addEventListener('change', () => {
+          state.leadsOn = (lb as HTMLInputElement).checked;
+          savePref('scout.leads.on', state.leadsOn);
+          if (state.leadsOn) for (const s of srcShown) { state.master[s] = true; savePref('scout.on.' + s, true); }
+          apply(); renderCtl();
+        });
         div.querySelectorAll('input[data-cat]').forEach((el) => el.addEventListener('change', () => {
           const c = (el as HTMLInputElement).dataset.cat as string;
           state.cat[c] = (el as HTMLInputElement).checked;
