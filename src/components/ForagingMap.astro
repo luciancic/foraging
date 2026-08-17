@@ -296,17 +296,9 @@ const plantCatalog = getPlants()
     try { return (crypto as any).randomUUID(); } catch {}
     return 'u-' + Math.abs(Math.floor((performance.now() % 1e9) * 1000)).toString(36) + Math.floor(performance.now()).toString(36);
   }
-  // Ensure we have a name to attribute the write to; prompt once, then remember.
-  function ensureUser(): Actor | null {
-    const existing = getUser();
-    if (existing) return existing;
-    const entered = window.prompt('Add spots as — your first name or handle (shown in the pin history):');
-    const name = (entered || '').trim();
-    if (!name) return null;
-    const u: Actor = { id: newId(), name: name.slice(0, 80) };
-    saveUser(u);
-    return u;
-  }
+  // Contributor identity is now collected inline as step 1 of the add wizard (see
+  // `startAddMode`/`onNext`), not via a browser prompt — `getUser`/`saveUser`/`newId`
+  // are the pieces it uses.
 
   // Assigned by initFullMap so the add-sheet can drop a freshly-created confirmed
   // pin straight into the live cluster (no reload). No-op until the map is built.
@@ -1069,6 +1061,15 @@ const plantCatalog = getPlants()
   // the text is a free-form custom name.
   let addSelectedSlug: string | null = null;
   let addComboCleanup: (() => void) | null = null; // removes the combo's document listener
+  // Multi-step wizard state. The sheet shows ONE step at a time (name → location →
+  // photos → plant); `addStepKeys` lists the steps present (the name step is dropped
+  // when a contributor name is already stored on the device) and `addStep` is the
+  // index into it. `addLatLng` freezes the crosshair location when we leave the
+  // location step, so the pin lands where it was placed even though the crosshair is
+  // hidden on later steps.
+  let addStep = 0;
+  let addStepKeys: string[] = [];
+  let addLatLng: any = null;
 
   const byId = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T | null;
 
@@ -1099,6 +1100,7 @@ const plantCatalog = getPlants()
 
   function endAddMode() {
     addMode = false; addBusy = false; addPhotoFiles = [];
+    addStepKeys = []; addStep = 0; addLatLng = null;
     addPhotoUrls.forEach((u) => { try { URL.revokeObjectURL(u); } catch {} });
     addPhotoUrls = [];
     document.body.classList.remove('map-adding');
@@ -1118,7 +1120,57 @@ const plantCatalog = getPlants()
     // or a typed custom find (lands in `other`). Category isn't asked of the user.
     return !!(byId<HTMLInputElement>('add-plant-search')?.value || '').trim();
   }
-  function refreshSave() { const b = byId<HTMLButtonElement>('add-save'); if (b) b.disabled = !addValid() || addBusy; }
+  // Can the current step advance? Name needs a value; the plant step needs a find;
+  // location and photos are always advanceable (a default location + optional photos).
+  function stepValid(): boolean {
+    const key = addStepKeys[addStep];
+    if (key === 'name') return !!(byId<HTMLInputElement>('add-name')?.value || '').trim();
+    if (key === 'plant') return addValid();
+    return true;
+  }
+  // The footer's primary button (Next / Save) reflects the current step's validity.
+  function refreshSave() { const b = byId<HTMLButtonElement>('add-next'); if (b) b.disabled = !stepValid() || addBusy; }
+
+  // Show a single step. Freezes the crosshair location when leaving the map step and
+  // restores it when returning, hides the crosshair off the location step, and swaps
+  // the footer between Next and Save.
+  function goToStep(i: number) {
+    if (!addSheet) return;
+    if (addStepKeys[addStep] === 'loc') addLatLng = crosshairLatLng();
+    addStep = Math.max(0, Math.min(i, addStepKeys.length - 1));
+    const key = addStepKeys[addStep];
+    const isLast = addStep === addStepKeys.length - 1;
+
+    addSheet.querySelectorAll<HTMLElement>('.add-step').forEach((el) => { el.hidden = el.dataset.step !== key; });
+    const ind = byId('add-step-ind');
+    if (ind) ind.textContent = `Step ${addStep + 1} of ${addStepKeys.length}`;
+    const back = byId<HTMLButtonElement>('add-back');
+    if (back) back.hidden = addStep === 0;
+    const next = byId<HTMLButtonElement>('add-next');
+    if (next) next.textContent = isLast ? 'Save spot' : 'Next';
+
+    // The crosshair only means something while placing the pin.
+    if (addCross) addCross.style.display = key === 'loc' ? '' : 'none';
+    if (key === 'loc' && addLatLng) centerCrosshairOn(addLatLng.lat, addLatLng.lng, 16);
+    if (key === 'name') setTimeout(() => byId<HTMLInputElement>('add-name')?.focus(), 40);
+
+    positionCross();
+    refreshSave();
+  }
+
+  // Footer "Next" (or "Save spot" on the last step). The name step persists the
+  // contributor identity the first time through.
+  function onNext() {
+    if (!stepValid() || addBusy) return;
+    if (addStepKeys[addStep] === 'name') {
+      const nm = (byId<HTMLInputElement>('add-name')!.value || '').trim().slice(0, 80);
+      if (!nm) return;
+      const existing = getUser();
+      saveUser({ id: existing?.id || newId(), name: nm });
+    }
+    if (addStep === addStepKeys.length - 1) { doSave(byId<HTMLButtonElement>('add-next')!); return; }
+    goToStep(addStep + 1);
+  }
 
   // File.type is empty for some iOS HEIC picks — infer a content-type from the
   // extension so the upload carries one (the server converts HEIC → JPEG).
@@ -1177,9 +1229,13 @@ const plantCatalog = getPlants()
       for (const f of picked) {
         const gps = await readExifGps(f);
         if (gps) {
-          centerCrosshairOn(gps.lat, gps.lon, 17);
+          // Photos come after the location step, so record the fix into `addLatLng`
+          // (used at save + when stepping back to the map) and only pan live if the
+          // crosshair is actually on screen (it's hidden off the location step).
+          addLatLng = L.latLng(gps.lat, gps.lon);
           setLocText('Placed from the photo’s location — pan to fine-tune.');
-          flash('📷 Placed from the photo’s location.');
+          if (addStepKeys[addStep] === 'loc') centerCrosshairOn(gps.lat, gps.lon, 17);
+          flash('📷 Used the photo’s location — check the Location step.');
           break;
         }
       }
@@ -1192,7 +1248,9 @@ const plantCatalog = getPlants()
     if (!user) { flash('A name is needed to save your spot.'); return; }
     addBusy = true; btn.disabled = true;
     try {
-      const ll = crosshairLatLng();
+      // The crosshair is hidden by the time we reach the last step, so use the
+      // location frozen when the map step was left (falls back defensively).
+      const ll = addLatLng || crosshairLatLng();
       const meta = resolvePlant();
       let name: string, category: string, species: string | null = null, plant: string | null = null;
       if (meta) {
@@ -1267,26 +1325,55 @@ const plantCatalog = getPlants()
     addSheet = document.createElement('div');
     addSheet.className = 'add-sheet';
     addSheet.innerHTML =
-      `<div class="add-head"><strong>Add a foraging spot</strong>` +
+      `<div class="add-head"><div class="add-head-titles"><strong>Add a foraging spot</strong>` +
+        `<span class="add-step-ind" id="add-step-ind"></span></div>` +
         `<button type="button" class="add-x" aria-label="Cancel">✕</button></div>` +
-      `<div class="add-loc"><span class="add-loc-txt" id="add-loc-txt">Pan the map so the crosshair sits on the spot.</span>` +
-        `<button type="button" class="add-useloc">📍 Use my location</button></div>` +
-      `<label class="add-row"><span>What did you find?</span>` +
-        `<div class="add-combo">` +
-          `<input type="text" class="add-plant" id="add-plant-search" role="combobox" ` +
-            `aria-autocomplete="list" aria-expanded="false" aria-controls="add-plant-list" ` +
-            `autocomplete="off" maxlength="80" placeholder="Search a plant, or type your own…">` +
-          `<button type="button" class="add-combo-clear" id="add-combo-clear" aria-label="Clear" hidden>✕</button>` +
-          `<ul class="add-plant-list" id="add-plant-list" role="listbox" hidden></ul>` +
+
+      // Step 1 — name (skipped when a name is already saved on this device).
+      `<div class="add-step" data-step="name" hidden>` +
+        `<label class="add-row"><span>Your name</span>` +
+          `<input type="text" id="add-name" autocomplete="name" maxlength="80" ` +
+            `placeholder="First name or handle"></label>` +
+        `<p class="add-note">Shown in the pin history. Saved on this device, so you’re only asked once.</p>` +
+      `</div>` +
+
+      // Step 2 — location: pan the map under the crosshair.
+      `<div class="add-step" data-step="loc" hidden>` +
+        `<div class="add-loc"><span class="add-loc-txt" id="add-loc-txt">Pan the map so the crosshair sits right on the spot.</span>` +
+          `<button type="button" class="add-useloc">📍 Use my location</button></div>` +
+      `</div>` +
+
+      // Step 3 — photos (optional).
+      `<div class="add-step" data-step="photo" hidden>` +
+        `<p class="add-tip">📸 Tip: shoot the plant <em>with its surroundings</em> — a nearby path, fence, or landmark — so it’s easy to find again.</p>` +
+        `<div class="add-photo-btns">` +
+          `<button type="button" class="add-photo-btn" id="add-photo-cam-btn">📷 Take a photo</button>` +
+          `<button type="button" class="add-photo-btn" id="add-photo-lib-btn">🖼 Choose from gallery</button>` +
         `</div>` +
-        `<span class="add-combo-hint" id="add-combo-hint"></span></label>` +
-      `<label class="add-row"><span>Photos <em>(optional)</em></span>` +
-        `<input type="file" accept="image/*" id="add-photo" multiple></label>` +
-      `<div class="add-photo-prev" id="add-photo-prev" hidden></div>` +
-      `<label class="add-row"><span>Access notes <em>(optional)</em></span>` +
-        `<textarea id="add-notes" rows="2" maxlength="500" placeholder="How to get to it — e.g. behind the big tree"></textarea></label>` +
-      `<div class="add-actions"><button type="button" class="add-cancel">Cancel</button>` +
-        `<button type="button" class="add-save" id="add-save" disabled>Save spot</button></div>`;
+        `<input type="file" accept="image/*" capture="environment" id="add-photo-cam" hidden>` +
+        `<input type="file" accept="image/*" multiple id="add-photo-lib" hidden>` +
+        `<div class="add-photo-prev" id="add-photo-prev" hidden></div>` +
+      `</div>` +
+
+      // Step 4 — which plant (+ optional notes).
+      `<div class="add-step" data-step="plant" hidden>` +
+        `<label class="add-row"><span>What did you find?</span>` +
+          `<div class="add-combo">` +
+            `<input type="text" class="add-plant" id="add-plant-search" role="combobox" ` +
+              `aria-autocomplete="list" aria-expanded="false" aria-controls="add-plant-list" ` +
+              `autocomplete="off" maxlength="80" placeholder="Search a plant, or type your own…">` +
+            `<button type="button" class="add-combo-clear" id="add-combo-clear" aria-label="Clear" hidden>✕</button>` +
+            `<ul class="add-plant-list" id="add-plant-list" role="listbox" hidden></ul>` +
+          `</div>` +
+          `<span class="add-combo-hint" id="add-combo-hint"></span></label>` +
+        `<label class="add-row"><span>Notes <em>(optional)</em></span>` +
+          `<textarea id="add-notes" rows="2" maxlength="500" placeholder="Anything helpful — e.g. several of these here, behind the fence…"></textarea></label>` +
+      `</div>` +
+
+      `<div class="add-actions">` +
+        `<button type="button" class="add-back" id="add-back" hidden>Back</button>` +
+        `<button type="button" class="add-cancel">Cancel</button>` +
+        `<button type="button" class="add-next" id="add-next" disabled>Next</button></div>`;
     shell.appendChild(addSheet);
     // The sheet owns its own gestures — don't let scrolling it pan/zoom the map.
     L.DomEvent.disableClickPropagation(addSheet);
@@ -1295,6 +1382,15 @@ const plantCatalog = getPlants()
     addSheet.querySelector('.add-x')!.addEventListener('click', endAddMode);
     addSheet.querySelector('.add-cancel')!.addEventListener('click', endAddMode);
     addSheet.querySelector('.add-useloc')!.addEventListener('click', () => { setLocText('Locating…'); locateNow(); });
+
+    // ── Step navigation (Back / Next / Save) ───────────────────────────────
+    byId<HTMLButtonElement>('add-back')!.addEventListener('click', () => goToStep(addStep - 1));
+    byId<HTMLButtonElement>('add-next')!.addEventListener('click', onNext);
+    const nameInput = byId<HTMLInputElement>('add-name');
+    if (nameInput) {
+      nameInput.addEventListener('input', refreshSave);
+      nameInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); onNext(); } });
+    }
 
     // ── Searchable plant combobox ──────────────────────────────────────────
     const search = byId<HTMLInputElement>('add-plant-search')!;
@@ -1382,24 +1478,35 @@ const plantCatalog = getPlants()
       }
     });
 
-    byId<HTMLInputElement>('add-photo')!.addEventListener('change', (e) => handlePhoto(e.target as HTMLInputElement));
-    byId<HTMLButtonElement>('add-save')!.addEventListener('click', (e) => doSave(e.currentTarget as HTMLButtonElement));
+    // Two explicit photo sources instead of one generic file input: a camera button
+    // (capture goes straight to the camera, no OS action sheet) and a gallery button.
+    // "Choose from files" is dropped — it's unnecessary noise on phones.
+    const camIn = byId<HTMLInputElement>('add-photo-cam')!;
+    const libIn = byId<HTMLInputElement>('add-photo-lib')!;
+    byId<HTMLButtonElement>('add-photo-cam-btn')!.addEventListener('click', () => camIn.click());
+    byId<HTMLButtonElement>('add-photo-lib-btn')!.addEventListener('click', () => libIn.click());
+    camIn.addEventListener('change', (e) => handlePhoto(e.target as HTMLInputElement));
+    libIn.addEventListener('change', (e) => handlePhoto(e.target as HTMLInputElement));
 
     positionCross();
   }
 
   function startAddMode() {
     if (addMode) return;
-    const user = ensureUser();
-    if (!user) { flash('Add cancelled — a name is needed to attribute your spot.'); return; }
     if (editMode) setEditMode(false); // adding and admin-editing are separate modes
     addMode = true;
+    addLatLng = null;
     document.body.classList.add('map-adding');
+    // The name step is the first step ONLY when we don't already have a stored name —
+    // no more browser prompt; the name is asked inline as step 1 when needed.
+    addStepKeys = getUser() ? ['loc', 'photo', 'plant'] : ['name', 'loc', 'photo', 'plant'];
+    addStep = 0;
     buildAddUI();
     // Default the crosshair to the user's location so field contributors barely
     // move it; if we have no fix yet, ask for one (recenters when it lands).
     if (userMarker) { const ll = userMarker.getLatLng(); centerCrosshairOn(ll.lat, ll.lng, 16); }
     else locateNow();
+    goToStep(0);
   }
 
   // Minimal client-side EXIF GPS reader (JPEG only) — best-effort, any failure

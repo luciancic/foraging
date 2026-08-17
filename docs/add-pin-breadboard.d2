@@ -18,6 +18,11 @@ classes: {
 grid-columns: 3
 grid-gap: 90
 
+# NOTE (2026-08): shipped flow has since evolved past Version B into a linear
+# 4-step wizard (④ below) — same live map + crosshair placement, but split into
+# discrete steps so the name is asked inline (no browser prompt) and each screen
+# stays simple. Versions A/B are kept as the original shaping record.
+
 # ─────────────────────────────────────────────────────────────
 current: "① CURRENT — no contributor add path" {
   style: { stroke: "#cbd5e1"; fill: "#ffffff" }
@@ -105,4 +110,53 @@ verB: "③ VERSION B — One bottom-sheet, live map (RECOMMENDED)" {
   sheet.save -> api: "lands confirmed"
 
   note: "Pick the PLANT, not fields:\nname + category + caution inherited\nfrom its guide (data-model change,\nother agent). Precedence photo-EXIF >\ndevice-GPS > drop, always nudgeable.\nLocation soft, never required." { class: note }
+}
+
+# ─────────────────────────────────────────────────────────────
+verShipped: "④ SHIPPED — linear multi-step wizard" {
+  style: { stroke: "#16a34a"; fill: "#ffffff" }
+
+  map: "Map (homepage / fullscreen)" {
+    class: place; grid-columns: 1
+    plus: "➕ Add button" { class: affordance }
+  }
+
+  s1: "Step 1 · Your name  (only if not saved on device)" {
+    class: place; grid-columns: 1
+    name: "Name field + Next\n(inline — no browser prompt)" { class: affordance }
+  }
+  named: "Name already on device?" { class: conditional }
+  map.plus -> named
+  named -> s1: "no → ask inline, save to localStorage"
+
+  s2: "Step 2 · Location" {
+    class: place; grid-columns: 1
+    cross: "Pan map under the crosshair" { class: affordance }
+    useloc: "📍 Use my location" { class: affordance }
+    nav: "Back · Cancel · Next" { class: affordance }
+  }
+  named -> s2: "yes → start here (3 steps)"
+  s1.name -> s2
+
+  s3: "Step 3 · Photos (optional)" {
+    class: place; grid-columns: 1
+    tip: "Tip: shoot the plant WITH its\nsurroundings (landmark/path)" { class: note }
+    cam: "📷 Take a photo (capture)" { class: affordance }
+    lib: "🖼 Choose from gallery" { class: affordance }
+    exif: "Photo GPS → freezes location\n(no 'choose from files')" { class: conditional }
+  }
+  s2.nav -> s3
+
+  s4: "Step 4 · Which plant (+ notes)" {
+    class: place; grid-columns: 1
+    plant: "Pick plant → name/category/species\ninherited from its guide" { class: affordance }
+    notes: "Notes (optional) — merged here,\nno longer its own step" { class: affordance }
+    save: "Save spot" { class: affordance }
+  }
+  s3 -> s4
+
+  api: "POST /api/photos → file\nPOST /api/pins {plant, lon, lat, actor}\n(location frozen when leaving step 2)" { class: data }
+  s4.save -> api: "lands confirmed"
+
+  note: "Crosshair only shows on step 2; its\nlat/lng is frozen into addLatLng on\nleaving so later steps can hide it.\nBack/Next preserve every entry." { class: note }
 }
