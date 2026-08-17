@@ -1063,7 +1063,11 @@ const plantCatalog = getPlants()
   let addPhotoFiles: File[] = [];
   let addPhotoUrls: string[] = []; // object URLs currently shown in the preview (revoked on re-render)
   let addBusy = false;
-  const OTHER = '__other__'; // sentinel <option> value for a not-in-the-guide find
+  // The plant picker is a searchable combobox: the visitor types to filter the
+  // guide, or types a name that isn't in the guide at all (saved as a custom
+  // `other` find). `addSelectedSlug` holds the picked guide plant, or null when
+  // the text is a free-form custom name.
+  let addSelectedSlug: string | null = null;
 
   const byId = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T | null;
 
@@ -1102,19 +1106,15 @@ const plantCatalog = getPlants()
     clearFlash();
   }
 
-  // The <select> value is a plant slug, the OTHER sentinel, or '' (placeholder).
-  const isOther = () => byId<HTMLSelectElement>('add-plant')?.value === OTHER;
-  // Resolve the selected slug to a guide plant, or null for a not-in-the-guide find.
+  // Resolve the currently-picked guide plant, or null for a custom (typed) find.
   function resolvePlant() {
-    const v = byId<HTMLSelectElement>('add-plant')?.value || '';
-    if (!v || v === OTHER) return null;
-    return PLANT_CATALOG.find((p) => p.slug === v) || null;
+    if (!addSelectedSlug) return null;
+    return PLANT_CATALOG.find((p) => p.slug === addSelectedSlug) || null;
   }
   function addValid(): boolean {
-    // A guide plant chosen, or "other" with a typed name. Category isn't asked for —
-    // it's the plant's (guide) or `other` for a custom find.
-    if (isOther()) return !!(byId<HTMLInputElement>('add-plant-other')?.value || '').trim();
-    return !!resolvePlant();
+    // Any non-empty name is savable — a picked guide plant (inherits its category)
+    // or a typed custom find (lands in `other`). Category isn't asked of the user.
+    return !!(byId<HTMLInputElement>('add-plant-search')?.value || '').trim();
   }
   function refreshSave() { const b = byId<HTMLButtonElement>('add-save'); if (b) b.disabled = !addValid() || addBusy; }
 
@@ -1199,7 +1199,7 @@ const plantCatalog = getPlants()
       } else {
         // Not-in-the-guide find → typed name, always the `other` category (category is
         // a property of the plant, not the pin; an unlisted plant is "other").
-        name = byId<HTMLInputElement>('add-plant-other')!.value.trim();
+        name = byId<HTMLInputElement>('add-plant-search')!.value.trim();
         category = 'other';
       }
       const notes = byId<HTMLTextAreaElement>('add-notes')!.value.trim() || null;
@@ -1244,20 +1244,24 @@ const plantCatalog = getPlants()
 
     addCross = document.createElement('div');
     addCross.className = 'add-cross'; addCross.setAttribute('aria-hidden', 'true');
+    // High-visibility target: every dark stroke sits over a white halo so it reads
+    // on light OR dark tiles, plus a slow pulse ring to draw the eye to the spot.
     addCross.innerHTML =
-      `<svg viewBox="0 0 44 44" width="44" height="44">` +
-        `<circle cx="22" cy="22" r="13" fill="none" stroke="#fff" stroke-width="3"/>` +
-        `<circle cx="22" cy="22" r="13" fill="none" stroke="#21492b" stroke-width="1.6"/>` +
-        `<circle cx="22" cy="22" r="2.6" fill="#21492b"/>` +
-        `<path d="M22 3v7M22 34v7M3 22h7M34 22h7" stroke="#21492b" stroke-width="2" stroke-linecap="round"/></svg>`;
+      `<svg viewBox="0 0 60 60" width="60" height="60">` +
+        `<circle cx="30" cy="30" r="12" fill="none" stroke="#21492b" stroke-width="2" opacity="0">` +
+          `<animate attributeName="r" values="11;24;11" dur="2.2s" repeatCount="indefinite"/>` +
+          `<animate attributeName="opacity" values=".7;0;.7" dur="2.2s" repeatCount="indefinite"/></circle>` +
+        `<path d="M30 4v11M30 45v11M4 30h11M45 30h11" stroke="#fff" stroke-width="5.5" stroke-linecap="round"/>` +
+        `<circle cx="30" cy="30" r="17" fill="none" stroke="#fff" stroke-width="5.5"/>` +
+        `<circle cx="30" cy="30" r="17" fill="none" stroke="#21492b" stroke-width="2.6"/>` +
+        `<path d="M30 4v11M30 45v11M4 30h11M45 30h11" stroke="#21492b" stroke-width="2.6" stroke-linecap="round"/>` +
+        `<circle cx="30" cy="30" r="4.6" fill="#fff"/>` +
+        `<circle cx="30" cy="30" r="3" fill="#21492b"/></svg>`;
     shell.appendChild(addCross);
 
-    // Plain native <select> — the most reliable picker on every phone (iOS shows its
-    // wheel, Android its dropdown). Option values are plant SLUGS; a trailing "not in
-    // the guide" sentinel reveals a free-text name (which lands in the `other` category).
-    const opts = `<option value="" disabled selected>Choose what you found…</option>` +
-      PLANT_CATALOG.map((p) => `<option value="${esc(p.slug)}">${esc(p.title)}</option>`).join('') +
-      `<option value="${OTHER}">Something else — not in the guide</option>`;
+    // Searchable combobox — a text input filters the guide as you type (the list can
+    // be long), and any name that ISN'T in the guide is savable as-is (a custom
+    // `other` find; reconciled to a guide later). A picked plant sets `addSelectedSlug`.
     addSheet = document.createElement('div');
     addSheet.className = 'add-sheet';
     addSheet.innerHTML =
@@ -1266,10 +1270,13 @@ const plantCatalog = getPlants()
       `<div class="add-loc"><span class="add-loc-txt" id="add-loc-txt">Pan the map so the crosshair sits on the spot.</span>` +
         `<button type="button" class="add-useloc">📍 Use my location</button></div>` +
       `<label class="add-row"><span>What did you find?</span>` +
-        `<select class="add-plant" id="add-plant">${opts}</select></label>` +
-      `<label class="add-row" id="add-other" hidden><span>Name your find</span>` +
-        `<input type="text" id="add-plant-other" autocomplete="off" maxlength="80" ` +
-          `placeholder="e.g. Wild grapes"></label>` +
+        `<div class="add-combo">` +
+          `<input type="text" class="add-plant" id="add-plant-search" role="combobox" ` +
+            `aria-autocomplete="list" aria-expanded="false" aria-controls="add-plant-list" ` +
+            `autocomplete="off" maxlength="80" placeholder="Search a plant, or type your own…">` +
+          `<ul class="add-plant-list" id="add-plant-list" role="listbox" hidden></ul>` +
+        `</div>` +
+        `<span class="add-combo-hint" id="add-combo-hint"></span></label>` +
       `<label class="add-row"><span>Photos <em>(optional)</em></span>` +
         `<input type="file" accept="image/*" id="add-photo" multiple></label>` +
       `<div class="add-photo-prev" id="add-photo-prev" hidden></div>` +
@@ -1285,17 +1292,77 @@ const plantCatalog = getPlants()
     addSheet.querySelector('.add-x')!.addEventListener('click', endAddMode);
     addSheet.querySelector('.add-cancel')!.addEventListener('click', endAddMode);
     addSheet.querySelector('.add-useloc')!.addEventListener('click', () => { setLocText('Locating…'); locateNow(); });
-    const plantSel = byId<HTMLSelectElement>('add-plant')!;
-    const otherRow = byId('add-other')!;
-    const otherInput = byId<HTMLInputElement>('add-plant-other')!;
-    const syncPlant = () => {
-      const other = plantSel.value === OTHER;
-      otherRow.hidden = !other; // "not in the guide" → reveal a free-text name field
-      if (other) otherInput.focus();
-      refreshSave();
+
+    // ── Searchable plant combobox ──────────────────────────────────────────
+    const search = byId<HTMLInputElement>('add-plant-search')!;
+    const list = byId<HTMLUListElement>('add-plant-list')!;
+    const hint = byId('add-combo-hint')!;
+    let activeIdx = -1;
+
+    const updateHint = () => {
+      const meta = resolvePlant();
+      const v = search.value.trim();
+      if (meta) { hint.textContent = `✓ Linked to the ${meta.title} guide.`; return; }
+      if (!v) { hint.textContent = ''; return; }
+      // Matches still showing but nothing picked → nudge to link; no match → custom.
+      const hasMatch = PLANT_CATALOG.some((p) => (p.title + ' ' + (p.species || '')).toLowerCase().includes(v.toLowerCase()));
+      hint.textContent = hasMatch
+        ? 'Tap a match to link its guide, or save as a custom find.'
+        : `Not in the guide — saved as a custom find (“${v}”).`;
     };
-    plantSel.addEventListener('change', syncPlant);
-    otherInput.addEventListener('input', refreshSave);
+    const renderCombo = () => {
+      const q = search.value.trim().toLowerCase();
+      const items = q ? PLANT_CATALOG.filter((p) => (p.title + ' ' + (p.species || '')).toLowerCase().includes(q)) : PLANT_CATALOG;
+      activeIdx = -1;
+      list.innerHTML = items.length
+        ? items.map((p) => `<li role="option" class="add-plant-opt" data-slug="${esc(p.slug)}">` +
+            `<span class="opt-title">${esc(p.title)}</span>` +
+            (p.species ? `<span class="opt-sci">${esc(p.species)}</span>` : '') + `</li>`).join('')
+        : `<li class="add-plant-none" aria-disabled="true">No guide match — “${esc(search.value.trim())}” saves as a custom find.</li>`;
+      list.hidden = false;
+      search.setAttribute('aria-expanded', 'true');
+    };
+    const closeCombo = () => { list.hidden = true; search.setAttribute('aria-expanded', 'false'); activeIdx = -1; };
+    const pickSlug = (slug: string) => {
+      const p = PLANT_CATALOG.find((x) => x.slug === slug);
+      if (!p) return;
+      addSelectedSlug = slug; search.value = p.title;
+      closeCombo(); updateHint(); refreshSave();
+    };
+
+    search.addEventListener('input', () => {
+      // Typing means a custom name unless it exactly matches a guide title (then re-link).
+      const v = search.value.trim().toLowerCase();
+      const exact = PLANT_CATALOG.find((p) => p.title.toLowerCase() === v);
+      addSelectedSlug = exact ? exact.slug : null;
+      renderCombo(); updateHint(); refreshSave();
+    });
+    search.addEventListener('focus', renderCombo);
+    // Close on blur, but a hair late so an option tap registers first.
+    search.addEventListener('blur', () => setTimeout(closeCombo, 150));
+    // pointerdown fires before the input's blur — pick without losing the tap.
+    list.addEventListener('pointerdown', (e) => {
+      const li = (e.target as HTMLElement).closest('.add-plant-opt') as HTMLElement | null;
+      if (!li) return;
+      e.preventDefault();
+      pickSlug(li.dataset.slug!);
+    });
+    search.addEventListener('keydown', (e) => {
+      const opts = Array.from(list.querySelectorAll<HTMLElement>('.add-plant-opt'));
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        if (list.hidden) renderCombo();
+        e.preventDefault();
+        if (!opts.length) return;
+        activeIdx = e.key === 'ArrowDown' ? Math.min(activeIdx + 1, opts.length - 1) : Math.max(activeIdx - 1, 0);
+        opts.forEach((o, i) => o.classList.toggle('active', i === activeIdx));
+        opts[activeIdx].scrollIntoView({ block: 'nearest' });
+      } else if (e.key === 'Enter') {
+        if (!list.hidden && activeIdx >= 0 && opts[activeIdx]) { e.preventDefault(); pickSlug(opts[activeIdx].dataset.slug!); }
+      } else if (e.key === 'Escape') {
+        if (!list.hidden) { e.preventDefault(); closeCombo(); }
+      }
+    });
+
     byId<HTMLInputElement>('add-photo')!.addEventListener('change', (e) => handlePhoto(e.target as HTMLInputElement));
     byId<HTMLButtonElement>('add-save')!.addEventListener('click', (e) => doSave(e.currentTarget as HTMLButtonElement));
 

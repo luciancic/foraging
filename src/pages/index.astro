@@ -1,65 +1,9 @@
 ---
 import Base from '../layouts/Base.astro';
 import ForagingMap from '../components/ForagingMap.astro';
-import { effectiveStatus } from '../lib/season';
-import { mediaVariant } from '../lib/media';
-import { getPlants } from '../lib/content.mjs';
-
-const plants = getPlants()
-  .map((p) => ({ ...p, live: effectiveStatus(p.data) }))
-  .sort((a, b) => a.data.order - b.data.order);
-const ripeNow = plants.filter((p) => p.live === 'ripe-now');
-const soon = plants.filter((p) => p.live === 'coming-soon');
-
-function thumb(p: any) {
-  return p.data.heroImage ? `--ph:url('${mediaVariant(p.data.heroImage, 'thumb')}')` : '';
-}
 ---
-<Base title="Forage MTL — map & plant guide" page="home">
-  <section class="hero wrap">
-    <h1>Forage MTL</h1>
-    <p>A personal, growing map of edible plants around Montréal — plus a field guide to what to look for, how to be sure it's safe, and how to harvest and prepare it.</p>
-  </section>
-
-  <section class="wrap home-map">
-    <ForagingMap />
-    <p style="margin-top:12px"><a href="/map">Open the full map →</a></p>
-  </section>
-
-  {ripeNow.length > 0 && (
-    <section class="wrap section">
-      <h2>Ripe right now</h2>
-      <div class="grid">
-        {ripeNow.map((p) => (
-          <a class="card" href={`/plants/${p.id}`}>
-            <div class="thumb" style={thumb(p)}></div>
-            <div class="body">
-              <span class="name">{p.data.title}</span>
-              {p.data.scientificName && <span class="sci">{p.data.scientificName}</span>}
-              <span class="meta"><span class={`badge ${p.live}`}>ripe now</span></span>
-            </div>
-          </a>
-        ))}
-      </div>
-    </section>
-  )}
-
-  {soon.length > 0 && (
-    <section class="wrap section">
-      <h2>Coming in the next few weeks</h2>
-      <div class="grid">
-        {soon.map((p) => (
-          <a class="card" href={`/plants/${p.id}`}>
-            <div class="thumb" style={thumb(p)}></div>
-            <div class="body">
-              <span class="name">{p.data.title}</span>
-              {p.data.scientificName && <span class="sci">{p.data.scientificName}</span>}
-              <span class="meta"><span class={`badge ${p.live}`}>coming soon</span></span>
-            </div>
-          </a>
-        ))}
-      </div>
-      <p style="margin-top:18px"><a href="/plants">See all plants →</a></p>
-    </section>
-  )}
+<Base title="Forage MTL — map & plant guide" page="map" description="Personal foraging spots mapped across Montréal." fullBleed={true}>
+  <div class="map-page">
+    <ForagingMap fullscreen={true} />
+  </div>
 </Base>
