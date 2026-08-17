@@ -1098,16 +1098,45 @@ const plantCatalog = getPlants()
   }
   const setLocText = (t: string) => { const el = byId('add-loc-txt'); if (el) el.textContent = t; };
 
+  // Lock/unlock all map movement. Off the location step the pin is set, so we freeze
+  // panning + zoom: nothing can nudge the map (and thus the crosshair's spot) while
+  // the crosshair is hidden. Re-enabled on the location step and when add mode ends.
+  function setMapMovable(on: boolean) {
+    const fn = on ? 'enable' : 'disable';
+    try {
+      map.dragging[fn](); map.touchZoom[fn](); map.scrollWheelZoom[fn]();
+      map.doubleClickZoom[fn](); map.boxZoom[fn]();
+      if (map.keyboard) map.keyboard[fn]();
+      if ((map as any).tap) (map as any).tap[fn]();
+    } catch {}
+  }
+
   function endAddMode() {
     addMode = false; addBusy = false; addPhotoFiles = [];
     addStepKeys = []; addStep = 0; addLatLng = null;
     addPhotoUrls.forEach((u) => { try { URL.revokeObjectURL(u); } catch {} });
     addPhotoUrls = [];
     document.body.classList.remove('map-adding');
+    setMapMovable(true); // restore normal map interaction on exit
     addComboCleanup?.(); addComboCleanup = null;
     addSheet?.remove(); addSheet = null;
     addCross?.remove(); addCross = null;
     clearFlash();
+  }
+
+  // Cancel the add flow, guarding against accidental data loss. The bigger ✕ is now
+  // the sole cancel affordance (no footer Cancel button), so confirm once the visitor
+  // has entered anything or moved past the first step.
+  function addHasProgress(): boolean {
+    if (addPhotoFiles.length) return true;
+    if ((byId<HTMLInputElement>('add-plant-search')?.value || '').trim()) return true;
+    if ((byId<HTMLTextAreaElement>('add-notes')?.value || '').trim()) return true;
+    if ((byId<HTMLInputElement>('add-name')?.value || '').trim()) return true;
+    return addStep > 0; // past step 1 ⇒ they at least placed the pin
+  }
+  function cancelAdd() {
+    if (addHasProgress() && !window.confirm('Are you sure you want to cancel? Your spot won’t be saved.')) return;
+    endAddMode();
   }
 
   // Resolve the currently-picked guide plant, or null for a custom (typed) find.
@@ -1149,12 +1178,18 @@ const plantCatalog = getPlants()
     const next = byId<HTMLButtonElement>('add-next');
     if (next) next.textContent = isLast ? 'Save spot' : 'Next';
 
-    // The crosshair only means something while placing the pin.
-    if (addCross) addCross.style.display = key === 'loc' ? '' : 'none';
-    if (key === 'loc' && addLatLng) centerCrosshairOn(addLatLng.lat, addLatLng.lng, 16);
+    // The crosshair only means something while placing the pin — show it and let the
+    // map move ONLY on the location step; freeze everything elsewhere so the pin can't
+    // drift. Position the crosshair for this step's sheet height BEFORE recentering,
+    // so returning to the location step lands the frozen spot exactly under it (the
+    // sheets differ in height, so the crosshair sits at a different y per step).
+    const onLoc = key === 'loc';
+    if (addCross) addCross.style.display = onLoc ? '' : 'none';
+    setMapMovable(onLoc);
+    positionCross();
+    if (onLoc && addLatLng) centerCrosshairOn(addLatLng.lat, addLatLng.lng, 16);
     if (key === 'name') setTimeout(() => byId<HTMLInputElement>('add-name')?.focus(), 40);
 
-    positionCross();
     refreshSave();
   }
 
@@ -1370,17 +1405,17 @@ const plantCatalog = getPlants()
           `<textarea id="add-notes" rows="2" maxlength="500" placeholder="Anything helpful — e.g. several of these here, behind the fence…"></textarea></label>` +
       `</div>` +
 
+      // Footer is just Back + Next/Save — cancelling is the bigger ✕ up top (so three
+      // buttons never crowd a step).
       `<div class="add-actions">` +
         `<button type="button" class="add-back" id="add-back" hidden>Back</button>` +
-        `<button type="button" class="add-cancel">Cancel</button>` +
         `<button type="button" class="add-next" id="add-next" disabled>Next</button></div>`;
     shell.appendChild(addSheet);
     // The sheet owns its own gestures — don't let scrolling it pan/zoom the map.
     L.DomEvent.disableClickPropagation(addSheet);
     L.DomEvent.disableScrollPropagation(addSheet);
 
-    addSheet.querySelector('.add-x')!.addEventListener('click', endAddMode);
-    addSheet.querySelector('.add-cancel')!.addEventListener('click', endAddMode);
+    addSheet.querySelector('.add-x')!.addEventListener('click', cancelAdd);
     addSheet.querySelector('.add-useloc')!.addEventListener('click', () => { setLocText('Locating…'); locateNow(); });
 
     // ── Step navigation (Back / Next / Save) ───────────────────────────────
