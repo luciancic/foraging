@@ -386,7 +386,28 @@ body:not(.map-editing) .leaflet-popup-content .scout-promote { display: none; }
 }
 @keyframes add-sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
 .add-head { display: flex; align-items: center; justify-content: space-between; }
+.add-head-titles { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
 .add-head strong { font-size: 1.02rem; color: var(--ink); }
+.add-step-ind { font-size: .74rem; font-weight: 500; color: var(--ink-soft); }
+/* One wizard step at a time; each stacks its own rows with the sheet's gap. */
+.add-step { display: flex; flex-direction: column; gap: 11px; }
+.add-step[hidden] { display: none; }
+.add-note { margin: 0; font-size: .78rem; color: var(--ink-soft); line-height: 1.4; }
+/* Photo-step pointer: shoot the plant in context. */
+.add-tip {
+  margin: 0; font-size: .84rem; line-height: 1.4; color: var(--forest-deep);
+  background: color-mix(in srgb, var(--forest) 8%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--forest) 22%, var(--line));
+  border-radius: 10px; padding: 9px 11px;
+}
+.add-tip em { font-style: normal; font-weight: 600; }
+.add-photo-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+.add-photo-btn {
+  flex: 1 1 140px; font: inherit; font-size: .9rem; font-weight: 600; color: var(--forest-deep);
+  background: var(--surface); border: 1px solid color-mix(in srgb, var(--forest) 32%, var(--line));
+  border-radius: 10px; padding: 12px 10px; cursor: pointer;
+}
+.add-photo-btn:hover { background: color-mix(in srgb, var(--forest) 10%, var(--surface)); }
 .add-x {
   border: 0; background: none; font-size: 1.1rem; line-height: 1; color: var(--ink-soft);
   padding: 4px 6px; cursor: pointer; border-radius: 8px;
@@ -468,15 +489,16 @@ body:not(.map-editing) .leaflet-popup-content .scout-promote { display: none; }
   padding-right: 32px;
 }
 .add-actions { display: flex; gap: 10px; margin-top: 2px; }
-.add-cancel, .add-save {
+.add-back, .add-cancel, .add-next {
   flex: 1 1 0; font: inherit; font-size: .92rem; font-weight: 600;
   border-radius: 10px; padding: 11px 12px; cursor: pointer; border: 1px solid var(--line);
 }
-.add-cancel { background: var(--surface); color: var(--ink-soft); }
-.add-cancel:hover { border-color: var(--ink-soft); }
-.add-save { background: var(--forest); color: #fff; border-color: var(--forest-deep); }
-.add-save:hover { background: var(--forest-deep); }
-.add-save:disabled { opacity: .5; cursor: default; }
+.add-back, .add-cancel { background: var(--surface); color: var(--ink-soft); }
+.add-back:hover, .add-cancel:hover { border-color: var(--ink-soft); }
+.add-back[hidden] { display: none; }
+.add-next { background: var(--forest); color: #fff; border-color: var(--forest-deep); }
+.add-next:hover { background: var(--forest-deep); }
+.add-next:disabled { opacity: .5; cursor: default; }
 /* While adding, hide the whole layers/edit/add panel — its ➕, pencil and Layers
    pill would otherwise sit on top of the sheet. To reach the layers, cancel the add. */
 body.map-adding .map-panel { display: none; }
