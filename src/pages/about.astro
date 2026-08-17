@@ -1,0 +1,59 @@
+---
+import Base from '../layouts/Base.astro';
+
+const REPO = 'https://github.com/luciancic/foraging';
+---
+<Base title="About — Forage MTL" page="about" description="About Forage MTL — an open-source foraging map and plant field guide for Montréal, and the data behind its scouting leads.">
+  <section class="wrap section prose">
+    <h1 style="margin:0 0 10px;">About</h1>
+    <p>
+      <strong>Forage MTL</strong> is a personal, hand-curated map of foraging spots and a field guide to
+      urban edible plants around the island of Montréal. Confirmed spots are places I've actually visited;
+      everything else on the map is a <em>scouting lead</em> — a hint from open data that still needs to be
+      checked in person before it's trustworthy.
+    </p>
+
+    <h2>Open source</h2>
+    <p>
+      This whole site — the map, the plant guides, the little live API behind the pins — is open source.
+      You're welcome to read the code, learn from it, file an issue, or fork it for your own city.
+    </p>
+    <p>
+      <a href={REPO} target="_blank" rel="noopener">View the source on GitHub →</a>
+    </p>
+
+    <h2 id="data">Scouting-leads data sources</h2>
+    <p>
+      The unverified leads on the map (the circles, diamonds, and triangles) come from three open datasets.
+      They're a one-time snapshot, not a live feed, and their locations can be imprecise or out of date —
+      which is exactly why they're marked as leads and must be confirmed on the ground before they become
+      real spots. Credit and licences:
+    </p>
+    <ul>
+      <li>
+        <strong>iNaturalist</strong> (● circles) — research-grade community observations
+        from <a href="https://www.inaturalist.org" target="_blank" rel="noopener">iNaturalist</a>. A sighting
+        of a species isn't the same as permission or a good picking spot — treat each as a hint.
+      </li>
+      <li>
+        <strong>Falling Fruit</strong> (◆ diamonds) — community-mapped edible spots
+        from <a href="https://fallingfruit.org" target="_blank" rel="noopener">Falling Fruit</a>,
+        used under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> (attribution,
+        non-commercial, share-alike).
+      </li>
+      <li>
+        <strong>Ville de Montréal</strong> (▲ triangles) — a sample of the city's public street- and park-tree
+        inventory from <a href="https://donnees.montreal.ca/dataset/arbres" target="_blank" rel="noopener">données Montréal</a>,
+        used under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>. The
+        city notes these locations may be imprecise or outdated.
+      </li>
+    </ul>
+
+    <h2>Forage responsibly</h2>
+    <p>
+      Never eat anything you can't identify with certainty against a live plant and two independent sources.
+      Learn the poisonous lookalike before the edible. Forage lightly, respect private property and city
+      bylaws, and leave plenty behind. When in doubt, throw it out.
+    </p>
+  </section>
+</Base>

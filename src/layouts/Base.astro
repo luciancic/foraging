@@ -20,6 +20,7 @@ const { title, description = 'A personal foraging map and plant field guide for 
         <nav class="nav">
           <a href="/" aria-current={page === 'map' ? 'page' : undefined}>Map</a>
           <a href="/plants" aria-current={page === 'plants' ? 'page' : undefined}>Plants</a>
+          <a href="/about" aria-current={page === 'about' ? 'page' : undefined}>About</a>
         </nav>
       </div>
     </header>
@@ -29,7 +30,7 @@ const { title, description = 'A personal foraging map and plant field guide for 
     {!fullBleed && (
     <footer class="site-footer">
       <div class="wrap">
-        <p>A personal foraging notebook for the island of Montréal · <a href="/map">map</a> · <a href="/plants">plants</a></p>
+        <p>A personal foraging notebook for the island of Montréal · <a href="/map">map</a> · <a href="/plants">plants</a> · <a href="/about">about</a></p>
         <p><strong>Forage responsibly:</strong> never eat anything you can't identify with certainty against a live plant and two independent sources. Learn the poisonous lookalike before the edible. When in doubt, throw it out.</p>
       </div>
     </footer>
