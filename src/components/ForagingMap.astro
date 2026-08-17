@@ -1068,6 +1068,7 @@ const plantCatalog = getPlants()
   // `other` find). `addSelectedSlug` holds the picked guide plant, or null when
   // the text is a free-form custom name.
   let addSelectedSlug: string | null = null;
+  let addComboCleanup: (() => void) | null = null; // removes the combo's document listener
 
   const byId = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T | null;
 
@@ -1101,6 +1102,7 @@ const plantCatalog = getPlants()
     addPhotoUrls.forEach((u) => { try { URL.revokeObjectURL(u); } catch {} });
     addPhotoUrls = [];
     document.body.classList.remove('map-adding');
+    addComboCleanup?.(); addComboCleanup = null;
     addSheet?.remove(); addSheet = null;
     addCross?.remove(); addCross = null;
     clearFlash();
@@ -1274,6 +1276,7 @@ const plantCatalog = getPlants()
           `<input type="text" class="add-plant" id="add-plant-search" role="combobox" ` +
             `aria-autocomplete="list" aria-expanded="false" aria-controls="add-plant-list" ` +
             `autocomplete="off" maxlength="80" placeholder="Search a plant, or type your own…">` +
+          `<button type="button" class="add-combo-clear" id="add-combo-clear" aria-label="Clear" hidden>✕</button>` +
           `<ul class="add-plant-list" id="add-plant-list" role="listbox" hidden></ul>` +
         `</div>` +
         `<span class="add-combo-hint" id="add-combo-hint"></span></label>` +
@@ -1297,7 +1300,12 @@ const plantCatalog = getPlants()
     const search = byId<HTMLInputElement>('add-plant-search')!;
     const list = byId<HTMLUListElement>('add-plant-list')!;
     const hint = byId('add-combo-hint')!;
+    const clearBtn = byId<HTMLButtonElement>('add-combo-clear')!;
     let activeIdx = -1;
+    let lastPickAt = 0; // suppress a ghost-click that would re-open the list right after a pick
+
+    // Show the ✕ only when there's something to clear.
+    const syncClear = () => { clearBtn.hidden = !search.value.length; };
 
     const updateHint = () => {
       const meta = resolvePlant();
@@ -1326,8 +1334,8 @@ const plantCatalog = getPlants()
     const pickSlug = (slug: string) => {
       const p = PLANT_CATALOG.find((x) => x.slug === slug);
       if (!p) return;
-      addSelectedSlug = slug; search.value = p.title;
-      closeCombo(); updateHint(); refreshSave();
+      addSelectedSlug = slug; search.value = p.title; lastPickAt = Date.now();
+      syncClear(); closeCombo(); updateHint(); refreshSave();
     };
 
     search.addEventListener('input', () => {
@@ -1335,18 +1343,29 @@ const plantCatalog = getPlants()
       const v = search.value.trim().toLowerCase();
       const exact = PLANT_CATALOG.find((p) => p.title.toLowerCase() === v);
       addSelectedSlug = exact ? exact.slug : null;
-      renderCombo(); updateHint(); refreshSave();
+      syncClear(); renderCombo(); updateHint(); refreshSave();
     });
-    search.addEventListener('focus', renderCombo);
-    // Close on blur, but a hair late so an option tap registers first.
-    search.addEventListener('blur', () => setTimeout(closeCombo, 150));
-    // pointerdown fires before the input's blur — pick without losing the tap.
-    list.addEventListener('pointerdown', (e) => {
+    // Open on a deliberate tap of the field (not `focus` — focus returns to the input
+    // right after a pick and would re-open the list we just closed).
+    search.addEventListener('click', () => { if (Date.now() - lastPickAt > 350) renderCombo(); });
+    // Select on click — a scroll-drag over the list produces NO click, so the user
+    // can freely scroll the options; only a real tap picks one.
+    list.addEventListener('click', (e) => {
       const li = (e.target as HTMLElement).closest('.add-plant-opt') as HTMLElement | null;
-      if (!li) return;
-      e.preventDefault();
-      pickSlug(li.dataset.slug!);
+      if (li) pickSlug(li.dataset.slug!);
     });
+    // Clear ✕ — wipe the field and any linked plant, reopen the full list.
+    clearBtn.addEventListener('click', () => {
+      search.value = ''; addSelectedSlug = null;
+      syncClear(); updateHint(); refreshSave(); renderCombo(); search.focus();
+    });
+    // Close when a tap/click lands outside the combo (blur-close would collapse the
+    // list mid-scroll on touch). Removed in endAddMode via addComboCleanup.
+    const onDocDown = (e: Event) => {
+      if (!list.hidden && !(e.target as HTMLElement).closest('.add-combo')) closeCombo();
+    };
+    document.addEventListener('pointerdown', onDocDown);
+    addComboCleanup = () => document.removeEventListener('pointerdown', onDocDown);
     search.addEventListener('keydown', (e) => {
       const opts = Array.from(list.querySelectorAll<HTMLElement>('.add-plant-opt'));
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
