@@ -1188,16 +1188,25 @@ const plantCatalog = getPlants()
     const next = byId<HTMLButtonElement>('add-next');
     if (next) next.textContent = isLast ? 'Save spot' : 'Next';
 
-    // The crosshair only means something while placing the pin — show it and let the
-    // map move ONLY on the location step; freeze everything elsewhere so the pin can't
-    // drift. Position the crosshair for this step's sheet height BEFORE recentering,
-    // so returning to the location step lands the frozen spot exactly under it (the
-    // sheets differ in height, so the crosshair sits at a different y per step).
+    // The crosshair marks where the pin lands. Shown from the location step onward:
+    // on the location step it PULSES and the map moves under it (positioned for that
+    // step's sheet height, recentred so a returning visit lands the frozen spot under
+    // it). On the later steps the map is frozen, so the crosshair stays put and keeps
+    // marking the exact placement — but STATIC (no pulse, so it's a quiet reference,
+    // not a distraction). Hidden only on the pre-location name step.
     const onLoc = key === 'loc';
-    if (addCross) addCross.style.display = onLoc ? '' : 'none';
+    const showCross = key !== 'name';
+    if (addCross) {
+      addCross.style.display = showCross ? '' : 'none';
+      addCross.classList.toggle('cross-static', showCross && !onLoc);
+    }
     setMapMovable(onLoc);
-    positionCross();
-    if (onLoc && addLatLng) centerCrosshairOn(addLatLng.lat, addLatLng.lng, 16);
+    if (onLoc) {
+      positionCross(); // reposition for this sheet height, THEN restore the placement
+      if (addLatLng) centerCrosshairOn(addLatLng.lat, addLatLng.lng, 16);
+    }
+    // Off the location step we leave the crosshair where the location step left it —
+    // the map is frozen, so that pixel still marks the placed spot.
     if (key === 'name') setTimeout(() => byId<HTMLInputElement>('add-name')?.focus(), 40);
 
     refreshSave();
@@ -1613,6 +1622,8 @@ const plantCatalog = getPlants()
     } catch { return null; }
   }
 
-  window.addEventListener('resize', () => { map.invalidateSize(); if (addMode) positionCross(); });
+  // Only the location step repositions the crosshair on resize; on the later (frozen)
+  // steps it stays pinned to the placed spot, so leave it alone.
+  window.addEventListener('resize', () => { map.invalidateSize(); if (addMode && addStepKeys[addStep] === 'loc') positionCross(); });
   void isTouch;
 </script>
