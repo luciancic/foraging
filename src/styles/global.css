@@ -71,16 +71,21 @@ body.fullbleed main { flex: 1 1 auto; min-height: 0; display: flex; }
 .hero h1 { font-size: clamp(2rem, 5vw, 3rem); margin: 0 0 12px; }
 .hero p { font-size: 1.15rem; color: var(--ink-soft); max-width: 60ch; margin: 0; }
 
-/* plant list search */
-.plant-search { margin: 0 0 20px; }
-.plant-search input {
+/* plant list search — a raw underlined field, no box. NB: distinct class from the
+   map's `.plant-search` filter (line ~320) so the two don't cross-style each other. */
+.plantlist-search { margin: 0 0 20px; }
+.plantlist-search input {
   width: 100%; max-width: 420px; box-sizing: border-box;
-  padding: 11px 14px; font-size: 1rem; color: var(--ink);
-  background: var(--surface); border: 1px solid var(--line);
-  border-radius: var(--radius); box-shadow: var(--shadow);
+  -webkit-appearance: none; appearance: none;
+  padding: 8px 2px; font-size: 1.05rem; color: var(--ink);
+  background: transparent; border: 0; border-bottom: 1px solid var(--line);
+  border-radius: 0; box-shadow: none;
 }
-.plant-search input:focus { outline: none; border-color: var(--forest-deep); box-shadow: 0 0 0 3px rgba(47,93,58,.15); }
-.plant-search-empty { color: var(--ink-soft); }
+.plantlist-search input:focus { outline: none; border-bottom-color: var(--forest-deep); }
+/* Drop the native search decorations so it reads as a plain underlined field. */
+.plantlist-search input::-webkit-search-cancel-button,
+.plantlist-search input::-webkit-search-decoration { -webkit-appearance: none; appearance: none; }
+.plantlist-search-empty { color: var(--ink-soft); }
 
 /* cards grid */
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; }
@@ -417,6 +422,16 @@ body:not(.map-editing) .leaflet-popup-content .scout-promote { display: none; }
 /* Searchable plant combobox: a text input over a filtered, scrollable option
    list that flows inline (so the internally-scrolling sheet never clips it). */
 .add-combo { position: relative; }
+#add-plant-search { padding-right: 38px; }
+/* Clear ✕ inside the field's right edge — appears only when there's text. */
+.add-combo-clear {
+  position: absolute; top: 6px; right: 6px;
+  width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+  font: inherit; font-size: .78rem; line-height: 1; color: var(--ink-soft); cursor: pointer;
+  background: color-mix(in srgb, var(--ink) 7%, transparent); border: 0; border-radius: 50%; padding: 0;
+}
+.add-combo-clear[hidden] { display: none; }
+.add-combo-clear:hover { background: color-mix(in srgb, var(--ink) 14%, transparent); color: var(--ink); }
 .add-plant-list {
   list-style: none; margin: 5px 0 0; padding: 4px;
   max-height: 210px; overflow-y: auto; overscroll-behavior: contain;
