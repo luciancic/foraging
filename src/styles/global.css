@@ -371,6 +371,9 @@ body:not(.map-editing) .leaflet-popup-content .scout-promote { display: none; }
   filter: drop-shadow(0 1px 3px rgba(0, 0, 0, .45));
 }
 .add-cross svg { display: block; }
+/* On the post-placement steps the crosshair is a quiet static marker — drop the
+   pulsing ring (the first <circle>, the only animated one) so it doesn't distract. */
+.add-cross.cross-static svg > circle:first-of-type { display: none; }
 
 /* Bottom sheet over the live map. Scrolls internally; capped so the map stays
    visible above it. Slides up on open. */
