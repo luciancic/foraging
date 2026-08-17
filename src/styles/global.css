@@ -408,9 +408,13 @@ body:not(.map-editing) .leaflet-popup-content .scout-promote { display: none; }
   border-radius: 10px; padding: 12px 10px; cursor: pointer;
 }
 .add-photo-btn:hover { background: color-mix(in srgb, var(--forest) 10%, var(--surface)); }
+/* The ✕ is the sole cancel affordance (no footer Cancel), so it's a big, clear
+   tap target that confirms before discarding. */
 .add-x {
-  border: 0; background: none; font-size: 1.1rem; line-height: 1; color: var(--ink-soft);
-  padding: 4px 6px; cursor: pointer; border-radius: 8px;
+  border: 0; background: none; font-size: 1.6rem; line-height: 1; color: var(--ink-soft);
+  width: 42px; height: 42px; margin: -8px -8px -8px 0; flex: none;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; border-radius: 10px;
 }
 .add-x:hover { background: color-mix(in srgb, var(--ink) 6%, transparent); }
 .add-loc {
@@ -489,12 +493,12 @@ body:not(.map-editing) .leaflet-popup-content .scout-promote { display: none; }
   padding-right: 32px;
 }
 .add-actions { display: flex; gap: 10px; margin-top: 2px; }
-.add-back, .add-cancel, .add-next {
+.add-back, .add-next {
   flex: 1 1 0; font: inherit; font-size: .92rem; font-weight: 600;
   border-radius: 10px; padding: 11px 12px; cursor: pointer; border: 1px solid var(--line);
 }
-.add-back, .add-cancel { background: var(--surface); color: var(--ink-soft); }
-.add-back:hover, .add-cancel:hover { border-color: var(--ink-soft); }
+.add-back { background: var(--surface); color: var(--ink-soft); }
+.add-back:hover { border-color: var(--ink-soft); }
 .add-back[hidden] { display: none; }
 .add-next { background: var(--forest); color: #fff; border-color: var(--forest-deep); }
 .add-next:hover { background: var(--forest-deep); }
