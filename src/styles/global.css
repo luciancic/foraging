@@ -435,7 +435,10 @@ body:not(.map-editing) .leaflet-popup-content .scout-promote { display: none; }
 .add-row > span { font-size: .8rem; font-weight: 600; color: var(--ink); }
 .add-row > span em { font-weight: 400; font-style: normal; color: var(--ink-soft); }
 .add-row select, .add-row input[type="text"], .add-row textarea, .add-row input[type="file"] {
-  font: inherit; font-size: .92rem; color: var(--ink);
+  /* 16px min: iOS Safari auto-zooms into any focused input with a smaller font,
+     and on a fullscreen map you can't pinch back out (pinching pans/zooms the
+     map, not the page) — leaving the header stranded off-screen. */
+  font: inherit; font-size: 16px; color: var(--ink);
   background: var(--surface); border: 1px solid var(--line); border-radius: 9px;
   padding: 9px 10px; width: 100%; box-sizing: border-box;
 }
@@ -506,6 +509,11 @@ body:not(.map-editing) .leaflet-popup-content .scout-promote { display: none; }
 /* While adding, hide the whole layers/edit/add panel — its ➕, pencil and Layers
    pill would otherwise sit on top of the sheet. To reach the layers, cancel the add. */
 body.map-adding .map-panel { display: none; }
+/* Leaflet's bottom controls (the © OpenStreetMap credit) default to a high
+   z-index and would poke through the add sheet. While adding, drop them behind
+   it — same "stay in the background" treatment as the ➕/pencil/Layers panel.
+   (The credit is still shown on the normal map view, only hidden under the sheet.) */
+body.map-adding .leaflet-bottom { z-index: 400; }
 
 /* section spacing helper */
 /* top margin gives the lead heading room under the sticky header; it collapses
