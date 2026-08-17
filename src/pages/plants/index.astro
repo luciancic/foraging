@@ -9,6 +9,13 @@ const order = { 'ripe-now': 0, 'coming-soon': 1, 'year-round': 2, 'note-for-next
 const plants = getPlants()
   .map((p) => ({ ...p, live: effectiveStatus(p.data), spots: spotCount(p.id) }))
   .sort((a, b) => order[a.live] - order[b.live] || a.data.order - b.data.order || a.data.title.localeCompare(b.data.title));
+
+// Lowercased searchable blob per plant — title, scientific name, common names,
+// categories — so the client-side filter matches any of them.
+function searchKey(p: any) {
+  return [p.data.title, p.data.scientificName, ...(p.data.commonNames || []), ...(p.data.category || [])]
+    .filter(Boolean).join(' ').toLowerCase();
+}
 ---
 <Base title="Plants — Forage MTL" page="plants" description="Field guide to urban edible plants around Montréal.">
   <section class="wrap section">
@@ -17,9 +24,12 @@ const plants = getPlants()
       Urban foraging is mostly "weeds" and a few ornamental trees that happen to be edible — not orchards.
       Each page has ID cues, safety notes, and space for harvest &amp; prep notes.
     </p>
-    <div class="grid">
+    <div class="plant-search">
+      <input type="search" id="plant-search" placeholder="Search plants — name, scientific name…" aria-label="Search plants" autocomplete="off" />
+    </div>
+    <div class="grid" id="plant-grid">
       {plants.map((p) => (
-        <a class="card" href={`/plants/${p.id}`}>
+        <a class="card" href={`/plants/${p.id}`} data-search={searchKey(p)}>
           <div class="thumb" style={p.data.heroImage ? `--ph:url('${mediaVariant(p.data.heroImage, 'thumb')}')` : ''}></div>
           <div class="body">
             <span class="name">{p.data.title}</span>
@@ -32,5 +42,33 @@ const plants = getPlants()
         </a>
       ))}
     </div>
+    <p class="plant-search-empty" id="plant-search-empty" hidden>No plants match “<span id="plant-search-term"></span>”.</p>
   </section>
+
+  <script is:inline>
+    (() => {
+      const input = document.getElementById('plant-search');
+      const grid = document.getElementById('plant-grid');
+      if (!input || !grid) return;
+      const cards = Array.from(grid.querySelectorAll('.card'));
+      const empty = document.getElementById('plant-search-empty');
+      const term = document.getElementById('plant-search-term');
+      const apply = () => {
+        const q = input.value.trim().toLowerCase();
+        let shown = 0;
+        for (const card of cards) {
+          const hit = !q || (card.dataset.search || '').includes(q);
+          card.hidden = !hit;
+          if (hit) shown++;
+        }
+        if (empty) {
+          empty.hidden = shown > 0 || !q;
+          if (term) term.textContent = input.value.trim();
+        }
+      };
+      input.addEventListener('input', apply);
+      // Restore a query typed before hydration / on back-navigation.
+      if (input.value) apply();
+    })();
+  </script>
 </Base>
