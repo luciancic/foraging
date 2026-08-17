@@ -387,6 +387,18 @@ const plantCatalog = getPlants()
           body.hidden = !open;
           btn.setAttribute('aria-expanded', String(open));
         });
+        // Click anywhere outside the panel dismisses it (popover-style). Inside
+        // clicks are stopped at `wrap` by disableClickPropagation above, so this
+        // document listener only fires for outside clicks; the contains() guard
+        // is belt-and-suspenders.
+        document.addEventListener('click', (e) => {
+          if (!open || wrap.contains(e.target as Node)) return;
+          open = false;
+          savePref('panel.open', open);
+          wrap.classList.remove('open');
+          body.hidden = true;
+          btn.setAttribute('aria-expanded', 'false');
+        });
         editBtnEl = wrap.querySelector('.map-panel-edit') as HTMLElement | null;
         if (editBtnEl) editBtnEl.addEventListener('click', () => setEditMode(!editMode));
         const addBtn = wrap.querySelector('.map-panel-add') as HTMLElement | null;
@@ -641,11 +653,9 @@ const plantCatalog = getPlants()
   // toggles each layer + filters by type; a promoted lead flips to a confirmed pin.
   function initFullMap() {
     const SOURCES: Record<string, any> = {
-      inat: { label: 'iNaturalist', glyph: '●', tag: 'research-grade · unverified', attrib: '' },
-      fallingfruit: { label: 'Falling Fruit', glyph: '◆', tag: 'community · CC BY-NC-SA',
-        attrib: 'Community spots via <a href="https://fallingfruit.org" target="_blank" rel="noopener">Falling Fruit</a> (CC BY-NC-SA)' },
-      montreal: { label: 'City trees', glyph: '▲', tag: 'city inventory · sample',
-        attrib: 'Public-tree inventory © <a href="https://donnees.montreal.ca/dataset/arbres" target="_blank" rel="noopener">Ville de Montréal</a> (CC BY 4.0)' },
+      inat: { label: 'iNaturalist', glyph: '●', tag: 'research-grade · unverified' },
+      fallingfruit: { label: 'Falling Fruit', glyph: '◆', tag: 'community' },
+      montreal: { label: 'City trees', glyph: '▲', tag: 'city inventory' },
     };
     const SOURCE_ORDER = ['inat', 'fallingfruit', 'montreal'];
 
@@ -946,7 +956,7 @@ const plantCatalog = getPlants()
                 `<span>${esc(pl.title)}</span><b>${pl.count}</b></label>`).join('') +
             `</div>` +
           `</div>` : '') +
-          (state.leadsOn ? srcShown.filter((s) => SOURCES[s].attrib).map((s) => `<p class="scout-attrib">${SOURCES[s].attrib}</p>`).join('') : '');
+          (state.leadsOn ? `<p class="scout-attrib">Leads from iNaturalist, Falling Fruit &amp; Ville de Montréal — <a href="/about#data">sources &amp; licences</a></p>` : '');
 
         div.querySelectorAll('input[data-master]').forEach((el) => el.addEventListener('change', () => {
           const k = (el as HTMLInputElement).dataset.master as string;
