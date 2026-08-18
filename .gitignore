@@ -12,5 +12,7 @@ public/photos/
 public/images/
 media-cache/
 .env
+# Machine-local/secret CLAUDE context — pointers to token/creds/service names.
+CLAUDE.local.md
 .DS_Store
 npm-debug.log*

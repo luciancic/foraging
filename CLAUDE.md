@@ -64,7 +64,7 @@ urban-edible plant field guide for Montréal. Live at **https://foraging.condrea
   a read-through cache (`media-cache/`) fetches each from Storj on first hit. Caddy
   reverse-proxies those paths to the API. To add a photo: upload it to
   `media/images/plants/<file>` or `media/photos/spots/<file>` in the bucket (reuse the
-  Storj creds in `~/myclaw/.env`); reference it by the same `/images/...` or `/photos/...`
+  Storj creds — path in `CLAUDE.local.md`); reference it by the same `/images/...` or `/photos/...`
   URL. Image URLs are unchanged from before — only where they're served from changed.
 - **Images are optimized** (`sharp`). Every upload (`POST /api/photos`) is run through
   `optimizeImage()` in `server/api.mjs`: auto-orient from EXIF, strip metadata, cap the
@@ -111,7 +111,7 @@ urban-edible plant field guide for Montréal. Live at **https://foraging.condrea
 - **Move a pin (fix bad photo-geolocation):** open `/map?edit=1`, drag the pin, drop
   it — it PATCHes `/api/pins/:id` with `lon`/`lat` and persists live (records a `move`
   event). **Admin-only** (a drag is destructive to curated placement): needs the edit
-  token, stored per-device in `localStorage`; the value is in `~/.config/foraging/foraging.env`.
+  token, stored per-device in `localStorage` (token location in `CLAUDE.local.md`).
 - **Snapshot live edits back to git:** `npm run db:export` (DB → `db/seed.json`),
   then commit. This is a deliberate step — the nightly Storj backup captures the
   live `data/foraging.db` directly (so field edits are safe) but does NOT touch the
@@ -172,17 +172,17 @@ urban-edible plant field guide for Montréal. Live at **https://foraging.condrea
   `deletePin`).
 
 ## Deploy & backup (this VPS)
-- Served by Caddy from `/srv/foraging` (static) + a reverse-proxy for `/api/*`,
-  `/photos/*`, `/images/*` → `localhost:8787` (the `foraging-api` systemd user service
-  running `server/api.mjs`, which needs the Storj creds from `~/myclaw/.env` to serve
-  photos).
+- **Local/secret paths (static web root, edit-token file, Storj creds, systemd
+  service/timer names): see `CLAUDE.local.md`** (gitignored, machine-local).
+- Served by Caddy from the static web root + a reverse-proxy for `/api/*`,
+  `/photos/*`, `/images/*` → `localhost:8787` (the API systemd user service
+  running `server/api.mjs`, which needs the Storj creds to serve photos).
 - `scripts/deploy.sh` = `db:init` (sync plants; keep live spots + leads; backfill any
   missing `genesis` events) + build + publish + restart the API. `scripts/install.sh`
-  = first-time / post-wipe: Caddy block, edit
-  token (`~/.config/foraging/foraging.env`, generated + printed once), nightly rebuild
-  timer, the API service, DB seed, then deploy.
-- `scripts/backup-storj.sh` → personal Storj `foraging` bucket (reuses the Storj creds
-  in `~/myclaw/.env`); backs up `data/foraging.db` + `db/seed.json` (NOT photos — those
+  = first-time / post-wipe: Caddy block, edit token (generated + printed once), nightly
+  rebuild timer, the API service, DB seed, then deploy.
+- `scripts/backup-storj.sh` → personal Storj `foraging` bucket (reuses the Storj creds);
+  backs up `data/foraging.db` + `db/seed.json` (NOT photos — those
   already live in the bucket under `media/`). Git holds the code + `db/seed.json`
   snapshot; the **live DB is only in the backup**, not git.
 - VPS is wipeable: `install.sh` rebuilds plants + confirmed spots from the committed
@@ -191,6 +191,22 @@ urban-edible plant field guide for Montréal. Live at **https://foraging.condrea
   and the `pin_events`/`users` audit history (none of which are in git).
 
 ## Conventions
+- **Ship autonomously.** This is a just-ship personal site: commit finished, verified
+  changes straight to `master` and run `scripts/deploy.sh` (map spots, plant guides,
+  CSS/UI) without asking. Ship independently-shippable work the moment it's done —
+  don't hold it to bundle with a still-blocked piece (a completed guide shouldn't wait
+  on a pending map pin). Fix stale/incorrect repo docs, comments, or refs in place as
+  you go (still surface *what* was stale in your summary). Push only if asked.
+- **Verify iNaturalist taxon IDs.** Never guess the numeric id in an
+  `inaturalist.org/taxa/<id>` link — a wrong id silently resolves to a real-but-wrong
+  species page (no 404, so it looks fine but misinforms). Verify against the API before
+  committing: `curl -s "https://api.inaturalist.org/v1/taxa?q=<Genus%20species>&rank=species"`
+  and confirm `results[0].name` matches the intended scientific name.
+- **Never combine the `padding` shorthand with `.wrap`.** On any element that also
+  carries `.wrap` (e.g. `class="hero wrap"`, `class="plant wrap"`), set vertical
+  spacing with `padding-block`, NOT the `padding` shorthand — the shorthand resets
+  padding-left/right to 0 and clobbers `.wrap`'s horizontal gutter (shipped once as a
+  real edge-to-edge-on-mobile bug).
 - Verify UI changes in a real browser before claiming they work (Playwright lives in
   `~/myclaw/ui`; run the script from inside that dir so `playwright` resolves).
 - Knowledge/notes about foraging itself belong in the KB vault (`2.Areas/Foraging/`),
