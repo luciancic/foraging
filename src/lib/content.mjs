@@ -6,12 +6,16 @@
 // familiar `p.data.<field>` access; `bodyHtml` is the field-notes Markdown body
 // rendered to HTML (the job astro:content's <Content /> used to do).
 import MarkdownIt from 'markdown-it';
-import { allPlants, getPlant } from './db.mjs';
+import { allPlants, getPlant, CAUTION_PLANTS } from './db.mjs';
 
 const md = new MarkdownIt({ html: true, linkify: true, typographer: true });
 
 function shape(row) {
   const { body, ...data } = row;
+  // `hazard` marks a genuinely dangerous plant (toxic lookalike or raw-toxic /
+  // handle-with-care) so the guide can flag its safety section red — everything
+  // else gets a calm, skimmable safety panel. Same list that rings map pins.
+  data.hazard = CAUTION_PLANTS.has(row.slug);
   // `id` == the slug string, matching Astro's glob-collection convention the
   // rest of the codebase uses (p.id / params.slug).
   return { id: row.slug, data, bodyHtml: md.render(body || '') };

@@ -520,12 +520,16 @@ export function slugForSpecies(species) {
   return SPECIES_TO_SLUG[sp ? `${genus} ${sp}` : genus] || GENUS_TO_SLUG[genus] || null;
 }
 
-// Plants whose pins should carry the amber caution ring — a dangerous lookalike or a
-// real handle-with-care hazard (raw-toxic, cyanogenic pits, contact irritant, deadly
-// umbellifer cousins). syncPinsToPlants OR-s this in; it never clears a set caution.
-const CAUTION_PLANTS = new Set([
+// Plants whose pins carry the amber caution ring AND whose guide shows the red
+// "Safety & lookalikes" panel — a dangerous lookalike or a real handle-with-care
+// hazard (raw-toxic, cyanogenic pits, contact irritant, deadly umbellifer/lily
+// cousins, toxic poison-sumac twin). This is the single hazard list: exported so
+// the plant guide can style its safety section the same way the map rings a pin.
+// syncPinsToPlants OR-s this in; it never clears a set caution.
+export const CAUTION_PLANTS = new Set([
   'wild-carrot', 'grape', 'milkweed', 'chives', 'ginkgo',
   'elderberry', 'chokecherry', 'black-cherry', 'highbush-cranberry',
+  'staghorn-sumac', 'burdock',
 ]);
 
 /** Idempotent deploy-time normalization (runs after plants are synced): bind every

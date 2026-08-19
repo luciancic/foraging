@@ -46,8 +46,8 @@ const onMap = spots + leads;
     )}
 
     {d.safety.length > 0 && (
-      <div class="panel safety">
-        <h2>⚠ Safety &amp; lookalikes</h2>
+      <div class={`panel${d.hazard ? ' safety' : ''}`}>
+        <h2>{d.hazard ? '⚠ Safety & lookalikes' : 'Safety'}</h2>
         <ul>{d.safety.map((s) => <li set:html={s} />)}</ul>
       </div>
     )}
