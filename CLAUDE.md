@@ -75,6 +75,11 @@ urban-edible plant field guide for Montréal. Live at **https://foraging.condrea
   backlog was optimized once by `scripts/optimize-media.mjs` (idempotent, re-runnable:
   skips any object that already has an `originals/` copy; `--dry` to preview) — run it
   again after a bulk hand-upload. Downscaled the backlog ~144 MB → ~24 MB (−84%).
+- **Reading photo EXIF/GPS:** this box has no `exiftool` (a fallback chain silently
+  prints nothing and looks like "no GPS"). Use Python PIL — `Image.open(f)._getexif()`
+  + `PIL.ExifTags.TAGS`/`GPSTAGS` (GPSInfo DMS → decimal). Photos uploaded via myclaw
+  (`/tmp/myclaw-uploads/`) keep their GPS; never claim metadata is stripped unless the
+  reader actually ran.
 - **On-the-fly thumbnails.** `serveMedia` also produces cached WebP derivatives keyed by
   `?v=` — `thumb` (480px) and `card` (800px) — rendered on first request and cached under
   `media-cache/_variants/<v>/`. The plant gallery, plant-list/home cards, and map-popup
